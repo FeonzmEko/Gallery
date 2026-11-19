@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Page Header -->
+    <!-- Page Header & Action Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/60 pb-5">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -12,11 +12,26 @@
         </p>
       </div>
 
-      <!-- Admin write actions (hidden for guests) -->
-      <div v-if="authStore.isAdmin" class="flex items-center gap-2">
+      <!-- Action Area -->
+      <div class="flex items-center gap-3">
+        <!-- Live Search Input -->
+        <div class="relative">
+          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="检索时光记忆与标签..."
+            class="w-48 sm:w-60 rounded-xl bg-slate-900 border border-slate-800/80 pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all"
+            @input="handleSearchDebounced"
+          />
+        </div>
+
+        <!-- Admin write action -->
         <button
+          v-if="authStore.isAdmin"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 shadow-md transition-colors"
+          class="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 shadow-md shadow-sky-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          @click="openCreateModal"
         >
           <PlusIcon class="w-4 h-4" />
           <span>记录此刻</span>
@@ -24,35 +39,296 @@
       </div>
     </div>
 
-    <!-- Timeline Content Placeholder / Preview -->
-    <div class="relative pl-6 sm:pl-8 border-l border-slate-800 space-y-8">
-      <div class="relative group">
-        <!-- Milestone Dot -->
-        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900 border-2 border-sky-400 shadow"></div>
-        <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-sm transition-all hover:border-slate-700">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span class="font-mono text-sky-400">2026 年 11 月</span>
-            <span class="rounded bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">系统架构初始完成</span>
-          </div>
-          <h3 class="text-lg font-semibold text-white">个人数字记忆长廊 (Personal Archive) 架构落地</h3>
-          <p class="mt-2 text-sm text-slate-300 leading-relaxed">
-            模块化单体与 Cloudflare 全栈架构已完成装配。访客公开只读与管理员密钥暗门授权已生效。
-          </p>
-          <div v-if="authStore.isAdmin" class="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-2">
-            <span class="text-xs text-amber-400 flex items-center gap-1">
-              <ShieldCheckIcon class="w-3.5 h-3.5" />
-              管理员专属编辑入口已就绪
-            </span>
-          </div>
-        </div>
+    <!-- Filter & Year Scale Ruler -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2 border-b border-slate-800/40">
+      <!-- Category Tabs (全部 / 旅行 / 日记 / 照片) -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <button
+          v-for="cat in categories"
+          :key="cat.value"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
+          :class="[
+            selectedCategory === cat.value
+              ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent',
+          ]"
+          @click="selectCategory(cat.value)"
+        >
+          <component :is="cat.icon" class="w-3.5 h-3.5" />
+          <span>{{ cat.label }}</span>
+        </button>
+      </div>
+
+      <!-- Year Scale Ruler (快速定位年份) -->
+      <div v-if="availableYears.length > 0" class="flex items-center gap-1 text-xs text-slate-400">
+        <span class="text-[11px] font-mono mr-1 text-slate-500">年份刻度:</span>
+        <button
+          type="button"
+          class="px-2 py-0.5 rounded-lg text-xs font-mono transition-colors"
+          :class="selectedYear === null ? 'bg-slate-800 text-sky-400 font-bold' : 'hover:text-slate-200'"
+          @click="selectedYear = null"
+        >
+          全部
+        </button>
+        <button
+          v-for="year in availableYears"
+          :key="year"
+          type="button"
+          class="px-2 py-0.5 rounded-lg text-xs font-mono transition-colors"
+          :class="selectedYear === year ? 'bg-slate-800 text-sky-400 font-bold border border-sky-500/30' : 'hover:text-slate-200'"
+          @click="selectedYear = year"
+        >
+          {{ year }}
+        </button>
       </div>
     </div>
+
+    <!-- Timeline Main Stream -->
+    <div class="relative pl-6 sm:pl-8 border-l border-slate-800/80 space-y-8 my-6">
+      <!-- Loading Skeletons -->
+      <div v-if="isLoading && entries.length === 0" class="space-y-6">
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="rounded-3xl border border-slate-800/80 bg-slate-900/40 p-6 animate-pulse space-y-3"
+        >
+          <div class="h-4 bg-slate-800 rounded w-1/4"></div>
+          <div class="h-6 bg-slate-800 rounded w-1/2"></div>
+          <div class="h-14 bg-slate-800/60 rounded w-full"></div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-else-if="filteredEntries.length === 0"
+        class="rounded-3xl border border-dashed border-slate-800/80 bg-slate-900/30 p-10 text-center"
+      >
+        <ClockIcon class="w-10 h-10 text-slate-600 mx-auto mb-3" />
+        <h4 class="text-sm font-semibold text-slate-300">暂无时间线记忆</h4>
+        <p class="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+          {{ searchKeyword ? '没有找到符合搜索条件的条目。' : '还没有记录任何历史足迹，点击上方“记录此刻”开始书写。' }}
+        </p>
+        <button
+          v-if="authStore.isAdmin && !searchKeyword"
+          type="button"
+          class="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-400 transition-colors"
+          @click="openCreateModal"
+        >
+          <PlusIcon class="w-3.5 h-3.5" />
+          <span>写下第一篇时光记录</span>
+        </button>
+      </div>
+
+      <!-- Timeline Entries Stream -->
+      <div v-else class="space-y-8">
+        <TimelineCard
+          v-for="entry in filteredEntries"
+          :key="entry.id"
+          :entry="entry"
+          :is-admin="authStore.isAdmin"
+          @edit="handleEditEntry"
+          @delete="handleDeleteEntry"
+        />
+      </div>
+
+      <!-- Cursor Pagination: Load More Button -->
+      <div v-if="hasMore" class="pt-4 text-center">
+        <button
+          type="button"
+          :disabled="isLoadingMore"
+          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-300 hover:text-white shadow transition-all disabled:opacity-50"
+          @click="loadMore"
+        >
+          <Loader2Icon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin text-sky-400" />
+          <span>{{ isLoadingMore ? '正在溯流历史...' : '向下溯流更多历史记忆' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Create / Edit Entry Modal -->
+    <CreateEntryModal
+      v-model="isModalOpen"
+      :editing-entry="editingEntry"
+      @saved="handleEntrySaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Clock as ClockIcon, Plus as PlusIcon, ShieldCheck as ShieldCheckIcon } from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import {
+  Clock as ClockIcon,
+  Plus as PlusIcon,
+  Search as SearchIcon,
+  Compass as CompassIcon,
+  BookOpen as BookOpenIcon,
+  Camera as CameraIcon,
+  Layers as LayersIcon,
+  Loader2 as Loader2Icon,
+} from 'lucide-vue-next';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
+import { apiClient } from '@/shared/api/client';
+import TimelineCard from '@/features/timeline/components/TimelineCard.vue';
+import CreateEntryModal from '@/features/timeline/components/CreateEntryModal.vue';
+import type { EntryDto } from '@archive/contracts';
 
 const authStore = useAuthStore();
+
+const categories = [
+  { label: '全部时光', value: 'all', icon: LayersIcon },
+  { label: '旅行足迹', value: 'trip', icon: CompassIcon },
+  { label: '随想日记', value: 'journal', icon: BookOpenIcon },
+  { label: '摄影长廊', value: 'photo', icon: CameraIcon },
+];
+
+const selectedCategory = ref('all');
+const selectedYear = ref<number | null>(null);
+const searchKeyword = ref('');
+
+const entries = ref<EntryDto[]>([]);
+const nextCursor = ref<string | null>(null);
+const hasMore = ref(false);
+const isLoading = ref(true);
+const isLoadingMore = ref(false);
+
+const isModalOpen = ref(false);
+const editingEntry = ref<EntryDto | null>(null);
+
+// Extract unique years from entries for Year Scale Ruler
+const availableYears = computed(() => {
+  const yearsSet = new Set<number>();
+  for (const item of entries.value) {
+    if (item.occurredAt) {
+      yearsSet.add(new Date(item.occurredAt).getFullYear());
+    }
+  }
+  return Array.from(yearsSet).sort((a, b) => b - a);
+});
+
+// Client-side filtering (year + category + search keyword)
+const filteredEntries = computed(() => {
+  return entries.value.filter((item) => {
+    // 1. Year filter
+    if (selectedYear.value !== null) {
+      const yr = new Date(item.occurredAt).getFullYear();
+      if (yr !== selectedYear.value) return false;
+    }
+
+    // 2. Category filter
+    if (selectedCategory.value !== 'all' && item.type !== selectedCategory.value) {
+      return false;
+    }
+
+    // 3. Keyword filter
+    if (searchKeyword.value.trim()) {
+      const q = searchKeyword.value.trim().toLowerCase();
+      const matchTitle = item.title.toLowerCase().includes(q);
+      const matchSummary = (item.summary || '').toLowerCase().includes(q);
+      const matchTags = (item.tags || []).some((t) => t.toLowerCase().includes(q));
+      if (!matchTitle && !matchSummary && !matchTags) return false;
+    }
+
+    return true;
+  });
+});
+
+let searchTimeout: any = null;
+function handleSearchDebounced() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    loadTimeline(true);
+  }, 350);
+}
+
+function selectCategory(cat: string) {
+  selectedCategory.value = cat;
+  loadTimeline(true);
+}
+
+async function loadTimeline(reset: boolean = false) {
+  if (reset) {
+    isLoading.value = true;
+    nextCursor.value = null;
+  } else {
+    isLoadingMore.value = true;
+  }
+
+  try {
+    const params: Record<string, any> = {
+      limit: 20,
+    };
+
+    if (selectedCategory.value !== 'all') {
+      params.type = selectedCategory.value;
+    }
+
+    if (searchKeyword.value.trim()) {
+      params.search = searchKeyword.value.trim();
+    }
+
+    if (!reset && nextCursor.value) {
+      params.cursor = nextCursor.value;
+    }
+
+    const res = await apiClient.request<{
+      data: EntryDto[];
+      meta?: { pagination?: { cursor: string | null; hasMore: boolean } };
+    }>('/api/v1/entries', {
+      params,
+    });
+
+    const newItems = Array.isArray(res) ? res : res.data || [];
+    const pagination = (res as any).meta?.pagination;
+
+    if (reset) {
+      entries.value = newItems;
+    } else {
+      entries.value = [...entries.value, ...newItems];
+    }
+
+    nextCursor.value = pagination?.cursor ?? null;
+    hasMore.value = pagination?.hasMore ?? false;
+  } catch (err) {
+    console.error('Failed to load timeline entries:', err);
+  } finally {
+    isLoading.value = false;
+    isLoadingMore.value = false;
+  }
+}
+
+function loadMore() {
+  if (hasMore.value && !isLoadingMore.value) {
+    loadTimeline(false);
+  }
+}
+
+function openCreateModal() {
+  editingEntry.value = null;
+  isModalOpen.value = true;
+}
+
+function handleEditEntry(entry: EntryDto) {
+  editingEntry.value = entry;
+  isModalOpen.value = true;
+}
+
+async function handleDeleteEntry(id: string) {
+  if (!confirm('确认删除此条记忆吗？此操作无法撤销。')) return;
+
+  try {
+    await apiClient.delete(`/api/v1/entries/${id}`);
+    entries.value = entries.value.filter((e) => e.id !== id);
+  } catch (err: any) {
+    alert(err.message || '删除失败');
+  }
+}
+
+function handleEntrySaved(_saved: EntryDto) {
+  loadTimeline(true);
+}
+
+onMounted(() => {
+  loadTimeline(true);
+});
 </script>
