@@ -17,6 +17,7 @@ import {
   MediaRoleSchema,
 } from '@archive/contracts';
 import { generateUlid } from '@archive/shared';
+import { mountCommentRoutes } from '@archive/module-comment';
 import type { Env } from './env.js';
 import { bootstrapServices, type AppServices } from './bootstrap.js';
 
@@ -362,6 +363,11 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   });
 
   app.route('/api/v1/tags', tagsRoutes);
+
+  // --- Mount Comment Module Routes ---
+  mountCommentRoutes(app, {
+    getCommentService: (c) => (c.get('services') as AppServices).comment,
+  });
 
   return app;
 }

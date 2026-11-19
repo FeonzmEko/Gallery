@@ -1,7 +1,7 @@
 {
   "name": "@archive/module-comment",
   "version": "0.1.0",
-  "description": "Comment module contract and reserved schema for Personal Archive",
+  "description": "Comment module contract and implementation for Personal Archive",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -24,8 +24,11 @@
   },
   "dependencies": {
     "@archive/contracts": "workspace:*",
+    "@archive/database": "workspace:*",
     "@archive/shared": "workspace:*",
-    "drizzle-orm": "^0.45.4"
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.7.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250224.0",

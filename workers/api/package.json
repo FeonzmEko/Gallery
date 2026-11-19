@@ -14,6 +14,7 @@
   "dependencies": {
     "@archive/contracts": "workspace:*",
     "@archive/database": "workspace:*",
+    "@archive/module-comment": "workspace:*",
     "@archive/module-core": "workspace:*",
     "@archive/module-media": "workspace:*",
     "@archive/shared": "workspace:*",

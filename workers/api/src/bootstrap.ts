@@ -1,6 +1,7 @@
 import { createDb, type ArchiveDb } from '@archive/database';
 import { AuthService, EntryService, TagService, RelationService } from '@archive/module-core';
 import { MediaService, R2StorageAdapter } from '@archive/module-media';
+import { CommentService } from '@archive/module-comment';
 import type { StoragePort, StorageUploadResult } from '@archive/contracts';
 import type { Env } from './env.js';
 
@@ -12,6 +13,7 @@ export interface AppServices {
   tag: TagService;
   relation: RelationService;
   media: MediaService;
+  comment: CommentService;
 }
 
 /**
@@ -85,6 +87,7 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
   const relation = new RelationService(db);
   const entry = new EntryService(db, tag);
   const media = new MediaService(db, storage);
+  const comment = new CommentService(db);
 
   return {
     db,
@@ -94,5 +97,6 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
     tag,
     relation,
     media,
+    comment,
   };
 }

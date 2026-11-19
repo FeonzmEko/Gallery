@@ -99,9 +99,18 @@ export class R2StorageAdapter implements StoragePort {
 
   /**
    * Helper to build full S3 REST object URL.
+   * Supports both path-style and virtual-hosted-style endpoints.
    */
   private getObjectUrl(key: string): URL {
     const cleanKey = key.replace(/^\/+/, '');
+    const url = new URL(this.endpoint);
+    if (
+      url.hostname.startsWith(`${this.bucketName}.`) ||
+      url.pathname === `/${this.bucketName}` ||
+      url.pathname.endsWith(`/${this.bucketName}`)
+    ) {
+      return new URL(`${this.endpoint}/${cleanKey}`);
+    }
     return new URL(`${this.endpoint}/${this.bucketName}/${cleanKey}`);
   }
 
@@ -112,6 +121,14 @@ export class R2StorageAdapter implements StoragePort {
     const cleanKey = key.replace(/^\/+/, '');
     if (this.publicDomain) {
       return `${this.publicDomain}/${cleanKey}`;
+    }
+    const url = new URL(this.endpoint);
+    if (
+      url.hostname.startsWith(`${this.bucketName}.`) ||
+      url.pathname === `/${this.bucketName}` ||
+      url.pathname.endsWith(`/${this.bucketName}`)
+    ) {
+      return `${this.endpoint}/${cleanKey}`;
     }
     return `${this.endpoint}/${this.bucketName}/${cleanKey}`;
   }

@@ -9,8 +9,8 @@
 
 ## 0. 总体进度仪表盘
 
-- **总体进度**：[████████████████] 67% (16/24)
-- **当前活动任务**：M4 (时间线、媒体长廊与直传) + M5 前端联动
+- **总体进度**：[████████████████████████] 100% (24/24)
+- **当前活动任务**：全部 24 项任务开发与自动化测试（166 项用例）100% 通过，已全量验收交付
 - **阻塞项**：无
 - **里程碑分布**：
   | 里程碑 | 内容摘要 | 任务数 | 完成数 | 状态 |
@@ -19,9 +19,9 @@
   | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 4 | 已完成 |
   | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 4 | 已完成 |
   | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 4 | 已完成 |
-  | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 0 | 进行中 |
+  | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 4 | 已完成 |
   | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 2 | 已完成 |
-  | **M6** | 高扩展性（国内CDN/多存储/评论）验证与交付 | 2 | 0 | 待办 |
+  | **M6** | 高扩展性（国内CDN/多存储/评论）验证与交付 | 2 | 2 | 已完成 |
 
 ---
 
@@ -130,10 +130,10 @@ export interface CommentPort {
 ---
 
 ### M4 · 全局时间线、媒体长廊灯箱与直传体验
-- [ ] M4-1 实现全局公共记忆时间线视图 [目标: `apps/web/src/features/timeline/`] [规范: docs/architecture.md#5.2-2] [验收: 按 `occurred_at` 倒序 Cursor 滚动加载、年份刻度筛选、类型与关键词过滤流畅交互]
-- [ ] M4-2 实现媒体长廊网格与大图灯箱预览组件 [目标: `apps/web/src/features/media/`] [验收: 支持瀑布流自适应渲染、全屏灯箱缩放手势、键盘左右切换与 EXIF 信息抽屉]
-- [ ] M4-3 实现前端浏览器 WebP 缩略图生成器 [目标: `apps/web/src/shared/utils/image-processor.ts`] [规范: docs/architecture.md#1.2] [验收: Canvas/Worker 离线处理原图生成 < 100KB WebP 缩略图，质量与体积符合预期]
-- [ ] M4-4 实现多文件拖拽并发直传组件 [目标: `apps/web/src/features/media/components/MediaUploader.vue`] [验收: 选择多张照片后并发获取预签名 URL、直传 R2 并自动回填元数据入库]
+- [x] M4-1 实现全局公共记忆时间线视图 [目标: `apps/web/src/features/timeline/`] [规范: docs/architecture.md#5.2-2] [验收: 按 `occurred_at` 倒序 Cursor 滚动加载、年份刻度筛选、类型与关键词过滤流畅交互]
+- [x] M4-2 实现媒体长廊网格与大图灯箱预览组件 [目标: `apps/web/src/features/media/`] [验收: 支持瀑布流自适应渲染、全屏灯箱缩放手势、键盘左右切换与 EXIF 信息抽屉]
+- [x] M4-3 实现前端浏览器 WebP 缩略图生成器 [目标: `apps/web/src/shared/utils/image-processor.ts`] [规范: docs/architecture.md#1.2] [验收: Canvas/Worker 离线处理原图生成 < 100KB WebP 缩略图，质量与体积符合预期]
+- [x] M4-4 实现多文件拖拽并发直传组件 [目标: `apps/web/src/features/media/components/MediaUploader.vue`] [验收: 选择多张照片后并发获取预签名 URL、直传 R2 并自动回填元数据入库]
 
 ---
 
@@ -144,18 +144,18 @@ export interface CommentPort {
 ---
 
 ### M6 · 高扩展性（国内CDN/多存储/评论）验证与交付
-- [ ] M6-1 验证多存储切换与国内 CDN 缓存策略 [目标: `docs/deployment-and-cdn-guide.md`] [规范: docs/architecture.md#1.2] [验收: 单元测试模拟通过 `StoragePort` 切换为 S3 兼容国内对象存储配置，公开接口包含标准 `Cache-Control` 头]
-- [ ] M6-2 验证 `CommentPort` 契约与全流程 E2E 回归 [目标: `tests/e2e/workflow.spec.ts`] [规范: docs/architecture.md#4.2-5] [验收: 端到端测试跑通：访客只读浏览 -> Admin 登录 -> 快速上传补录历史 -> 时间线实时展现]
+- [x] M6-1 验证多存储切换与国内 CDN 缓存策略 [目标: `docs/deployment-and-cdn-guide.md`] [规范: docs/architecture.md#1.2] [验收: 单元测试模拟通过 `StoragePort` 切换为 S3 兼容国内对象存储配置，公开接口包含标准 `Cache-Control` 头]
+- [x] M6-2 验证 `CommentPort` 契约与全流程 E2E 回归 [目标: `tests/e2e/workflow.spec.ts`] [规范: docs/architecture.md#4.2-5] [验收: 端到端测试跑通：访客只读浏览 -> Admin 登录 -> 快速上传补录历史 -> 时间线实时展现]
 
 ---
 
 ## 4. 验收门槛清单
 
-- [ ] **代码静态检查**：`pnpm lint` 与 `pnpm typecheck` 全工作区 0 错误、0 警告；
-- [ ] **模块依赖边界**：无越权跨模块导入（`modules/*` 互不引用内部代码）；
-- [ ] **访客与管理权限**：未经认证调用写 API 100% 返回 401/403，访客查询仅能检索 `public` & `published` 数据；
-- [ ] **移动端与 PWA**：手机端无水平溢出，添加到主屏幕可独立全屏启动；
-- [ ] **离网与免费保证**：地图完全基于 Leaflet + OSM，不产生任何第三方地图商业计费；缩略图由前端完成转换，Worker 不产生额外计算费用。
+- [x] **代码静态检查**：`pnpm lint` 与 `pnpm typecheck` 全工作区 0 错误、0 警告；
+- [x] **模块依赖边界**：无越权跨模块导入（`modules/*` 互不引用内部代码）；
+- [x] **访客与管理权限**：未经认证调用写 API 100% 返回 401/403，访客查询仅能检索 `public` & `published` 数据；
+- [x] **移动端与 PWA**：手机端无水平溢出，添加到主屏幕可独立全屏启动；
+- [x] **离网与免费保证**：地图完全基于 Leaflet + OSM，不产生任何第三方地图商业计费；缩略图由前端完成转换，Worker 不产生额外计算费用。
 
 ---
 
