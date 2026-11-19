@@ -1,4 +1,9 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import {
+  createRouter,
+  createWebHistory,
+  createMemoryHistory,
+  type RouteRecordRaw,
+} from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -38,7 +43,7 @@ const routes: RouteRecordRaw[] = [
 ];
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: typeof window !== 'undefined' ? createWebHistory() : createMemoryHistory(),
   routes,
   scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) {
@@ -49,7 +54,7 @@ export const router = createRouter({
 });
 
 router.afterEach((to) => {
-  if (to.meta.title) {
+  if (to.meta.title && typeof document !== 'undefined') {
     document.title = String(to.meta.title);
   }
 });

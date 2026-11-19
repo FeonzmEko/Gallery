@@ -23,21 +23,38 @@ const TOKEN_STORAGE_KEY = 'archive_auth_token';
 let currentToken: string | null = null;
 let onUnauthorizedCallback: (() => void) | null = null;
 
-export function getStoredToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  if (!currentToken) {
-    currentToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+function getStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+      return globalThis.localStorage;
+    }
+  } catch {
+    // Storage access might be restricted in some privacy modes
   }
+  return null;
+}
+
+export function getStoredToken(): string | null {
+  if (currentToken !== null) {
+    return currentToken;
+  }
+  const storage = getStorage();
+  if (!storage) return null;
+  currentToken = storage.getItem(TOKEN_STORAGE_KEY);
   return currentToken;
 }
 
 export function setStoredToken(token: string | null): void {
   currentToken = token;
-  if (typeof window === 'undefined') return;
+  const storage = getStorage();
+  if (!storage) return;
   if (token) {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    storage.setItem(TOKEN_STORAGE_KEY, token);
   } else {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    storage.removeItem(TOKEN_STORAGE_KEY);
   }
 }
 
@@ -126,7 +143,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       ...fetchOptions,
       headers,
       body: requestBody,
-      credentials: 'include', // Include cookies for same-origin or CORS
+      credentials: 'include',
     });
   } catch (networkError) {
     throw new AppError(

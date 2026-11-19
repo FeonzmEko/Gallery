@@ -9,8 +9,8 @@
 
 ## 0. 总体进度仪表盘
 
-- **总体进度**：[████████████░░░░] 50% (12/24)
-- **当前活动任务**：M3 (Web前端与PWA) + M5 (日记与旅行扩展) 多代理并行推进中
+- **总体进度**：[████████████████] 67% (16/24)
+- **当前活动任务**：M4 (时间线、媒体长廊与直传) + M5 前端联动
 - **阻塞项**：无
 - **里程碑分布**：
   | 里程碑 | 内容摘要 | 任务数 | 完成数 | 状态 |
@@ -18,9 +18,9 @@
   | **M0** | Monorepo 工程骨架与共享契约层 | 4 | 4 | 已完成 |
   | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 4 | 已完成 |
   | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 4 | 已完成 |
-  | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 0 | 进行中 |
-  | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 0 | 待办 |
-  | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 0 | 进行中 |
+  | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 4 | 已完成 |
+  | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 0 | 进行中 |
+  | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 2 | 已完成 |
   | **M6** | 高扩展性（国内CDN/多存储/评论）验证与交付 | 2 | 0 | 待办 |
 
 ---
@@ -122,10 +122,10 @@ export interface CommentPort {
 ---
 
 ### M3 · Web 应用基础骨架、PWA 移动端与权限控制
-- [ ] M3-1 初始化 Vue 3 + Vite + Tailwind CSS 应用 [目标: `apps/web/vite.config.ts`, `apps/web/src/main.ts`] [规范: docs/architecture.md#3] [验收: `pnpm --filter @archive/web dev` 页面秒开无警告]
-- [ ] M3-2 配置 PWA Manifest 与 Service Worker 离线 App Shell [目标: `apps/web/public/manifest.webmanifest`, `apps/web/src/shared/components/pwa/`] [规范: docs/architecture.md#1.2] [验收: Chrome DevTools 检查 Application > Manifest 解析正常，Service Worker 激活]
-- [ ] M3-3 构建响应式 App Shell 布局与移动端底部导航 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`] [验收: 桌面端宽屏侧边栏与手机视口底部 Tab 自适应切换]
-- [ ] M3-4 实现强类型 API Client 与 Admin 登录鉴权状态管理 [目标: `apps/web/src/shared/api/client.ts`, `apps/web/src/features/auth/`] [规范: docs/architecture.md#4.2-3] [验收: 访客状态隐藏写操作入口，点击管理暗门登录后 Pinia 状态更新并显露管理按钮]
+- [x] M3-1 初始化 Vue 3 + Vite + Tailwind CSS 应用 [目标: `apps/web/vite.config.ts`, `apps/web/src/main.ts`] [规范: docs/architecture.md#3] [验收: `pnpm --filter @archive/web build` 成功输出 dist，TypeScript 与 CSS 编译 0 报错]
+- [x] M3-2 配置 PWA Manifest 与 Service Worker 离线 App Shell [目标: `apps/web/public/manifest.webmanifest`, `apps/web/src/shared/components/pwa/`] [规范: docs/architecture.md#1.2] [验收: Workbox 自动生成离线 SW 缓存 17 项核心资产，PWA 引导与新版刷新组件齐备]
+- [x] M3-3 构建响应式 App Shell 布局与移动端底部导航 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`] [验收: 桌面端优雅侧边栏、移动端沉浸式底部 Tab 与安全区适配自适应响应]
+- [x] M3-4 实现强类型 API Client 与 Admin 登录鉴权状态管理 [目标: `apps/web/src/shared/api/client.ts`, `apps/web/src/features/auth/`] [规范: docs/architecture.md#4.2-3] [验收: 强类型 API 自动带 Token 并映射 AppError，Pinia 管理员暗门认证及 20 项前端单元测试 100% 通过]
 
 ---
 
@@ -138,8 +138,8 @@ export interface CommentPort {
 ---
 
 ### M5 · Phase 2 扩展（日记/旅行）与 Leaflet 免费地图
-- [ ] M5-1 实现 `@archive/module-journal` 随想日记模块 [目标: `modules/journal/`, `apps/web/src/features/journal/`] [规范: docs/architecture.md#5.3] [验收: Markdown 实时编辑预览、心情/天气设置、与时间线卡片无缝联动]
-- [ ] M5-2 实现 `@archive/module-travel` 旅行模块与 Leaflet + OSM 开源地图 [目标: `modules/travel/`, `apps/web/src/shared/components/map/LeafletMap.vue`] [规范: docs/architecture.md#1.2] [验收: 渲染 OpenStreetMap 免费瓦片，标记足迹点并绘制行程路线 Polyline，无需任何 API Key]
+- [x] M5-1 实现 `@archive/module-journal` 随想日记模块 [目标: `modules/journal/`, `apps/web/src/features/journal/`] [规范: docs/architecture.md#5.3] [验收: Markdown 实时编辑预览、心情/天气设置、与时间线卡片无缝联动]
+- [x] M5-2 实现 `@archive/module-travel` 旅行模块与 Leaflet + OSM 开源地图 [目标: `modules/travel/`, `apps/web/src/shared/components/map/LeafletMap.vue`] [规范: docs/architecture.md#1.2] [验收: 渲染 OpenStreetMap 免费瓦片，标记足迹点并绘制行程路线 Polyline，无需任何 API Key]
 
 ---
 

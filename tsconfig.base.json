@@ -31,7 +31,8 @@
       "@archive/module-comment": ["modules/comment/src/index.ts"],
       "@archive/module-comment/*": ["modules/comment/src/*"],
       "@archive/ui": ["packages/ui/src/index.ts"],
-      "@archive/ui/*": ["packages/ui/src/*"]
+      "@archive/ui/*": ["packages/ui/src/*"],
+      "@/*": ["apps/web/src/*"]
     }
   }
 }
