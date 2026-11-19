@@ -7,8 +7,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "personal_archive_db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "personal-archive-prod",
+      "database_id": "9b9b6d95-0d2b-4dec-9068-0c8be7a4be2d",
       "migrations_dir": "../../packages/database/migrations"
     }
   ],

@@ -13,9 +13,10 @@
     "test": "vitest run",
     "typecheck": "pnpm -r --filter=!personal-archive run typecheck",
     "db:generate": "pnpm --filter @archive/database db:generate",
-    "db:migrate:local": "wrangler d1 migrations apply personal_archive_db --local --config workers/api/wrangler.jsonc",
-    "db:migrate:remote": "wrangler d1 migrations apply personal_archive_db --remote --config workers/api/wrangler.jsonc",
+    "db:migrate:local": "wrangler d1 migrations apply personal-archive-prod --local --config workers/api/wrangler.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply personal-archive-prod --remote --config workers/api/wrangler.jsonc",
     "db:seed": "tsx packages/database/src/seed.ts",
+    "db:seed:remote": "wrangler d1 execute personal-archive-prod --remote --file=packages/database/seed.sql --config workers/api/wrangler.jsonc",
     "lint": "echo \"Workspace lint check passed\""
   },
   "devDependencies": {
