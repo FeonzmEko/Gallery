@@ -18,6 +18,17 @@ export interface RequestOptions extends RequestInit {
   token?: string | null;
 }
 
+export interface PaginationMeta {
+  cursor: string | null;
+  hasMore: boolean;
+  limit: number;
+}
+
+export interface PaginatedApiResult<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}
+
 const TOKEN_STORAGE_KEY = 'archive_auth_token';
 
 let currentToken: string | null = null;
@@ -114,9 +125,12 @@ function mapToAppError(
 }
 
 /**
- * Base HTTP request executor.
+ * Base HTTP request executor. Returns the parsed JSON envelope.
  */
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+async function requestEnvelope<T>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<ApiResponse<T> | null> {
   const { params, token = getStoredToken(), headers: customHeaders, body, ...fetchOptions } = options;
 
   const url = buildUrl(endpoint, params);
@@ -130,7 +144,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  // Handle body JSON encoding if not FormData or URLSearchParams
   let requestBody = body;
   if (body && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof URLSearchParams)) {
     headers.set('Content-Type', 'application/json');
@@ -156,7 +169,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     );
   }
 
-  // Handle 401 Unauthorized
   if (res.status === 401) {
     setStoredToken(null);
     if (onUnauthorizedCallback) {
@@ -164,7 +176,6 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
   }
 
-  // Parse JSON response
   let json: ApiResponse<T> | ApiErrorResponse | null = null;
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
@@ -180,16 +191,45 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     throw mapToAppError(res.status, errorPayload);
   }
 
+  return json as ApiResponse<T> | null;
+}
+
+/**
+ * Unwraps the `data` field from the API response envelope.
+ */
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  const json = await requestEnvelope<T>(endpoint, options);
   if (json && 'data' in json) {
     return json.data;
   }
-
   return (json as unknown as T) ?? ({} as T);
+}
+
+/**
+ * Fetches a cursor-paginated endpoint while preserving `meta.pagination`.
+ */
+async function getPaginated<T>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<PaginatedApiResult<T>> {
+  const json = await requestEnvelope<T[]>(endpoint, { ...options, method: 'GET' });
+  const items = json && Array.isArray(json.data) ? json.data : [];
+  const rawPagination = (json?.meta as Record<string, any> | undefined)?.pagination;
+  return {
+    items,
+    pagination: {
+      cursor: rawPagination?.cursor ?? null,
+      hasMore: Boolean(rawPagination?.hasMore),
+      limit: Number(rawPagination?.limit ?? 20),
+    },
+  };
 }
 
 export const apiClient = {
   get: <T>(url: string, options?: RequestOptions) =>
     request<T>(url, { ...options, method: 'GET' }),
+
+  getPaginated,
 
   post: <T>(url: string, data?: unknown, options?: RequestOptions) =>
     request<T>(url, { ...options, method: 'POST', body: data as any }),

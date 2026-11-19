@@ -1,251 +1,246 @@
 <template>
-  <div
-    v-if="modelValue"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-    role="dialog"
-    aria-modal="true"
-  >
-    <!-- Backdrop -->
+  <Teleport to="body">
     <div
-      class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-      @click="handleClose"
-    ></div>
-
-    <!-- Modal Container -->
-    <div
-      class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] shadow-2xl overflow-hidden"
+      v-if="modelValue"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
     >
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between border-b border-[#E5E1D8] px-6 py-4 bg-white">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDF8F6] text-[#C25438] border border-[#F0D5CD]">
-            <UploadCloudIcon class="w-5 h-5" />
-          </div>
-          <div>
-            <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">多照片并发直传</h3>
-            <p class="text-xs text-[#747169]">
-              本地 Canvas 预压缩 WebP (<100KB) · 预签名安全直传 R2 / 对象存储
-            </p>
-          </div>
-        </div>
+      <div
+        class="fixed inset-0 bg-[#1D1C1A]/40 backdrop-blur-xs transition-opacity"
+        @click="handleClose"
+      ></div>
 
-        <button
-          type="button"
-          class="rounded-lg p-2 text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] transition-colors"
-          @click="handleClose"
-        >
-          <XIcon class="w-5 h-5" />
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-        <!-- Settings Bar -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-white border border-[#E5E1D8] text-xs">
-          <!-- Visibility Selector -->
-          <div class="flex items-center justify-between sm:justify-start gap-3">
-            <span class="text-[#747169]">公开权限:</span>
-            <div class="inline-flex rounded-lg bg-[#F7F5F0] p-1 border border-[#E5E1D8]">
-              <button
-                type="button"
-                class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                :class="uploadVisibility === 'public' ? 'bg-white text-[#C25438] shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
-                @click="uploadVisibility = 'public'"
-              >
-                公开访问
-              </button>
-              <button
-                type="button"
-                class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-                :class="uploadVisibility === 'private' ? 'bg-white text-amber-800 shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
-                @click="uploadVisibility = 'private'"
-              >
-                私密隐藏
-              </button>
+      <div
+        class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] shadow-2xl overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-[#E5E1D8] px-6 py-4 bg-white">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDF8F6] text-[#C25438] border border-[#F0D5CD]">
+              <UploadCloudIcon class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">多照片并发直传</h3>
+              <p class="text-xs text-[#747169]">
+                浏览器 Canvas 预压缩 WebP (&lt;100KB) · 自动提取 EXIF 参数直传 R2
+              </p>
             </div>
           </div>
 
-          <!-- Auto Create Entry Toggle -->
-          <div v-if="!targetEntryId" class="flex items-center justify-between sm:justify-end gap-2">
-            <label class="flex items-center gap-2 cursor-pointer text-[#1D1C1A]">
-              <input
-                type="checkbox"
-                v-model="createTimelineEntry"
-                class="rounded border-[#D4CEBF] text-[#C25438] focus:ring-[#C25438]"
-              />
-              <span>同步生成时间线记忆卡片</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Drag & Drop Upload Zone -->
-        <div
-          class="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 cursor-pointer"
-          :class="[
-            isDragging
-              ? 'border-[#C25438] bg-[#FDF8F6]'
-              : 'border-[#D4CEBF] hover:border-[#C25438]/50 bg-white hover:bg-[#FDF8F6]/30',
-          ]"
-          @dragover.prevent="isDragging = true"
-          @dragleave.prevent="isDragging = false"
-          @drop.prevent="handleDrop"
-          @click="triggerFileInput"
-        >
-          <input
-            ref="fileInputRef"
-            type="file"
-            multiple
-            accept="image/*"
-            class="hidden"
-            @change="handleFileInputChange"
-          />
-
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] shadow-xs mb-3">
-            <ImageIcon class="w-6 h-6 text-[#C25438]" />
-          </div>
-
-          <p class="text-sm font-medium text-[#1D1C1A]">
-            拖拽单张或多张照片至此处，或
-            <span class="text-[#C25438] hover:underline">点击选择文件</span>
-          </p>
-          <p class="mt-1 text-xs text-[#747169]">
-            支持 JPG, PNG, WebP, AVIF, HEIC · 自动提取拍摄时间、相机 EXIF 并并发压缩
-          </p>
-        </div>
-
-        <!-- Queue List -->
-        <div v-if="queue.length > 0" class="space-y-3">
-          <div class="flex items-center justify-between text-xs text-[#747169] px-1 font-mono">
-            <span>待传列表 ({{ queue.length }} 张照片)</span>
-            <div class="flex items-center gap-3">
-              <button
-                v-if="hasCompletedTasks"
-                type="button"
-                class="text-xs text-[#747169] hover:text-[#1D1C1A] transition-colors"
-                @click="clearCompleted"
-              >
-                清理已完成
-              </button>
-              <button
-                v-if="hasFailedTasks"
-                type="button"
-                class="text-xs text-[#C25438] hover:underline transition-colors"
-                @click="retryFailed"
-              >
-                重试失败项
-              </button>
-            </div>
-          </div>
-
-          <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
-            <div
-              v-for="item in queue"
-              :key="item.id"
-              class="flex items-center gap-3 rounded-xl border border-[#E5E1D8] bg-white p-2.5 shadow-xs transition-all"
-            >
-              <!-- Thumbnail preview -->
-              <div class="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-[#E5E1D8] bg-[#F7F5F0]">
-                <img
-                  v-if="item.previewUrl"
-                  :src="item.previewUrl"
-                  :alt="item.name"
-                  class="h-full w-full object-cover"
-                />
-                <div v-else class="flex h-full w-full items-center justify-center text-[#9E9B93]">
-                  <ImageIcon class="w-5 h-5" />
-                </div>
-              </div>
-
-              <!-- Info & Progress -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-xs font-medium text-[#1D1C1A] truncate">{{ item.name }}</span>
-                  <span class="text-[11px] font-mono" :class="statusColorClass(item.status)">
-                    {{ statusText(item) }}
-                  </span>
-                </div>
-
-                <div class="mt-1 flex items-center gap-2 text-[10px] text-[#747169] font-mono">
-                  <span>{{ formatFileSize(item.size) }}</span>
-                  <span v-if="item.processedSize">➔ WebP {{ formatFileSize(item.processedSize) }}</span>
-                  <span v-if="item.exif?.model" class="truncate">• {{ item.exif.model }}</span>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EFECE4]">
-                  <div
-                    class="h-full transition-all duration-300"
-                    :class="[
-                      item.status === 'error'
-                        ? 'bg-red-500'
-                        : item.status === 'success'
-                        ? 'bg-emerald-600'
-                        : 'bg-[#C25438]',
-                    ]"
-                    :style="{ width: `${item.progress}%` }"
-                  ></div>
-                </div>
-              </div>
-
-              <!-- Remove / Cancel action -->
-              <button
-                v-if="item.status !== 'uploading' && item.status !== 'compressing'"
-                type="button"
-                class="p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
-                @click="removeFromQueue(item.id)"
-                title="移除"
-              >
-                <XIcon class="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-between border-t border-[#E5E1D8] px-6 py-4 bg-white">
-        <div class="text-xs text-[#747169]">
-          <span v-if="isProcessing" class="flex items-center gap-2 text-[#C25438] font-mono">
-            <Loader2Icon class="w-4 h-4 animate-spin" />
-            <span>并发处理中...</span>
-          </span>
-          <span v-else-if="queue.length === 0">请选择或拖入图片</span>
-          <span v-else class="font-mono">共 {{ queue.length }} 项待处理</span>
-        </div>
-
-        <div class="flex items-center gap-3">
           <button
             type="button"
-            class="px-4 py-2 rounded-xl text-xs font-medium text-[#747169] hover:bg-[#F7F5F0] transition-colors"
+            class="rounded-lg p-2 text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] transition-colors"
             @click="handleClose"
           >
-            {{ hasCompletedTasks ? '完成' : '取消' }}
+            <XIcon class="w-5 h-5" />
           </button>
-          <button
-            v-if="hasPendingTasks"
-            type="button"
-            class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#C25438] text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors shadow-sm disabled:opacity-50"
-            :disabled="isProcessing"
-            @click="startUploadQueue"
+        </div>
+
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <!-- Settings Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-white border border-[#E5E1D8] text-xs">
+            <div class="flex items-center justify-between sm:justify-start gap-3">
+              <span class="text-[#747169]">公开权限:</span>
+              <div class="inline-flex rounded-lg bg-[#F7F5F0] p-1 border border-[#E5E1D8]">
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                  :class="uploadVisibility === 'public' ? 'bg-white text-[#C25438] shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
+                  @click="uploadVisibility = 'public'"
+                >
+                  公开访问
+                </button>
+                <button
+                  type="button"
+                  class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                  :class="uploadVisibility === 'private' ? 'bg-white text-amber-800 shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
+                  @click="uploadVisibility = 'private'"
+                >
+                  私密隐藏
+                </button>
+              </div>
+            </div>
+
+            <div v-if="!targetEntryId" class="flex items-center justify-between sm:justify-end gap-2">
+              <label class="flex items-center gap-2 cursor-pointer text-[#1D1C1A]">
+                <input
+                  type="checkbox"
+                  v-model="createTimelineEntry"
+                  class="rounded border-[#D4CEBF] text-[#C25438] focus:ring-[#C25438]"
+                />
+                <span>同步生成时间线摄影卡片</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Drag & Drop Upload Zone -->
+          <div
+            class="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 cursor-pointer"
+            :class="[
+              isDragging
+                ? 'border-[#C25438] bg-[#FDF8F6]'
+                : 'border-[#D4CEBF] hover:border-[#C25438]/50 bg-white hover:bg-[#FDF8F6]/30',
+            ]"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop"
+            @click="triggerFileInput"
           >
-            <UploadCloudIcon class="w-3.5 h-3.5" />
-            <span>开始并发上传</span>
-          </button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              multiple
+              accept="image/*"
+              class="hidden"
+              @change="handleFileInputChange"
+            />
+
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] shadow-xs mb-3">
+              <ImageIcon class="w-6 h-6 text-[#C25438]" />
+            </div>
+
+            <p class="text-sm font-medium text-[#1D1C1A]">
+              拖拽单张或多张照片至此处，或
+              <span class="text-[#C25438] hover:underline">点击选择文件</span>
+            </p>
+            <p class="mt-1 text-xs text-[#747169]">
+              支持 JPG, PNG, WebP, AVIF, HEIC · 自动保留相机 EXIF 参数与拍摄时间
+            </p>
+          </div>
+
+          <!-- Queue List -->
+          <div v-if="queue.length > 0" class="space-y-3">
+            <div class="flex items-center justify-between text-xs text-[#747169] px-1 font-mono">
+              <span>待传列表 ({{ queue.length }} 张照片)</span>
+              <div class="flex items-center gap-3">
+                <button
+                  v-if="hasCompletedTasks"
+                  type="button"
+                  class="text-xs text-[#747169] hover:text-[#1D1C1A] transition-colors"
+                  @click="clearCompleted"
+                >
+                  清理已完成
+                </button>
+                <button
+                  v-if="hasFailedTasks"
+                  type="button"
+                  class="text-xs text-[#C25438] hover:underline transition-colors"
+                  @click="retryFailed"
+                >
+                  重试失败项
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+              <div
+                v-for="item in queue"
+                :key="item.id"
+                class="flex items-center gap-3 rounded-xl border border-[#E5E1D8] bg-white p-2.5 shadow-xs transition-all"
+              >
+                <div class="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-[#E5E1D8] bg-[#F7F5F0]">
+                  <img
+                    v-if="item.previewUrl"
+                    :src="item.previewUrl"
+                    :alt="item.name"
+                    class="h-full w-full object-cover"
+                  />
+                  <div v-else class="flex h-full w-full items-center justify-center text-[#9E9B93]">
+                    <ImageIcon class="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-medium text-[#1D1C1A] truncate">{{ item.name }}</span>
+                    <span class="text-[11px] font-mono shrink-0" :class="statusColorClass(item.status)">
+                      {{ statusText(item) }}
+                    </span>
+                  </div>
+
+                  <div class="mt-1 flex items-center gap-2 text-[10px] text-[#747169] font-mono">
+                    <span>{{ formatFileSize(item.size) }}</span>
+                    <span v-if="item.processedSize">-> WebP {{ formatFileSize(item.processedSize) }}</span>
+                    <span v-if="item.exif?.model" class="truncate">· {{ item.exif.model }}</span>
+                  </div>
+
+                  <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EFECE4]">
+                    <div
+                      class="h-full transition-all duration-300"
+                      :class="[
+                        item.status === 'error'
+                          ? 'bg-red-600'
+                          : item.status === 'success'
+                          ? 'bg-[#4E6053]'
+                          : 'bg-[#C25438]',
+                      ]"
+                      :style="{ width: `${item.progress}%` }"
+                    ></div>
+                  </div>
+                </div>
+
+                <button
+                  v-if="item.status !== 'uploading' && item.status !== 'compressing'"
+                  type="button"
+                  class="p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
+                  @click="removeFromQueue(item.id)"
+                  title="移除"
+                >
+                  <XIcon class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-between border-t border-[#E5E1D8] px-6 py-4 bg-white">
+          <div class="text-xs text-[#747169]">
+            <span v-if="isProcessing" class="flex items-center gap-2 text-[#C25438] font-mono">
+              <Loader2Icon class="w-4 h-4 animate-spin" />
+              <span>并发处理中...</span>
+            </span>
+            <span v-else-if="queue.length === 0">请选择或拖入图片</span>
+            <span v-else class="font-mono">共 {{ queue.length }} 项待处理</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-xl text-xs font-medium text-[#747169] hover:bg-[#F7F5F0] transition-colors"
+              @click="handleClose"
+            >
+              {{ hasCompletedTasks ? '完成' : '取消' }}
+            </button>
+            <button
+              v-if="hasPendingTasks"
+              type="button"
+              class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#C25438] text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors shadow-sm disabled:opacity-50"
+              :disabled="isProcessing"
+              @click="startUploadQueue"
+            >
+              <UploadCloudIcon class="w-3.5 h-3.5" />
+              <span>开始并发上传</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import {
   UploadCloud as UploadCloudIcon,
   X as XIcon,
   Image as ImageIcon,
   Loader2 as Loader2Icon,
 } from 'lucide-vue-next';
-import { apiClient } from '@/shared/api/client';
+import { apiClient, getStoredToken } from '@/shared/api/client';
+import { useUiStore } from '@/shared/stores/ui.store';
 import {
   processImageFile,
   formatFileSize,
@@ -266,6 +261,8 @@ const emit = defineEmits<{
   (e: 'entry-created', entry: EntryDto): void;
 }>();
 
+const uiStore = useUiStore();
+
 type TaskStatus = 'pending' | 'compressing' | 'requesting' | 'uploading' | 'confirming' | 'success' | 'error';
 
 interface QueueItem {
@@ -275,6 +272,7 @@ interface QueueItem {
   size: number;
   processedSize?: number;
   previewUrl: string;
+  isObjectUrl: boolean;
   status: TaskStatus;
   progress: number;
   errorMsg?: string;
@@ -294,9 +292,15 @@ const hasCompletedTasks = computed(() => queue.value.some((t) => t.status === 's
 const hasPendingTasks = computed(() => queue.value.some((t) => t.status === 'pending' || t.status === 'error'));
 const hasFailedTasks = computed(() => queue.value.some((t) => t.status === 'error'));
 
-function handleClose() {
+async function handleClose() {
   if (isProcessing.value) {
-    if (!confirm('上传正在进行中，确认退出吗？')) return;
+    const ok = await uiStore.confirm({
+      title: '上传仍在进行中',
+      message: '关闭弹窗将中断尚未完成的上传提示，确定要退出吗？',
+      confirmLabel: '确认退出',
+      danger: true,
+    });
+    if (!ok) return;
   }
   emit('update:modelValue', false);
 }
@@ -322,6 +326,10 @@ function handleDrop(e: DragEvent) {
 
 function addFilesToQueue(files: File[]) {
   const imageFiles = files.filter((f) => f.type.startsWith('image/'));
+  if (imageFiles.length === 0) {
+    uiStore.notifyError('请选择有效的图片文件');
+    return;
+  }
   for (const file of imageFiles) {
     const previewUrl = URL.createObjectURL(file);
     queue.value.push({
@@ -330,22 +338,35 @@ function addFilesToQueue(files: File[]) {
       name: file.name,
       size: file.size,
       previewUrl,
+      isObjectUrl: true,
       status: 'pending',
       progress: 0,
     });
   }
 }
 
+function revokeItemUrl(item: QueueItem) {
+  if (item.isObjectUrl && item.previewUrl.startsWith('blob:')) {
+    URL.revokeObjectURL(item.previewUrl);
+  }
+}
+
 function removeFromQueue(id: string) {
   const idx = queue.value.findIndex((q) => q.id === id);
   if (idx !== -1) {
-    URL.revokeObjectURL(queue.value[idx].previewUrl);
+    revokeItemUrl(queue.value[idx]);
     queue.value.splice(idx, 1);
   }
 }
 
 function clearCompleted() {
-  queue.value = queue.value.filter((q) => q.status !== 'success');
+  queue.value = queue.value.filter((q) => {
+    if (q.status === 'success') {
+      revokeItemUrl(q);
+      return false;
+    }
+    return true;
+  });
 }
 
 function retryFailed() {
@@ -381,29 +402,25 @@ function statusText(item: QueueItem): string {
 function statusColorClass(status: TaskStatus): string {
   switch (status) {
     case 'pending':
-      return 'text-slate-400';
+      return 'text-[#747169]';
     case 'compressing':
     case 'requesting':
     case 'uploading':
     case 'confirming':
-      return 'text-sky-400';
+      return 'text-[#C25438]';
     case 'success':
-      return 'text-emerald-400';
+      return 'text-[#4E6053] font-semibold';
     case 'error':
-      return 'text-red-400';
+      return 'text-red-600';
   }
 }
 
-/**
- * Concurrency worker: process up to 3 uploads concurrently.
- */
 async function startUploadQueue() {
   if (isProcessing.value) return;
   isProcessing.value = true;
 
   const CONCURRENCY = 3;
   const uploadedAssets: MediaAssetDto[] = [];
-
   const getNextPendingItem = () => queue.value.find((i) => i.status === 'pending');
 
   const worker = async () => {
@@ -420,6 +437,7 @@ async function startUploadQueue() {
 
     if (uploadedAssets.length > 0) {
       emit('uploaded', uploadedAssets);
+      uiStore.notifySuccess(`成功上传 ${uploadedAssets.length} 张影像`);
     }
   } finally {
     isProcessing.value = false;
@@ -428,7 +446,7 @@ async function startUploadQueue() {
 
 async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[]) {
   try {
-    // 1. Process & Compress image to WebP (<100KB)
+    // 1. Compress image & extract EXIF
     item.status = 'compressing';
     item.progress = 15;
     const processed = await processImageFile(item.file, {
@@ -441,10 +459,12 @@ async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[])
     item.processedSize = processed.sizeBytes;
     item.exif = processed.exif;
     if (processed.dataUrl) {
+      revokeItemUrl(item);
       item.previewUrl = processed.dataUrl;
+      item.isObjectUrl = false;
     }
 
-    // 2. Request Presigned Upload Ticket
+    // 2. Request upload ticket
     item.status = 'requesting';
     item.progress = 30;
 
@@ -458,22 +478,24 @@ async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[])
       visibility: uploadVisibility.value,
     });
 
-    // 3. Direct Storage PUT Upload
+    // 3. Direct storage PUT upload
     item.status = 'uploading';
     item.progress = 50;
 
     await directUploadToStorage(ticket.uploadUrl, processed.blob, ticket.headers, (percent) => {
-      item.progress = 50 + Math.round(percent * 0.35); // 50% to 85%
+      item.progress = 50 + Math.round(percent * 0.35);
     });
 
-    // 4. Confirm Upload with Metadata
+    // 4. Confirm upload & persist EXIF metadata
     item.status = 'confirming';
     item.progress = 90;
 
+    const cleanExif = Object.keys(processed.exif).length > 0 ? processed.exif : undefined;
     const asset = await apiClient.post<MediaAssetDto>(`/api/v1/media/${ticket.mediaId}/confirm`, {
       width: processed.width,
       height: processed.height,
       thumbKey: ticket.bucketKey,
+      exif: cleanExif,
     });
     item.asset = asset;
 
@@ -485,10 +507,12 @@ async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[])
         role: 'gallery',
       });
     } else if (createTimelineEntry.value) {
-      // Determine occurredAt from EXIF DateTimeOriginal or DateTime or current time
       let occurredAt = Date.now();
       if (processed.exif.dateTimeOriginal || processed.exif.dateTime) {
-        const rawDate = (processed.exif.dateTimeOriginal || processed.exif.dateTime)!.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+        const rawDate = (processed.exif.dateTimeOriginal || processed.exif.dateTime)!.replace(
+          /^(\d{4}):(\d{2}):(\d{2})/,
+          '$1-$2-$3'
+        );
         const parsedTimestamp = new Date(rawDate).getTime();
         if (!isNaN(parsedTimestamp) && parsedTimestamp > 0) {
           occurredAt = parsedTimestamp;
@@ -503,8 +527,15 @@ async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[])
         occurredAt,
         visibility: uploadVisibility.value,
         status: 'published',
-        tags: ['摄影', '生活'],
+        tags: ['摄影', '影像'],
       });
+
+      await apiClient.post('/api/v1/media/bind', {
+        entryId: entry.id,
+        mediaId: asset.id,
+        role: 'cover',
+        sortOrder: 0,
+      }).catch(() => {});
 
       emit('entry-created', entry);
     }
@@ -518,9 +549,6 @@ async function processSingleItem(item: QueueItem, uploadedList: MediaAssetDto[])
   }
 }
 
-/**
- * Direct PUT upload with progress reporting via XMLHttpRequest.
- */
 function directUploadToStorage(
   url: string,
   blob: Blob,
@@ -528,22 +556,22 @@ function directUploadToStorage(
   onProgress?: (percent: number) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // If mock upload url (internal fallback)
     if (url.includes('mock-signed=true') || url.includes('.internal/')) {
-      let current = 0;
-      const interval = setInterval(() => {
-        current += 30;
-        if (onProgress) onProgress(Math.min(100, current));
-        if (current >= 100) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 50);
+      reject(new Error('对象存储服务未配置（请检查 R2 存储桶或环境变量）'));
       return;
     }
 
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
+
+    const isSameOriginWorkerBlob = url.startsWith('/api/');
+    if (isSameOriginWorkerBlob) {
+      xhr.withCredentials = true;
+      const token = getStoredToken();
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+    }
 
     if (headers) {
       for (const [k, v] of Object.entries(headers)) {
@@ -564,12 +592,18 @@ function directUploadToStorage(
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
-        reject(new Error(`Storage PUT failed with status ${xhr.status}`));
+        reject(new Error(`直传失败 (${xhr.status})`));
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error during direct storage upload'));
+    xhr.onerror = () => reject(new Error('网络错误：无法连接对象存储'));
     xhr.send(blob);
   });
 }
+
+onUnmounted(() => {
+  for (const item of queue.value) {
+    revokeItemUrl(item);
+  }
+});
 </script>

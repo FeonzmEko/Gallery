@@ -1,23 +1,36 @@
 <template>
-  <div class="relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-inner">
+  <div class="relative w-full overflow-hidden rounded-xl border border-[#E5E1D8] bg-[#EFECE4]">
     <!-- Map Container Target -->
-    <div ref="mapContainerRef" :style="{ height: height || '420px' }" class="w-full z-10"></div>
-
-    <!-- Map Overlay Controls / Attribution Badge -->
     <div
-      class="absolute bottom-2 left-2 z-20 pointer-events-none rounded-lg bg-slate-950/80 px-2.5 py-1 text-[10px] font-mono text-slate-400 border border-slate-800/80 backdrop-blur-md"
+      ref="mapContainerRef"
+      :style="{ height: height || '440px' }"
+      class="w-full z-10"
+      :class="pickMode ? 'cursor-crosshair' : ''"
+    ></div>
+
+    <!-- Pick Mode Helper Banner -->
+    <div
+      v-if="pickMode"
+      class="absolute top-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-[#1D1C1A]/90 px-3.5 py-1.5 text-[11px] font-mono text-[#F7F5F0] shadow-md backdrop-blur-md pointer-events-none"
     >
-      <span>OpenStreetMap 开源瓦片 · 零商业 Key 依赖</span>
+      点击地图任意位置以拾取经纬度坐标
+    </div>
+
+    <!-- Map Attribution Badge -->
+    <div
+      class="absolute bottom-2.5 left-2.5 z-20 pointer-events-none rounded-lg bg-[#F7F5F0]/90 px-2.5 py-1 text-[10px] font-mono text-[#747169] border border-[#E5E1D8] backdrop-blur-md shadow-xs"
+    >
+      <span>OpenStreetMap 开源矢量瓦片 · 零商业 Key</span>
     </div>
 
     <!-- Loading Placeholder until Map initializes -->
     <div
       v-if="!isMapReady"
-      class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/90 text-slate-400"
+      class="absolute inset-0 z-30 flex items-center justify-center bg-[#F7F5F0]/95 text-[#747169]"
     >
-      <div class="flex items-center gap-2 text-xs">
-        <CompassIcon class="w-5 h-5 text-indigo-400 animate-spin" />
-        <span>正在加载 Leaflet 开源地理瓦片...</span>
+      <div class="flex items-center gap-2 text-xs font-mono">
+        <CompassIcon class="w-4 h-4 text-[#4E6053] animate-spin" />
+        <span>正在加载地理档案图谱...</span>
       </div>
     </div>
   </div>
@@ -26,6 +39,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Compass as CompassIcon } from 'lucide-vue-next';
+import { escapeHtml } from '@/shared/utils/markdown';
 
 export interface MapMarker {
   id: string;
@@ -43,18 +57,21 @@ const props = withDefaults(
     center?: [number, number];
     zoom?: number;
     height?: string;
+    pickMode?: boolean;
   }>(),
   {
     markers: () => [],
     polyline: () => [],
-    center: () => [34.3416, 108.9398], // Default central viewpoint
+    center: () => [34.3416, 108.9398],
     zoom: 4,
-    height: '420px',
+    height: '440px',
+    pickMode: false,
   }
 );
 
 const emit = defineEmits<{
   (e: 'marker-click', marker: MapMarker): void;
+  (e: 'map-click', coords: { lat: number; lng: number }): void;
 }>();
 
 const mapContainerRef = ref<HTMLElement | null>(null);
@@ -64,19 +81,16 @@ let mapInstance: any = null;
 let leafletLib: any = null;
 let markerLayerGroup: any = null;
 let polylineLayer: any = null;
+let resizeObserver: ResizeObserver | null = null;
 
 async function initMap() {
   if (typeof window === 'undefined' || !mapContainerRef.value) return;
 
   try {
-    // Dynamic import to prevent SSR issues
     const L = await import('leaflet');
     leafletLib = L;
-
-    // Load stylesheet
     await import('leaflet/dist/leaflet.css');
 
-    // Create map instance
     mapInstance = L.map(mapContainerRef.value, {
       center: props.center,
       zoom: props.zoom,
@@ -84,7 +98,6 @@ async function initMap() {
       attributionControl: true,
     });
 
-    // Add free OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors',
@@ -92,8 +105,25 @@ async function initMap() {
 
     markerLayerGroup = L.layerGroup().addTo(mapInstance);
 
+    mapInstance.on('click', (e: any) => {
+      if (props.pickMode && e?.latlng) {
+        emit('map-click', {
+          lat: Number(e.latlng.lat.toFixed(5)),
+          lng: Number(e.latlng.lng.toFixed(5)),
+        });
+      }
+    });
+
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.value) {
+      resizeObserver = new ResizeObserver(() => {
+        mapInstance?.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.value);
+    }
+
     renderFeatures();
     isMapReady.value = true;
+    window.setTimeout(() => mapInstance?.invalidateSize(), 120);
   } catch (err) {
     console.error('Failed to initialize Leaflet Map:', err);
   }
@@ -103,7 +133,6 @@ function renderFeatures() {
   if (!mapInstance || !leafletLib) return;
   const L = leafletLib;
 
-  // Clear previous markers
   markerLayerGroup.clearLayers();
   if (polylineLayer) {
     mapInstance.removeLayer(polylineLayer);
@@ -112,13 +141,12 @@ function renderFeatures() {
 
   const boundsLatLngs: [number, number][] = [];
 
-  // 1. Draw glowing trajectory polyline
   if (props.polyline && props.polyline.length > 1) {
     polylineLayer = L.polyline(props.polyline, {
-      color: '#6366f1',
-      weight: 3.5,
+      color: '#C25438',
+      weight: 3,
       opacity: 0.85,
-      dashArray: '8, 8',
+      dashArray: '7, 7',
       lineCap: 'round',
       lineJoin: 'round',
     }).addTo(mapInstance);
@@ -128,14 +156,13 @@ function renderFeatures() {
     }
   }
 
-  // 2. Custom HTML / SVG Pulsing Footprint Marker Icon
   const createCustomIcon = (index: number) => {
     return L.divIcon({
       className: 'custom-footprint-marker',
       html: `
         <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; inset: 0; border-radius: 9999px; background-color: rgba(99, 102, 241, 0.35); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="position: relative; width: 22px; height: 22px; border-radius: 9999px; background-color: #4f46e5; border: 2px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 10px; font-weight: bold; font-family: monospace;">
+          <div style="position: absolute; inset: 2px; border-radius: 9999px; background-color: rgba(78, 96, 83, 0.28); animation: archivePing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: relative; width: 22px; height: 22px; border-radius: 9999px; background-color: #4E6053; border: 2px solid #F7F5F0; box-shadow: 0 3px 8px rgba(29,28,26,0.28); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace;">
             ${index + 1}
           </div>
         </div>
@@ -146,7 +173,6 @@ function renderFeatures() {
     });
   };
 
-  // 3. Render markers
   if (props.markers && props.markers.length > 0) {
     props.markers.forEach((m, idx) => {
       boundsLatLngs.push([m.lat, m.lng]);
@@ -156,12 +182,15 @@ function renderFeatures() {
         title: m.title,
       });
 
-      // Popup balloon
+      const safeTitle = escapeHtml(m.title);
+      const safeDesc = m.description ? escapeHtml(m.description) : '';
+      const safeTime = m.time !== undefined && m.time !== null ? escapeHtml(String(m.time)) : '';
+
       const popupHtml = `
-        <div style="font-family: sans-serif; min-width: 150px; padding: 2px;">
-          <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #0f172a;">${m.title}</h4>
-          ${m.description ? `<p style="margin: 4px 0 0; font-size: 11px; color: #475569;">${m.description}</p>` : ''}
-          ${m.time ? `<div style="margin-top: 4px; font-size: 10px; color: #6366f1; font-family: monospace;">${m.time}</div>` : ''}
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 160px; padding: 2px;">
+          <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #1D1C1A;">${safeTitle}</h4>
+          ${safeDesc ? `<p style="margin: 4px 0 0; font-size: 11px; color: #747169; line-height: 1.4;">${safeDesc}</p>` : ''}
+          ${safeTime ? `<div style="margin-top: 4px; font-size: 10px; color: #C25438; font-family: monospace;">${safeTime}</div>` : ''}
         </div>
       `;
 
@@ -174,11 +203,10 @@ function renderFeatures() {
     });
   }
 
-  // 4. Auto adjust view bounds
   if (boundsLatLngs.length > 0) {
     mapInstance.fitBounds(boundsLatLngs, {
       padding: [40, 40],
-      maxZoom: 14,
+      maxZoom: 13,
     });
   }
 }
@@ -198,6 +226,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
   if (mapInstance) {
     mapInstance.remove();
     mapInstance = null;
@@ -206,9 +236,9 @@ onUnmounted(() => {
 </script>
 
 <style>
-@keyframes ping {
+@keyframes archivePing {
   75%, 100% {
-    transform: scale(2);
+    transform: scale(1.9);
     opacity: 0;
   }
 }

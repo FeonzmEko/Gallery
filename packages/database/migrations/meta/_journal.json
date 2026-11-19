@@ -8,6 +8,13 @@
       "when": 1795083339016,
       "tag": "0000_nappy_ultragirl",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795090000000,
+      "tag": "0001_journal_travel_media_exif",
+      "breakpoints": true
     }
   ]
 }

@@ -10,16 +10,26 @@ import {
   successResponse,
   UnauthorizedError,
   ForbiddenError,
+  NotFoundError,
   hasAdminPrivileges,
   CreateEntryInputSchema,
   UpdateEntryInputSchema,
   RequestUploadTicketSchema,
   MediaRoleSchema,
+  MediaTypeSchema,
+  VisibilitySchema,
+  ExifMetadataSchema,
 } from '@archive/contracts';
 import { generateUlid } from '@archive/shared';
 import { mountCommentRoutes } from '@archive/module-comment';
+import { mountJournalRoutes } from '@archive/module-journal';
+import { mountTravelRoutes } from '@archive/module-travel';
 import type { Env } from './env.js';
-import { bootstrapServices, type AppServices } from './bootstrap.js';
+import {
+  bootstrapServices,
+  verifyStorageOperation,
+  type AppServices,
+} from './bootstrap.js';
 
 export interface AppContext {
   Bindings: Env;
@@ -38,10 +48,40 @@ const BindMediaSchema = z.object({
   caption: z.string().trim().max(500).optional().nullable(),
 });
 
+const ConfirmMediaSchema = z.object({
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  durationMs: z.number().int().positive().optional(),
+  sha256: z.string().trim().optional(),
+  thumbKey: z.string().trim().optional(),
+  previewKey: z.string().trim().optional(),
+  exif: ExifMetadataSchema,
+});
+
+const UpdateMediaSchema = z.object({
+  visibility: VisibilitySchema.optional(),
+  originalFilename: z.string().trim().max(255).optional().nullable(),
+});
+
 const LoginInputSchema = z.object({
   email: z.string().trim().email('请输入合法的邮箱地址'),
   password: z.string().min(1, '密码不能为空'),
 });
+
+function extractToken(c: { req: { header: (name: string) => string | undefined } }): string | null {
+  const authHeader = c.req.header('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7).trim();
+  }
+  const cookieHeader = c.req.header('Cookie');
+  if (cookieHeader) {
+    const match = cookieHeader.match(/(?:^|;\s*)auth_token=([^;]+)/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1]);
+    }
+  }
+  return null;
+}
 
 /**
  * Creates and configures the Hono application instance.
@@ -55,29 +95,12 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     c.set('requestId', reqId);
     c.header('x-request-id', reqId);
 
-    // Bootstrap services if not already attached
     if (!c.get('services')) {
       const services = bootstrapServices(c.env, customStorage);
       c.set('services', services);
     }
 
-    // Extract Bearer token from Authorization header or Cookie
-    const authHeader = c.req.header('Authorization');
-    let token: string | null = null;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7).trim();
-    } else {
-      // Cookie fallback
-      const cookieHeader = c.req.header('Cookie');
-      if (cookieHeader) {
-        const match = cookieHeader.match(/auth_token=([^;]+)/);
-        if (match && match[1]) {
-          token = match[1];
-        }
-      }
-    }
-
+    const token = extractToken(c);
     if (token) {
       const services = c.get('services');
       const authUser = await services.auth.verifyToken(token);
@@ -95,7 +118,7 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     cors({
       origin: '*',
       allowHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       exposeHeaders: ['Content-Length', 'x-request-id'],
       maxAge: 86400,
     })
@@ -166,7 +189,7 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     return c.json(
       successResponse({
         status: 'ok',
-        environment: c.env.ENVIRONMENT || 'production',
+        environment: c.env?.ENVIRONMENT || 'production',
         timestamp: Date.now(),
       })
     );
@@ -187,10 +210,9 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
 
     const session = await services.auth.createSession(authUser.userId);
 
-    // Set HttpOnly cookie for web client
     c.header(
       'Set-Cookie',
-      `auth_token=${session.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 3600}`
+      `auth_token=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 3600}`
     );
 
     return c.json(
@@ -203,7 +225,7 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   });
 
   authRoutes.post('/logout', async (c) => {
-    const token = c.req.header('Authorization')?.replace('Bearer ', '');
+    const token = extractToken(c);
     if (token) {
       const services = c.get('services');
       await services.auth.invalidateSession(token);
@@ -224,7 +246,15 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     }
     const services = c.get('services');
     const profile = await services.auth.getUserProfile(user.userId);
-    return c.json(successResponse(profile));
+    if (!profile) {
+      throw new UnauthorizedError('用户档案不存在');
+    }
+    return c.json(
+      successResponse({
+        ...profile,
+        userId: profile.id,
+      })
+    );
   });
 
   app.route('/api/v1/auth', authRoutes);
@@ -232,19 +262,29 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   // --- Entries Routes: /api/v1/entries ---
   const entriesRoutes = new Hono<AppContext>();
 
+  entriesRoutes.get('/years', cachePublicFeed, async (c) => {
+    const query = c.req.query();
+    const services = c.get('services');
+    const user = c.get('user');
+    const years = await services.entry.getTimelineYears(user, query.type);
+    return c.json(successResponse(years));
+  });
+
   entriesRoutes.get('/', cachePublicFeed, async (c) => {
     const query = c.req.query();
     const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const year = query.year ? parseInt(query.year, 10) : undefined;
     const services = c.get('services');
     const user = c.get('user');
 
     const result = await services.entry.listTimeline(
       {
         cursor: query.cursor,
-        limit,
+        limit: Number.isFinite(limit) ? limit : undefined,
         type: query.type,
         tag: query.tag,
         search: query.search,
+        year: Number.isFinite(year) ? year : undefined,
         visibility: query.visibility as any,
         status: query.status as any,
       },
@@ -256,6 +296,16 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
         pagination: result.pagination,
       })
     );
+  });
+
+  entriesRoutes.get('/:id/media', cachePublicFeed, async (c) => {
+    const id = c.req.param('id');
+    const services = c.get('services');
+    const user = c.get('user');
+    // Ensure entry itself is accessible before listing bound media
+    await services.entry.getEntryById(id, user);
+    const items = await services.media.listEntryMedia(id, user);
+    return c.json(successResponse(items));
   });
 
   entriesRoutes.get('/:id', cachePublicFeed, async (c) => {
@@ -302,6 +352,119 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   // --- Media Routes: /api/v1/media ---
   const mediaRoutes = new Hono<AppContext>();
 
+  // Native Worker R2 Binding Blob Upload (signed via HMAC or authenticated admin)
+  mediaRoutes.put('/blob/*', async (c) => {
+    const bucket = c.env?.MEDIA_BUCKET;
+    if (!bucket) {
+      throw new NotFoundError('本地 R2 存储桶未配置');
+    }
+    const rawKey = c.req.path.replace(/^\/api\/v1\/media\/blob\//, '');
+    const key = decodeURIComponent(rawKey).replace(/^\/+/, '');
+    if (!key) {
+      throw new NotFoundError('无效的对象存储键');
+    }
+
+    const services = c.get('services');
+    const user = c.get('user');
+    const exp = Number(c.req.query('exp'));
+    const sig = c.req.query('sig') || '';
+    const hasValidSig = await verifyStorageOperation(
+      services.jwtSecret,
+      'PUT',
+      key,
+      exp,
+      sig
+    );
+
+    if (!hasValidSig && !hasAdminPrivileges(user?.role)) {
+      throw new UnauthorizedError('上传签名无效或权限不足');
+    }
+
+    const contentType = c.req.header('Content-Type') || 'application/octet-stream';
+    const bodyBuffer = await c.req.arrayBuffer();
+    await bucket.put(key, bodyBuffer, {
+      httpMetadata: {
+        contentType,
+      },
+    });
+
+    return c.json(successResponse({ key, sizeBytes: bodyBuffer.byteLength }));
+  });
+
+  // Native Worker R2 Binding Blob Download
+  mediaRoutes.get('/blob/*', async (c) => {
+    const bucket = c.env?.MEDIA_BUCKET;
+    if (!bucket) {
+      throw new NotFoundError('本地 R2 存储桶未配置');
+    }
+    const rawKey = c.req.path.replace(/^\/api\/v1\/media\/blob\//, '');
+    const key = decodeURIComponent(rawKey).replace(/^\/+/, '');
+    if (!key) {
+      throw new NotFoundError('媒体文件不存在');
+    }
+
+    const services = c.get('services');
+    const user = c.get('user');
+    const exp = Number(c.req.query('exp'));
+    const sig = c.req.query('sig') || '';
+    const hasValidSig = await verifyStorageOperation(
+      services.jwtSecret,
+      'GET',
+      key,
+      exp,
+      sig
+    );
+
+    if (!hasValidSig && !hasAdminPrivileges(user?.role)) {
+      throw new UnauthorizedError('媒体访问签名无效或已过期');
+    }
+
+    const obj = await bucket.get(key);
+    if (!obj) {
+      throw new NotFoundError('媒体文件不存在');
+    }
+
+    const headers = new Headers();
+    if (obj.httpMetadata?.contentType) {
+      headers.set('Content-Type', obj.httpMetadata.contentType);
+    }
+    if (obj.httpEtag) {
+      headers.set('etag', obj.httpEtag);
+    }
+    headers.set('Cache-Control', 'public, max-age=86400');
+    return new Response(obj.body as unknown as BodyInit, { headers });
+  });
+
+  mediaRoutes.get('/', cachePublicFeed, async (c) => {
+    const query = c.req.query();
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const services = c.get('services');
+    const user = c.get('user');
+
+    const parsedMediaType = query.mediaType
+      ? MediaTypeSchema.safeParse(query.mediaType)
+      : null;
+    const parsedVisibility = query.visibility
+      ? VisibilitySchema.safeParse(query.visibility)
+      : null;
+
+    const result = await services.media.listMedia(
+      {
+        cursor: query.cursor,
+        limit: Number.isFinite(limit) ? limit : undefined,
+        mediaType: parsedMediaType?.success ? parsedMediaType.data : undefined,
+        visibility: parsedVisibility?.success ? parsedVisibility.data : undefined,
+      },
+      user
+    );
+
+    return c.json(
+      successResponse(result.items, {
+        pagination: result.pagination,
+      })
+    );
+  });
+
   mediaRoutes.post('/upload-url', requireAdmin, async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const validated = RequestUploadTicketSchema.parse(body);
@@ -315,10 +478,18 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   mediaRoutes.post('/:id/confirm', requireAdmin, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json().catch(() => ({}));
+    const validated = ConfirmMediaSchema.parse(body);
     const services = c.get('services');
     const user = c.get('user')!;
 
-    const asset = await services.media.confirmUpload(id, body, user);
+    const asset = await services.media.confirmUpload(
+      id,
+      {
+        ...validated,
+        exif: validated.exif ?? undefined,
+      },
+      user
+    );
     return c.json(successResponse(asset));
   });
 
@@ -329,6 +500,27 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
 
     const asset = await services.media.getMedia(id, user);
     return c.json(successResponse(asset));
+  });
+
+  mediaRoutes.put('/:id', requireAdmin, async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json().catch(() => ({}));
+    const validated = UpdateMediaSchema.parse(body);
+    const services = c.get('services');
+    const user = c.get('user')!;
+
+    const updated = await services.media.updateMedia(id, validated, user);
+    return c.json(successResponse(updated));
+  });
+
+  mediaRoutes.delete('/:id', requireAdmin, async (c) => {
+    const id = c.req.param('id');
+    const hard = c.req.query('hard') === 'true';
+    const services = c.get('services');
+    const user = c.get('user')!;
+
+    await services.media.deleteMedia(id, user, !hard);
+    return c.json(successResponse({ deleted: true, id }));
   });
 
   mediaRoutes.post('/bind', requireAdmin, async (c) => {
@@ -364,7 +556,15 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
 
   app.route('/api/v1/tags', tagsRoutes);
 
-  // --- Mount Comment Module Routes ---
+  // --- Mount Journal, Travel & Comment Module Routes ---
+  mountJournalRoutes(app, {
+    getJournalService: (c) => (c.get('services') as AppServices).journal,
+  });
+
+  mountTravelRoutes(app, {
+    getTravelService: (c) => (c.get('services') as AppServices).travel,
+  });
+
   mountCommentRoutes(app, {
     getCommentService: (c) => (c.get('services') as AppServices).comment,
   });

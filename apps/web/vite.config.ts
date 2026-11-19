@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Personal Archive',
         short_name: 'Archive',
         description: 'Personal Life Stream & Multi-Modal Archive',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#F7F5F0',
+        background_color: '#F7F5F0',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
@@ -54,7 +54,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\/api\/v1\/(?:entries|media|timeline).*/i,
+            urlPattern: /\/api\/v1\/(?:entries|media|journals|trips|tags).*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-feed-cache',
@@ -64,7 +64,7 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24, // 1 day
               },
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
             },
           },

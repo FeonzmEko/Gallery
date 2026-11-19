@@ -29,6 +29,7 @@ export const mediaAssets = sqliteTable(
     uploadStatus: text('upload_status').notNull().default('pending'),
     visibility: text('visibility').notNull().default('public'),
     originalFilename: text('original_filename'),
+    exifJson: text('exif_json'),
     createdAt: integer('created_at').notNull(),
     deletedAt: integer('deleted_at'),
   },

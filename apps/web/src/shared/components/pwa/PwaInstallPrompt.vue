@@ -11,28 +11,28 @@
     >
       <div
         v-if="needRefresh"
-        class="pointer-events-auto mb-3 rounded-2xl border border-sky-500/30 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-slate-100"
+        class="pointer-events-auto mb-3 rounded-2xl border border-[#C25438]/30 bg-white/95 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#1D1C1A]"
       >
         <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
-            <RefreshCwIcon class="w-5 h-5 animate-spin" />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FDF8F6] border border-[#F0D5CD] text-[#C25438]">
+            <RefreshCwIcon class="w-4 h-4 animate-spin" />
           </div>
           <div>
-            <p class="font-medium text-white text-xs sm:text-sm">发现应用新版本</p>
-            <p class="text-[11px] text-slate-400">点击更新即可加载最新功能与离线资源</p>
+            <p class="font-medium text-[#1D1C1A] text-xs sm:text-sm">发现档案馆新版本</p>
+            <p class="text-[11px] text-[#747169]">点击刷新以加载最新功能与离线资源</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            class="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-400 transition-colors"
+            class="rounded-lg bg-[#C25438] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors"
             @click="handleUpdate"
           >
             刷新
           </button>
           <button
             type="button"
-            class="rounded-lg p-1 text-slate-400 hover:text-slate-200 transition-colors"
+            class="rounded-lg p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
             @click="needRefresh = false"
           >
             <XIcon class="w-4 h-4" />
@@ -52,28 +52,28 @@
     >
       <div
         v-if="canInstall && !isDismissed && !isStandalone"
-        class="pointer-events-auto rounded-2xl border border-slate-800 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-slate-100"
+        class="pointer-events-auto rounded-2xl border border-[#E5E1D8] bg-white/95 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#1D1C1A]"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-emerald-500 text-slate-950 shadow-md">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] text-[#C25438]">
             <DownloadCloudIcon class="w-5 h-5" />
           </div>
           <div class="min-w-0">
-            <p class="font-semibold text-white text-xs sm:text-sm truncate">添加为桌面 / 移动端应用</p>
-            <p class="text-[11px] text-slate-400 truncate">离线秒开体验，杜绝浏览器地址栏遮挡</p>
+            <p class="font-serif font-medium text-[#1D1C1A] text-xs sm:text-sm truncate">添加为独立档案馆应用</p>
+            <p class="text-[11px] text-[#747169] truncate">支持离线浏览与独立全屏窗口体验</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            class="rounded-xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-400 shadow transition-colors active:scale-95"
+            class="rounded-xl bg-[#C25438] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A9442C] shadow-xs transition-colors active:scale-95"
             @click="handleInstallClick"
           >
-            立即添加
+            添加
           </button>
           <button
             type="button"
-            class="rounded-lg p-1 text-slate-400 hover:text-slate-200 transition-colors"
+            class="rounded-lg p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
             @click="dismissPrompt"
             title="暂不需要"
           >
@@ -105,7 +105,6 @@ const isStandalone = ref(false);
 const needRefresh = ref(false);
 let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
 
-// Try to register service worker update hook if virtual module is available
 try {
   // @ts-ignore
   import('virtual:pwa-register/vue').then(({ useRegisterSW }) => {
@@ -145,12 +144,10 @@ function handleBeforeInstallPrompt(e: Event): void {
 function handleAppInstalled(): void {
   canInstall.value = false;
   deferredPrompt.value = null;
-  console.log('[PWA] Application successfully installed');
 }
 
 async function handleInstallClick(): Promise<void> {
   if (!deferredPrompt.value) return;
-
   await deferredPrompt.value.prompt();
   const choice = await deferredPrompt.value.userChoice;
   if (choice.outcome === 'accepted') {

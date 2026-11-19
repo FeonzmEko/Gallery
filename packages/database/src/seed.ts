@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { generateUuidV7 } from '@archive/shared';
 import type { ArchiveDb } from './client.js';
 import * as schema from './schema.js';
@@ -235,6 +235,42 @@ export async function seedDatabase(
           updatedAt: now,
         })
         .onConflictDoNothing();
+
+      // Seed module-specific detail rows if tables exist
+      if (item.type === 'journal') {
+        const contentMarkdown =
+          item.slug === 'welcome'
+            ? `# Welcome to Personal Archive\n\n这是一个属于个人的、长期可维护的**数字档案馆**与记忆长廊。\n\n## 核心理念\n\n- **发生时间轴 (\`occurred_at\`)**：严格按记忆真实发生的刻度编年排序\n- **公共展厅与私密保险库**：公开内容对访客开放只读策展，私密记录仅管理员可见\n- **纯文本与可移植性**：所有随想以标准 Markdown 留存，伴随时间长久保存`
+            : `# 2026 年度复盘与私密备忘\n\n此条目为 \`private\` 私密权限示例，仅管理员登录后可见。\n\n- 资产配置与年度预算回顾\n- 明年旅行清单与阅读计划`;
+        const wordCount = contentMarkdown.length;
+        const mood = item.slug === 'welcome' ? '宁静' : '沉思';
+        const weather = item.slug === 'welcome' ? '晴朗' : '多云';
+        await db
+          .run(
+            sql`INSERT OR IGNORE INTO journal_entries (entry_id, content_markdown, word_count, mood, weather) VALUES (${entryId}, ${contentMarkdown}, ${wordCount}, ${mood}, ${weather})`
+          )
+          .catch(() => {});
+      } else if (item.type === 'trip') {
+        const startDate = item.occurredAt;
+        const endDate = item.occurredAt + 86400000 * 4;
+        await db
+          .run(
+            sql`INSERT OR IGNORE INTO trips (entry_id, start_date, end_date, country_code, city_summary, distance_km) VALUES (${entryId}, ${startDate}, ${endDate}, 'CHE', '苏黎世 · 采尔马特 · 因特拉肯', 214.6)`
+          )
+          .catch(() => {});
+        const loc1 = generateUuidV7();
+        const loc2 = generateUuidV7();
+        await db
+          .run(
+            sql`INSERT OR IGNORE INTO trip_locations (id, trip_entry_id, name, latitude, longitude, visited_at, sort_order, notes) VALUES (${loc1}, ${entryId}, '苏黎世湖畔 (Zurich)', 47.3769, 8.5417, ${startDate}, 0, '阿尔卑斯徒步起点')`
+          )
+          .catch(() => {});
+        await db
+          .run(
+            sql`INSERT OR IGNORE INTO trip_locations (id, trip_entry_id, name, latitude, longitude, visited_at, sort_order, notes) VALUES (${loc2}, ${entryId}, '采尔马特马特洪峰 (Zermatt)', 46.0207, 7.7491, ${endDate}, 1, '雪山冰川日出')`
+          )
+          .catch(() => {});
+      }
     }
   }
 
@@ -252,14 +288,24 @@ async function runCli(): Promise<void> {
 
   console.log('🌱 Starting Personal Archive database seeding...');
 
-  // Search for local D1 sqlite db or use local dev SQLite db
-  const stateDir = path.resolve(__dirname, '../../../.wrangler/state/v3/d1');
+  // Search for local Wrangler D1 sqlite db (under workers/api/.wrangler or root .wrangler)
+  const candidateStateDirs = [
+    path.resolve(__dirname, '../../../workers/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+    path.resolve(__dirname, '../../../workers/api/.wrangler/state/v3/d1'),
+    path.resolve(__dirname, '../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+    path.resolve(__dirname, '../../../.wrangler/state/v3/d1'),
+  ];
   let targetSqlitePath = path.resolve(__dirname, '../../../.wrangler/local-dev.db');
 
-  if (fs.existsSync(stateDir)) {
-    const files = fs.readdirSync(stateDir).filter((f: string) => f.endsWith('.sqlite'));
-    if (files.length > 0) {
-      targetSqlitePath = path.join(stateDir, files[0]);
+  for (const stateDir of candidateStateDirs) {
+    if (fs.existsSync(stateDir)) {
+      const files = fs
+        .readdirSync(stateDir)
+        .filter((f: string) => f.endsWith('.sqlite') && f !== 'metadata.sqlite');
+      if (files.length > 0) {
+        targetSqlitePath = path.join(stateDir, files[0]);
+        break;
+      }
     }
   }
 
@@ -271,18 +317,24 @@ async function runCli(): Promise<void> {
   console.log(`📦 Connecting to SQLite database at: ${targetSqlitePath}`);
   const mem = new DatabaseSync(targetSqlitePath);
 
-  // Apply migration if tables don't exist
-  const migrationFile = path.resolve(__dirname, '../migrations/0000_nappy_ultragirl.sql');
-  if (fs.existsSync(migrationFile)) {
-    const sqlContent = fs.readFileSync(migrationFile, 'utf-8');
-    const statements = sqlContent.split('--> statement-breakpoint');
-    for (const stmt of statements) {
-      const clean = stmt.trim();
-      if (clean) {
-        try {
-          mem.exec(clean);
-        } catch {
-          // Table or index may already exist
+  // Apply all migrations in order if tables don't exist
+  const migrationsDir = path.resolve(__dirname, '../migrations');
+  if (fs.existsSync(migrationsDir)) {
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f: string) => f.endsWith('.sql'))
+      .sort();
+    for (const file of migrationFiles) {
+      const sqlContent = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+      const statements = sqlContent.split('--> statement-breakpoint');
+      for (const stmt of statements) {
+        const clean = stmt.trim();
+        if (clean) {
+          try {
+            mem.exec(clean);
+          } catch {
+            // Table, index, or column may already exist
+          }
         }
       }
     }

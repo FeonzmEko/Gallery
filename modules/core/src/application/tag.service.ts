@@ -6,17 +6,11 @@ import {
   type AuthUser,
   NotFoundError,
 } from '@archive/contracts';
-import { generateUuidV7 } from '@archive/shared';
+import { generateUuidV7, slugify } from '@archive/shared';
 import { tags, entryTags, type TagSelect } from '../infrastructure/schema.js';
 import { assertAdmin } from '../domain/rbac.js';
 
-export function slugify(str: string): string {
-  return str
-    .trim()
-    .toLowerCase()
-    .replace(/[\s\W-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+export { slugify };
 
 export class TagService {
   private readonly db: ArchiveDb;

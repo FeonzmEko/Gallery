@@ -13,6 +13,27 @@ export type MediaRole = z.infer<typeof MediaRoleSchema>;
 export const StorageProviderSchema = z.enum(['r2', 'oss', 'cos', 's3', 'minio']);
 export type StorageProvider = z.infer<typeof StorageProviderSchema>;
 
+export const ExifMetadataSchema = z
+  .object({
+    make: z.string().trim().max(100).optional(),
+    model: z.string().trim().max(100).optional(),
+    dateTime: z.string().trim().max(50).optional(),
+    dateTimeOriginal: z.string().trim().max(50).optional(),
+    exposureTime: z.string().trim().max(30).optional(),
+    fNumber: z.number().positive().optional(),
+    iso: z.number().int().positive().optional(),
+    focalLength: z.number().positive().optional(),
+    orientation: z.number().int().optional(),
+    width: z.number().int().positive().optional(),
+    height: z.number().int().positive().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+  })
+  .optional()
+  .nullable();
+
+export type ExifMetadataDto = NonNullable<z.infer<typeof ExifMetadataSchema>>;
+
 /**
  * Media Asset DTO representing physical file stored in object storage
  */
@@ -33,6 +54,7 @@ export interface MediaAssetDto {
   uploadStatus: UploadStatus;
   visibility: Visibility;
   originalFilename: string | null;
+  exif?: ExifMetadataDto | null;
   createdAt: number;
   deletedAt: number | null;
   // Dynamic computed URLs for frontend rendering

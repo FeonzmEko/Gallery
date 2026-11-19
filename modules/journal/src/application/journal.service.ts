@@ -1,4 +1,4 @@
-import { eq, and, or, lt, desc, isNull, inArray } from 'drizzle-orm';
+import { eq, and, or, lt, desc, isNull, inArray, like, sql } from 'drizzle-orm';
 import type { ArchiveDb } from '@archive/database';
 import {
   entries,
@@ -21,6 +21,7 @@ import {
   generateUuidV7,
   encodeTimelineCursor,
   decodeTimelineCursor,
+  slugify,
 } from '@archive/shared';
 import { journalEntries, type JournalEntrySelect } from '../infrastructure/schema.js';
 import { calculateWordCount } from '../domain/word-count.js';
@@ -29,15 +30,6 @@ import type {
   CreateJournalInput,
   UpdateJournalInput,
 } from '../domain/types.js';
-
-function slugify(str: string): string {
-  const normalized = str
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\-_]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
-  return normalized || encodeURIComponent(str.trim().toLowerCase());
-}
 
 function extractSummary(markdown: string, maxLength: number = 200): string {
   // Strip code blocks and markdown markers for a clean plain-text summary
@@ -61,6 +53,7 @@ export interface ListJournalsQuery {
   tag?: string;
   mood?: string;
   weather?: string;
+  search?: string;
 }
 
 export class JournalService {
@@ -326,7 +319,7 @@ export class JournalService {
       })
       .from(entries)
       .innerJoin(journalEntries, eq(entries.id, journalEntries.entryId))
-      .where(and(eq(entries.id, entryId), eq(entries.type, 'journal')))
+      .where(and(eq(entries.id, entryId), eq(entries.type, 'journal'), isNull(entries.deletedAt)))
       .get();
 
     if (!existing) {
@@ -436,7 +429,7 @@ export class JournalService {
     const existing = await this.db
       .select({ id: entries.id })
       .from(entries)
-      .where(and(eq(entries.id, entryId), eq(entries.type, 'journal')))
+      .where(and(eq(entries.id, entryId), eq(entries.type, 'journal'), isNull(entries.deletedAt)))
       .get();
 
     if (!existing) {
@@ -461,10 +454,9 @@ export class JournalService {
     user?: AuthUser | null
   ): Promise<PaginatedResult<JournalDetailDto>> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 100);
-    const conditions = [eq(entries.type, 'journal')];
+    const conditions = [eq(entries.type, 'journal'), isNull(entries.deletedAt)];
 
     if (!hasAdminPrivileges(user?.role)) {
-      conditions.push(isNull(entries.deletedAt));
       conditions.push(eq(entries.status, 'published'));
       conditions.push(eq(entries.visibility, 'public'));
     }
@@ -475,6 +467,34 @@ export class JournalService {
 
     if (query.weather) {
       conditions.push(eq(journalEntries.weather, query.weather));
+    }
+
+    if (query.tag) {
+      const targetTag = query.tag.trim();
+      const taggedEntries = await this.db
+        .select({ entryId: entryTags.entryId })
+        .from(entryTags)
+        .innerJoin(tags, eq(entryTags.tagId, tags.id))
+        .where(or(eq(tags.slug, targetTag), eq(tags.name, targetTag)));
+      const matchedIds = taggedEntries.map((r) => r.entryId);
+      if (matchedIds.length === 0) {
+        return {
+          items: [],
+          pagination: { cursor: null, hasMore: false, limit },
+        };
+      }
+      conditions.push(inArray(entries.id, matchedIds));
+    }
+
+    if (query.search && query.search.trim()) {
+      const pattern = `%${query.search.trim().toLowerCase()}%`;
+      conditions.push(
+        or(
+          like(sql`lower(${entries.title})`, pattern),
+          like(sql`lower(${entries.summary})`, pattern),
+          like(sql`lower(${journalEntries.contentMarkdown})`, pattern)
+        )!
+      );
     }
 
     if (query.cursor) {

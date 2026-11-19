@@ -1,4 +1,4 @@
-import { eq, and, or, lt, desc, asc, isNull } from 'drizzle-orm';
+import { eq, and, or, lt, desc, asc, isNull, inArray, like, sql } from 'drizzle-orm';
 import type { ArchiveDb } from '@archive/database';
 import {
   entries,
@@ -22,8 +22,9 @@ import {
   generateUuidV7,
   encodeTimelineCursor,
   decodeTimelineCursor,
+  slugify,
 } from '@archive/shared';
-import { trips, tripLocations, type TripSelect, type TripLocationSelect } from '../infrastructure/schema.js';
+import { trips, tripLocations, type TripSelect } from '../infrastructure/schema.js';
 import { isValidCoordinates } from '../domain/coordinates.js';
 import { calculateTotalRouteDistance } from '../domain/haversine.js';
 import { buildTripGeoData } from '../domain/geojson.js';
@@ -36,20 +37,12 @@ import type {
   CreateLocationInput,
 } from '../domain/types.js';
 
-function slugify(str: string): string {
-  const normalized = str
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\-_]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
-  return normalized || encodeURIComponent(str.trim().toLowerCase());
-}
-
 export interface ListTripsQuery {
   cursor?: string;
   limit?: number;
   countryCode?: string;
   tag?: string;
+  search?: string;
 }
 
 export class TravelService {
@@ -414,7 +407,7 @@ export class TravelService {
       })
       .from(entries)
       .innerJoin(trips, eq(entries.id, trips.entryId))
-      .where(and(eq(entries.id, entryId), eq(entries.type, 'trip')))
+      .where(and(eq(entries.id, entryId), eq(entries.type, 'trip'), isNull(entries.deletedAt)))
       .get();
 
     if (!existing) {
@@ -497,6 +490,11 @@ export class TravelService {
           updatedAt: now,
         },
       });
+
+    // Replace locations if provided
+    if (input.locations !== undefined) {
+      await this.setTripLocations(entryId, input.locations, user);
+    }
 
     return this.getTrip(entryId, user);
   }
@@ -640,7 +638,7 @@ export class TravelService {
     const existing = await this.db
       .select({ id: entries.id })
       .from(entries)
-      .where(and(eq(entries.id, entryId), eq(entries.type, 'trip')))
+      .where(and(eq(entries.id, entryId), eq(entries.type, 'trip'), isNull(entries.deletedAt)))
       .get();
 
     if (!existing) {
@@ -665,16 +663,44 @@ export class TravelService {
     user?: AuthUser | null
   ): Promise<PaginatedResult<TripDetailDto>> {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 100);
-    const conditions = [eq(entries.type, 'trip')];
+    const conditions = [eq(entries.type, 'trip'), isNull(entries.deletedAt)];
 
     if (!hasAdminPrivileges(user?.role)) {
-      conditions.push(isNull(entries.deletedAt));
       conditions.push(eq(entries.status, 'published'));
       conditions.push(eq(entries.visibility, 'public'));
     }
 
     if (query.countryCode) {
       conditions.push(eq(trips.countryCode, query.countryCode));
+    }
+
+    if (query.tag) {
+      const targetTag = query.tag.trim();
+      const taggedEntries = await this.db
+        .select({ entryId: entryTags.entryId })
+        .from(entryTags)
+        .innerJoin(tags, eq(entryTags.tagId, tags.id))
+        .where(or(eq(tags.slug, targetTag), eq(tags.name, targetTag)));
+      const matchedIds = taggedEntries.map((r) => r.entryId);
+      if (matchedIds.length === 0) {
+        return {
+          items: [],
+          pagination: { cursor: null, hasMore: false, limit },
+        };
+      }
+      conditions.push(inArray(entries.id, matchedIds));
+    }
+
+    if (query.search && query.search.trim()) {
+      const pattern = `%${query.search.trim().toLowerCase()}%`;
+      conditions.push(
+        or(
+          like(sql`lower(${entries.title})`, pattern),
+          like(sql`lower(${entries.summary})`, pattern),
+          like(sql`lower(${trips.citySummary})`, pattern),
+          like(sql`lower(${trips.countryCode})`, pattern)
+        )!
+      );
     }
 
     if (query.cursor) {

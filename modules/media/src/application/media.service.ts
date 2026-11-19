@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { eq, and, or, lt, desc, isNull, inArray } from 'drizzle-orm';
 import type { ArchiveDb } from '@archive/database';
 import {
   type StoragePort,
@@ -8,8 +8,11 @@ import {
   type UploadTicketDto,
   type RequestUploadTicketInput,
   type MediaRole,
+  type MediaType,
   type StorageProvider,
   type Visibility,
+  type PaginatedResult,
+  type ExifMetadataDto,
   hasAdminPrivileges,
   UnauthorizedError,
   ForbiddenError,
@@ -17,7 +20,11 @@ import {
   MediaTypeNotAllowedError,
   FileTooLargeError,
 } from '@archive/contracts';
-import { generateUuidV7 } from '@archive/shared';
+import {
+  generateUuidV7,
+  encodeCursor,
+  decodeCursor,
+} from '@archive/shared';
 import { mediaAssets, entryMedia, type MediaAssetSelect } from '../infrastructure/schema.js';
 
 export interface ConfirmUploadInput {
@@ -27,6 +34,33 @@ export interface ConfirmUploadInput {
   sha256?: string;
   thumbKey?: string;
   previewKey?: string;
+  exif?: ExifMetadataDto | null;
+}
+
+export interface ListMediaQuery {
+  cursor?: string;
+  limit?: number;
+  mediaType?: MediaType;
+  visibility?: Visibility;
+}
+
+export interface UpdateMediaInput {
+  visibility?: Visibility;
+  originalFilename?: string | null;
+}
+
+interface MediaCursorPayload {
+  createdAt: number;
+  id: string;
+}
+
+function parseExifJson(raw: string | null | undefined): ExifMetadataDto | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as ExifMetadataDto;
+  } catch {
+    return null;
+  }
 }
 
 export interface BindEntryMediaInput {
@@ -197,10 +231,182 @@ export class MediaService {
     if (metadata?.sha256 !== undefined) updatePayload.sha256 = metadata.sha256;
     if (metadata?.thumbKey !== undefined) updatePayload.thumbKey = metadata.thumbKey;
     if (metadata?.previewKey !== undefined) updatePayload.previewKey = metadata.previewKey;
+    if (metadata?.exif !== undefined) {
+      updatePayload.exifJson = metadata.exif ? JSON.stringify(metadata.exif) : null;
+    }
 
     await this.db.update(mediaAssets).set(updatePayload).where(eq(mediaAssets.id, assetId));
 
     return this.getMedia(assetId, user);
+  }
+
+  private async mapAssetToDto(asset: MediaAssetSelect): Promise<MediaAssetDto> {
+    const expiresIn = asset.visibility === 'private' ? 900 : 3600;
+    const originalUrl = await this.storagePort.getDownloadUrl(asset.bucketKey, expiresIn);
+    const thumbUrl = asset.thumbKey
+      ? await this.storagePort.getDownloadUrl(asset.thumbKey, expiresIn)
+      : originalUrl;
+    const previewUrl = asset.previewKey
+      ? await this.storagePort.getDownloadUrl(asset.previewKey, expiresIn)
+      : undefined;
+
+    return {
+      id: asset.id,
+      ownerId: asset.ownerId,
+      storageProvider: asset.storageProvider as StorageProvider,
+      bucketKey: asset.bucketKey,
+      thumbKey: asset.thumbKey,
+      previewKey: asset.previewKey,
+      mimeType: asset.mimeType,
+      mediaType: asset.mediaType as MediaAssetDto['mediaType'],
+      sizeBytes: asset.sizeBytes,
+      sha256: asset.sha256,
+      width: asset.width,
+      height: asset.height,
+      durationMs: asset.durationMs,
+      uploadStatus: asset.uploadStatus as MediaAssetDto['uploadStatus'],
+      visibility: asset.visibility as Visibility,
+      originalFilename: asset.originalFilename,
+      exif: parseExifJson(asset.exifJson),
+      createdAt: asset.createdAt,
+      deletedAt: asset.deletedAt,
+      originalUrl,
+      thumbUrl,
+      previewUrl,
+    };
+  }
+
+  /**
+   * List uploaded media assets with cursor pagination and RBAC visibility guard.
+   */
+  async listMedia(
+    query: ListMediaQuery = {},
+    user?: AuthUser | null
+  ): Promise<PaginatedResult<MediaAssetDto>> {
+    const isAdmin = hasAdminPrivileges(user?.role);
+    const limit = Math.min(Math.max(query.limit ?? 40, 1), 100);
+
+    const conditions = [
+      isNull(mediaAssets.deletedAt),
+      eq(mediaAssets.uploadStatus, 'uploaded'),
+    ];
+
+    if (!isAdmin) {
+      conditions.push(eq(mediaAssets.visibility, 'public'));
+    } else if (query.visibility) {
+      conditions.push(eq(mediaAssets.visibility, query.visibility));
+    }
+
+    if (query.mediaType) {
+      conditions.push(eq(mediaAssets.mediaType, query.mediaType));
+    }
+
+    if (query.cursor) {
+      const decoded = decodeCursor<MediaCursorPayload>(query.cursor);
+      if (decoded && typeof decoded.createdAt === 'number' && decoded.id) {
+        conditions.push(
+          or(
+            lt(mediaAssets.createdAt, decoded.createdAt),
+            and(
+              eq(mediaAssets.createdAt, decoded.createdAt),
+              lt(mediaAssets.id, decoded.id)
+            )
+          )!
+        );
+      }
+    }
+
+    const rows = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(and(...conditions))
+      .orderBy(desc(mediaAssets.createdAt), desc(mediaAssets.id))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+    const items = await Promise.all(pageRows.map((row) => this.mapAssetToDto(row)));
+
+    let nextCursor: string | null = null;
+    if (hasMore && pageRows.length > 0) {
+      const last = pageRows[pageRows.length - 1];
+      nextCursor = encodeCursor<MediaCursorPayload>({
+        createdAt: last.createdAt,
+        id: last.id,
+      });
+    }
+
+    return {
+      items,
+      pagination: {
+        cursor: nextCursor,
+        hasMore,
+        limit,
+      },
+    };
+  }
+
+  /**
+   * Batch resolve media URLs for entry cover hydration.
+   */
+  async resolveMediaUrls(
+    mediaIds: string[],
+    user?: AuthUser | null
+  ): Promise<Map<string, { originalUrl: string; thumbUrl?: string }>> {
+    const map = new Map<string, { originalUrl: string; thumbUrl?: string }>();
+    if (mediaIds.length === 0) return map;
+
+    const isAdmin = hasAdminPrivileges(user?.role);
+    const rows = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(and(inArray(mediaAssets.id, mediaIds), isNull(mediaAssets.deletedAt)));
+
+    await Promise.all(
+      rows.map(async (row) => {
+        if (row.visibility === 'private' && !isAdmin) return;
+        const expiresIn = row.visibility === 'private' ? 900 : 3600;
+        const originalUrl = await this.storagePort.getDownloadUrl(row.bucketKey, expiresIn);
+        const thumbUrl = row.thumbKey
+          ? await this.storagePort.getDownloadUrl(row.thumbKey, expiresIn)
+          : originalUrl;
+        map.set(row.id, { originalUrl, thumbUrl });
+      })
+    );
+
+    return map;
+  }
+
+  /**
+   * Update media asset metadata / visibility. Admin only.
+   */
+  async updateMedia(
+    id: string,
+    input: UpdateMediaInput,
+    user: AuthUser
+  ): Promise<MediaAssetDto> {
+    assertAdmin(user);
+
+    const existing = await this.db
+      .select()
+      .from(mediaAssets)
+      .where(and(eq(mediaAssets.id, id), isNull(mediaAssets.deletedAt)))
+      .limit(1);
+
+    if (!existing[0]) {
+      throw new NotFoundError('媒体资产不存在', id);
+    }
+
+    const updates: Partial<typeof mediaAssets.$inferInsert> = {};
+    if (input.visibility !== undefined) updates.visibility = input.visibility;
+    if (input.originalFilename !== undefined) updates.originalFilename = input.originalFilename;
+
+    if (Object.keys(updates).length > 0) {
+      await this.db.update(mediaAssets).set(updates).where(eq(mediaAssets.id, id));
+    }
+
+    return this.getMedia(id, user);
   }
 
   /**
@@ -224,39 +430,7 @@ export class MediaService {
       throw new ForbiddenError('无权访问该私有媒体资产');
     }
 
-    // Generate URLs
-    const expiresIn = asset.visibility === 'private' ? 900 : 3600;
-    const originalUrl = await this.storagePort.getDownloadUrl(asset.bucketKey, expiresIn);
-    const thumbUrl = asset.thumbKey
-      ? await this.storagePort.getDownloadUrl(asset.thumbKey, expiresIn)
-      : undefined;
-    const previewUrl = asset.previewKey
-      ? await this.storagePort.getDownloadUrl(asset.previewKey, expiresIn)
-      : undefined;
-
-    return {
-      id: asset.id,
-      ownerId: asset.ownerId,
-      storageProvider: asset.storageProvider as StorageProvider,
-      bucketKey: asset.bucketKey,
-      thumbKey: asset.thumbKey,
-      previewKey: asset.previewKey,
-      mimeType: asset.mimeType,
-      mediaType: asset.mediaType as MediaAssetDto['mediaType'],
-      sizeBytes: asset.sizeBytes,
-      sha256: asset.sha256,
-      width: asset.width,
-      height: asset.height,
-      durationMs: asset.durationMs,
-      uploadStatus: asset.uploadStatus as MediaAssetDto['uploadStatus'],
-      visibility: asset.visibility as Visibility,
-      originalFilename: asset.originalFilename,
-      createdAt: asset.createdAt,
-      deletedAt: asset.deletedAt,
-      originalUrl,
-      thumbUrl,
-      previewUrl,
-    };
+    return this.mapAssetToDto(asset);
   }
 
   /**
@@ -337,6 +511,9 @@ export class MediaService {
 
       const expiresIn = row.asset.visibility === 'private' ? 900 : 3600;
       const originalUrl = await this.storagePort.getDownloadUrl(row.asset.bucketKey, expiresIn);
+      const thumbUrl = row.asset.thumbKey
+        ? await this.storagePort.getDownloadUrl(row.asset.thumbKey, expiresIn)
+        : originalUrl;
 
       results.push({
         id: row.id,
@@ -363,9 +540,11 @@ export class MediaService {
           uploadStatus: row.asset.uploadStatus as MediaAssetDto['uploadStatus'],
           visibility: row.asset.visibility as Visibility,
           originalFilename: row.asset.originalFilename,
+          exif: parseExifJson(row.asset.exifJson),
           createdAt: row.asset.createdAt,
           deletedAt: row.asset.deletedAt,
           originalUrl,
+          thumbUrl,
         },
       });
     }

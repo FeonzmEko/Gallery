@@ -54,6 +54,7 @@ export const UpdateTripInputSchema = z
     status: EntryStatusSchema.optional(),
     coverMediaId: z.string().optional().nullable(),
     tags: z.array(z.string().trim().min(1).max(50)).optional(),
+    locations: z.array(TripLocationInputSchema).optional(),
   })
   .refine(
     (data) => {

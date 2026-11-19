@@ -3,6 +3,8 @@ import {
   and,
   or,
   lt,
+  gte,
+  lte,
   desc,
   isNull,
   inArray,
@@ -25,13 +27,14 @@ import {
   generateUuidV7,
   encodeTimelineCursor,
   decodeTimelineCursor,
+  getYearRange,
+  getYear,
 } from '@archive/shared';
 import {
   entries,
   tags,
   entryTags,
   entrySearchIndex,
-  type EntrySelect,
 } from '../infrastructure/schema.js';
 import { assertAdmin, hasAdminPrivileges } from '../domain/rbac.js';
 import { TagService } from './tag.service.js';
@@ -42,17 +45,34 @@ export interface TimelineQuery {
   type?: string;
   tag?: string;
   search?: string;
+  year?: number;
   visibility?: Visibility;
   status?: EntryStatus;
 }
 
+export interface ResolvedMediaUrls {
+  originalUrl: string;
+  thumbUrl?: string;
+}
+
+export type MediaUrlResolver = (
+  mediaIds: string[],
+  user?: AuthUser | null
+) => Promise<Map<string, ResolvedMediaUrls>>;
+
 export class EntryService {
   private readonly db: ArchiveDb;
   private readonly tagService: TagService;
+  private readonly mediaResolver?: MediaUrlResolver;
 
-  constructor(db: ArchiveDb, tagService?: TagService) {
+  constructor(
+    db: ArchiveDb,
+    tagService?: TagService,
+    mediaResolver?: MediaUrlResolver
+  ) {
     this.db = db;
     this.tagService = tagService ?? new TagService(db);
+    this.mediaResolver = mediaResolver;
   }
 
   /**
@@ -274,6 +294,16 @@ export class EntryService {
     }
 
     const tagsList = await this.getTagsForEntry(id);
+    let coverUrl: string | null = null;
+    let coverThumbUrl: string | null = null;
+    if (entry.coverMediaId && this.mediaResolver) {
+      const resolved = await this.mediaResolver([entry.coverMediaId], user);
+      const urls = resolved.get(entry.coverMediaId);
+      if (urls) {
+        coverUrl = urls.originalUrl;
+        coverThumbUrl = urls.thumbUrl ?? urls.originalUrl;
+      }
+    }
 
     return {
       id: entry.id,
@@ -283,6 +313,8 @@ export class EntryService {
       title: entry.title,
       summary: entry.summary,
       coverMediaId: entry.coverMediaId,
+      coverUrl,
+      coverThumbUrl,
       occurredAt: entry.occurredAt,
       visibility: entry.visibility as Visibility,
       status: entry.status as EntryStatus,
@@ -291,6 +323,38 @@ export class EntryService {
       deletedAt: entry.deletedAt,
       tags: tagsList,
     };
+  }
+
+  /**
+   * List distinct years present in the timeline, respecting RBAC visibility.
+   */
+  async getTimelineYears(
+    user?: AuthUser | null,
+    type?: string
+  ): Promise<number[]> {
+    const isAdmin = hasAdminPrivileges(user?.role);
+    const conditions = [isNull(entries.deletedAt)];
+
+    if (!isAdmin) {
+      conditions.push(eq(entries.visibility, 'public'));
+      conditions.push(eq(entries.status, 'published'));
+    }
+
+    if (type) {
+      conditions.push(eq(entries.type, type));
+    }
+
+    const rows = await this.db
+      .select({ occurredAt: entries.occurredAt })
+      .from(entries)
+      .where(and(...conditions))
+      .orderBy(desc(entries.occurredAt));
+
+    const years = new Set<number>();
+    for (const row of rows) {
+      years.add(getYear(row.occurredAt));
+    }
+    return Array.from(years).sort((a, b) => b - a);
   }
 
   /**
@@ -350,15 +414,45 @@ export class EntryService {
       conditions.push(inArray(entries.id, matchedIds));
     }
 
-    // Keyword search in title/summary
-    if (query.search) {
-      const searchPattern = `%${query.search.trim().toLowerCase()}%`;
-      conditions.push(
-        or(
-          like(sql`lower(${entries.title})`, searchPattern),
-          like(sql`lower(${entries.summary})`, searchPattern)
-        )
-      );
+    // Filter by year if requested
+    if (query.year && Number.isInteger(query.year) && query.year > 1900 && query.year < 3000) {
+      const { start, end } = getYearRange(query.year);
+      conditions.push(gte(entries.occurredAt, start));
+      conditions.push(lte(entries.occurredAt, end));
+    }
+
+    // Keyword search in title/summary/tags
+    if (query.search && query.search.trim()) {
+      const cleanSearch = query.search.trim().toLowerCase();
+      const searchPattern = `%${cleanSearch}%`;
+      const searchIndexHits = await this.db
+        .select({ entryId: entrySearchIndex.entryId })
+        .from(entrySearchIndex)
+        .where(
+          or(
+            like(entrySearchIndex.titleNormalized, searchPattern),
+            like(sql`lower(${entrySearchIndex.tagsText})`, searchPattern),
+            like(sql`lower(${entrySearchIndex.bodyExcerpt})`, searchPattern)
+          )
+        );
+      const indexHitIds = searchIndexHits.map((r) => r.entryId);
+
+      if (indexHitIds.length > 0) {
+        conditions.push(
+          or(
+            like(sql`lower(${entries.title})`, searchPattern),
+            like(sql`lower(${entries.summary})`, searchPattern),
+            inArray(entries.id, indexHitIds)
+          )
+        );
+      } else {
+        conditions.push(
+          or(
+            like(sql`lower(${entries.title})`, searchPattern),
+            like(sql`lower(${entries.summary})`, searchPattern)
+          )
+        );
+      }
     }
 
     // Decode and apply composite cursor (occurredAt DESC, id DESC)
@@ -400,26 +494,43 @@ export class EntryService {
       });
     }
 
-    // Batch load tags for all entries in the page
+    // Batch load tags & cover URLs for all entries in the page
     const entryIds = pageRows.map((r) => r.id);
     const tagsMap = await this.getTagsMapForEntries(entryIds);
 
-    const items: EntryDto[] = pageRows.map((row) => ({
-      id: row.id,
-      ownerId: row.ownerId,
-      type: row.type,
-      slug: row.slug,
-      title: row.title,
-      summary: row.summary,
-      coverMediaId: row.coverMediaId,
-      occurredAt: row.occurredAt,
-      visibility: row.visibility as Visibility,
-      status: row.status as EntryStatus,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      deletedAt: row.deletedAt,
-      tags: tagsMap.get(row.id) ?? [],
-    }));
+    const coverMediaIds = Array.from(
+      new Set(
+        pageRows
+          .map((r) => r.coverMediaId)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      )
+    );
+    const mediaMap =
+      coverMediaIds.length > 0 && this.mediaResolver
+        ? await this.mediaResolver(coverMediaIds, user)
+        : new Map<string, ResolvedMediaUrls>();
+
+    const items: EntryDto[] = pageRows.map((row) => {
+      const mediaUrls = row.coverMediaId ? mediaMap.get(row.coverMediaId) : undefined;
+      return {
+        id: row.id,
+        ownerId: row.ownerId,
+        type: row.type,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        coverMediaId: row.coverMediaId,
+        coverUrl: mediaUrls?.originalUrl ?? null,
+        coverThumbUrl: mediaUrls?.thumbUrl ?? mediaUrls?.originalUrl ?? null,
+        occurredAt: row.occurredAt,
+        visibility: row.visibility as Visibility,
+        status: row.status as EntryStatus,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: row.deletedAt,
+        tags: tagsMap.get(row.id) ?? [],
+      };
+    });
 
     return {
       items,

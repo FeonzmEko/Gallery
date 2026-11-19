@@ -104,4 +104,5 @@ export interface UpdateTripInput {
   status?: EntryStatus;
   coverMediaId?: string | null;
   tags?: string[];
+  locations?: CreateLocationInput[];
 }

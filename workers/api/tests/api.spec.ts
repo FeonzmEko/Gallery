@@ -154,6 +154,7 @@ describe('Workers API Integration Suite', () => {
         upload_status TEXT NOT NULL DEFAULT 'pending',
         visibility TEXT NOT NULL DEFAULT 'public',
         original_filename TEXT,
+        exif_json TEXT,
         created_at INTEGER NOT NULL,
         deleted_at INTEGER
       );
@@ -165,6 +166,48 @@ describe('Workers API Integration Suite', () => {
         role TEXT NOT NULL DEFAULT 'gallery',
         sort_order INTEGER NOT NULL DEFAULT 0,
         caption TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE journal_entries (
+        entry_id TEXT PRIMARY KEY NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+        content_markdown TEXT NOT NULL,
+        word_count INTEGER NOT NULL DEFAULT 0,
+        mood TEXT,
+        weather TEXT
+      );
+
+      CREATE TABLE trips (
+        entry_id TEXT PRIMARY KEY NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+        start_date INTEGER NOT NULL,
+        end_date INTEGER NOT NULL,
+        country_code TEXT,
+        city_summary TEXT,
+        distance_km REAL DEFAULT 0
+      );
+
+      CREATE TABLE trip_locations (
+        id TEXT PRIMARY KEY NOT NULL,
+        trip_entry_id TEXT NOT NULL REFERENCES trips(entry_id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        visited_at INTEGER,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        notes TEXT
+      );
+
+      CREATE TABLE comments (
+        id TEXT PRIMARY KEY NOT NULL,
+        entry_id TEXT NOT NULL,
+        parent_id TEXT,
+        author_name TEXT NOT NULL,
+        author_email TEXT NOT NULL,
+        author_url TEXT,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'approved',
+        ip_hash TEXT NOT NULL,
+        user_agent TEXT,
         created_at INTEGER NOT NULL
       );
     `);
@@ -395,5 +438,155 @@ describe('Workers API Integration Suite', () => {
     const tagNames = body.data.map((t: any) => t.name);
     expect(tagNames).toContain('Introduction');
     expect(tagNames).toContain('Travel');
+  });
+
+  it('supports journals, trips, media list with EXIF, coverUrl hydration, Chinese tags, and year filtering', async () => {
+    const loginRes = await app.request(
+      '/api/v1/auth/login',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@archive.internal',
+          password: 'Admin@Pass2026',
+        }),
+      },
+      mockEnv
+    );
+    const loginBody = (await loginRes.json()) as any;
+    const authHeaders = {
+      Authorization: `Bearer ${loginBody.data.token}`,
+      'Content-Type': 'application/json',
+    };
+
+    // Verify /me returns userId
+    const meRes = await app.request('/api/v1/auth/me', { headers: authHeaders }, mockEnv);
+    const meBody = (await meRes.json()) as any;
+    expect(meBody.data.userId).toBe(meBody.data.id);
+
+    // Create a journal via /api/v1/journals with Chinese tags
+    const journalRes = await app.request(
+      '/api/v1/journals',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: '京都秋日手札',
+          contentMarkdown: '# 晨光\n\n漫步哲学之道，落叶如雨。',
+          occurredAt: new Date('2023-11-10T08:00:00Z').getTime(),
+          mood: '宁静',
+          weather: '晴朗',
+          tags: ['旅行', '京都', '随笔'],
+        }),
+      },
+      mockEnv
+    );
+    expect(journalRes.status).toBe(201);
+    const journalBody = (await journalRes.json()) as any;
+    expect(journalBody.data.tags).toEqual(expect.arrayContaining(['旅行', '京都', '随笔']));
+    expect(journalBody.data.wordCount).toBeGreaterThan(0);
+
+    // Create a trip via /api/v1/trips
+    const tripRes = await app.request(
+      '/api/v1/trips',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: '关西红叶线',
+          countryCode: 'JPN',
+          citySummary: '京都 · 奈良',
+          startDate: new Date('2023-11-08T00:00:00Z').getTime(),
+          endDate: new Date('2023-11-12T00:00:00Z').getTime(),
+          locations: [
+            { name: '清水寺', latitude: 34.9949, longitude: 135.785 },
+            { name: '奈良公园', latitude: 34.6851, longitude: 135.843 },
+          ],
+        }),
+      },
+      mockEnv
+    );
+    expect(tripRes.status).toBe(201);
+    const tripBody = (await tripRes.json()) as any;
+    expect(tripBody.data.distanceKm).toBeGreaterThan(30);
+    expect(tripBody.data.locations).toHaveLength(2);
+
+    // Upload & confirm media with EXIF, then create photo entry with coverMediaId
+    const ticketRes = await app.request(
+      '/api/v1/media/upload-url',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          filename: 'kyoto.webp',
+          contentType: 'image/webp',
+          sizeBytes: 42000,
+          mediaType: 'image',
+          width: 1600,
+          height: 1200,
+        }),
+      },
+      mockEnv
+    );
+    const ticket = ((await ticketRes.json()) as any).data;
+    const confirmRes = await app.request(
+      `/api/v1/media/${ticket.mediaId}/confirm`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          width: 1600,
+          height: 1200,
+          exif: { make: 'LEICA', model: 'LEICA M11', fNumber: 2, iso: 64, exposureTime: '1/500s' },
+        }),
+      },
+      mockEnv
+    );
+    expect(confirmRes.status).toBe(200);
+    const confirmed = ((await confirmRes.json()) as any).data;
+    expect(confirmed.exif.model).toBe('LEICA M11');
+
+    const photoEntryRes = await app.request(
+      '/api/v1/entries',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'photo',
+          title: '琉璃光院倒影',
+          coverMediaId: ticket.mediaId,
+          occurredAt: new Date('2023-11-11T10:00:00Z').getTime(),
+        }),
+      },
+      mockEnv
+    );
+    expect(photoEntryRes.status).toBe(201);
+
+    // Verify GET /api/v1/entries hydrates coverUrl and filters by year=2023
+    const yearEntriesRes = await app.request('/api/v1/entries?year=2023', { method: 'GET' }, mockEnv);
+    const yearEntriesBody = (await yearEntriesRes.json()) as any;
+    expect(yearEntriesBody.data).toHaveLength(3);
+    const photoCard = yearEntriesBody.data.find((e: any) => e.type === 'photo');
+    expect(photoCard.coverUrl).toContain('https://media.archive.internal/');
+
+    // Verify GET /api/v1/entries/years includes 2023
+    const yearsRes = await app.request('/api/v1/entries/years', { method: 'GET' }, mockEnv);
+    const yearsBody = (await yearsRes.json()) as any;
+    expect(yearsBody.data).toContain(2023);
+
+    // Verify GET /api/v1/media returns uploaded item with EXIF
+    const mediaListRes = await app.request('/api/v1/media', { method: 'GET' }, mockEnv);
+    const mediaListBody = (await mediaListRes.json()) as any;
+    expect(mediaListBody.data).toHaveLength(1);
+    expect(mediaListBody.data[0].exif.fNumber).toBe(2);
+
+    // Soft-delete journal and ensure admin list does not include deleted item
+    await app.request(`/api/v1/journals/${journalBody.data.id}`, {
+      method: 'DELETE',
+      headers: authHeaders,
+    }, mockEnv);
+    const adminJournalsRes = await app.request('/api/v1/journals', { headers: authHeaders }, mockEnv);
+    const adminJournalsBody = (await adminJournalsRes.json()) as any;
+    expect(adminJournalsBody.data.find((j: any) => j.id === journalBody.data.id)).toBeUndefined();
   });
 });

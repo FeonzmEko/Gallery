@@ -62,7 +62,7 @@ export function mountTravelRoutes(
   router.get('/', async (c) => {
     const service = resolveService(c);
     const user = c.get('user');
-    const { cursor, limit, countryCode, tag } = c.req.query();
+    const { cursor, limit, countryCode, tag, search } = c.req.query();
 
     const result = await service.listTrips(
       {
@@ -70,9 +70,16 @@ export function mountTravelRoutes(
         limit: limit ? parseInt(limit, 10) : undefined,
         countryCode,
         tag,
+        search,
       },
       user
     );
+
+    if (!hasAdminPrivileges(user?.role)) {
+      c.header('Cache-Control', 'public, max-age=60, s-maxage=3600');
+    } else {
+      c.header('Cache-Control', 'private, no-cache, no-store');
+    }
 
     return c.json(
       successResponse(result.items, {

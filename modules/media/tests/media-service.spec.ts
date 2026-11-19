@@ -103,6 +103,7 @@ describe('MediaService', () => {
         upload_status TEXT NOT NULL DEFAULT 'pending',
         visibility TEXT NOT NULL DEFAULT 'public',
         original_filename TEXT,
+        exif_json TEXT,
         created_at INTEGER NOT NULL,
         deleted_at INTEGER
       );

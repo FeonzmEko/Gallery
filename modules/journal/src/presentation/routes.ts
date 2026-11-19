@@ -60,7 +60,7 @@ export function mountJournalRoutes(
   router.get('/', async (c) => {
     const service = resolveService(c);
     const user = c.get('user');
-    const { cursor, limit, mood, weather, tag } = c.req.query();
+    const { cursor, limit, mood, weather, tag, search } = c.req.query();
 
     const result = await service.listJournals(
       {
@@ -69,9 +69,16 @@ export function mountJournalRoutes(
         mood,
         weather,
         tag,
+        search,
       },
       user
     );
+
+    if (!hasAdminPrivileges(user?.role)) {
+      c.header('Cache-Control', 'public, max-age=60, s-maxage=3600');
+    } else {
+      c.header('Cache-Control', 'private, no-cache, no-store');
+    }
 
     return c.json(
       successResponse(result.items, {

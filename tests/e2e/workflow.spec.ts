@@ -154,6 +154,7 @@ describe('End-to-End Core Workflow Regression Suite (M6-2)', () => {
         upload_status TEXT NOT NULL DEFAULT 'pending',
         visibility TEXT NOT NULL DEFAULT 'public',
         original_filename TEXT,
+        exif_json TEXT,
         created_at INTEGER NOT NULL,
         deleted_at INTEGER
       );

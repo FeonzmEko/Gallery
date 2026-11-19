@@ -189,4 +189,35 @@ describe('API Client (@archive/web/src/shared/api/client)', () => {
       expect(err.code).toBe('NETWORK_ERROR');
     }
   });
+
+  it('fetches paginated data while preserving meta.pagination via getPaginated', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        success: true,
+        data: [{ id: 'e1' }, { id: 'e2' }],
+        meta: {
+          timestamp: 123456,
+          pagination: {
+            cursor: 'next_cursor_abc',
+            hasMore: true,
+            limit: 2,
+          },
+        },
+      }),
+    } as Response);
+
+    const res = await apiClient.getPaginated<{ id: string }>('/api/v1/entries', {
+      params: { limit: 2 },
+    });
+
+    expect(res.items).toEqual([{ id: 'e1' }, { id: 'e2' }]);
+    expect(res.pagination).toEqual({
+      cursor: 'next_cursor_abc',
+      hasMore: true,
+      limit: 2,
+    });
+  });
 });

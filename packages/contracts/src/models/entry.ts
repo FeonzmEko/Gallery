@@ -55,6 +55,8 @@ export interface EntryDto {
   deletedAt: number | null;
   tags?: string[];
   coverUrl?: string | null;
+  coverThumbUrl?: string | null;
+  commentCount?: number;
 }
 
 /**
