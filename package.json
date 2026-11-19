@@ -5,10 +5,16 @@
   "type": "module",
   "packageManager": "pnpm@11.1.3",
   "scripts": {
+    "dev": "pnpm --filter @archive/web dev",
+    "dev:web": "pnpm --filter @archive/web dev",
+    "dev:api": "wrangler dev --config workers/api/wrangler.jsonc",
     "build": "pnpm -r --filter=!personal-archive run build",
+    "deploy": "pnpm --filter @archive/web build && wrangler deploy --config workers/api/wrangler.jsonc",
     "test": "vitest run",
     "typecheck": "pnpm -r --filter=!personal-archive run typecheck",
     "db:generate": "pnpm --filter @archive/database db:generate",
+    "db:migrate:local": "wrangler d1 migrations apply personal_archive_db --local --config workers/api/wrangler.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply personal_archive_db --remote --config workers/api/wrangler.jsonc",
     "db:seed": "tsx packages/database/src/seed.ts",
     "lint": "echo \"Workspace lint check passed\""
   },
@@ -16,6 +22,7 @@
     "pnpm": "^12.21.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "wrangler": "^4.164.0"
   }
 }
