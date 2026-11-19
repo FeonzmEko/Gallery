@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'workers/*'
+  - 'modules/*'
+  - 'packages/*'
+
+allowBuilds:
+  esbuild: true
+  pnpm: true
+
+onlyBuiltDependencies:
+  - esbuild
