@@ -89,6 +89,16 @@ function extractToken(c: { req: { header: (name: string) => string | undefined }
 export function createApp(customStorage?: StoragePort): Hono<AppContext> {
   const app = new Hono<AppContext>();
 
+  // 0. Canonical apex redirect for www -> root domain (preserve origin.* for SaaS fallback)
+  app.use('*', async (c, next) => {
+    const url = new URL(c.req.url);
+    if (url.hostname === 'www.feonzmeko.qzz.io') {
+      url.hostname = 'feonzmeko.qzz.io';
+      return c.redirect(url.toString(), 301);
+    }
+    await next();
+  });
+
   // 1. Traceable Request ID & Services Injection Middleware
   app.use('*', async (c, next) => {
     const reqId = c.req.header('x-request-id') || `req_${generateUlid()}`;

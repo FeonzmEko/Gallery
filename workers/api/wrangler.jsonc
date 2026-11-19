@@ -25,7 +25,15 @@
   },
   "routes": [
     {
-      "pattern": "gallery.feonzmeko.qzz.io",
+      "pattern": "feonzmeko.qzz.io",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.feonzmeko.qzz.io",
+      "custom_domain": true
+    },
+    {
+      "pattern": "origin.feonzmeko.qzz.io",
       "custom_domain": true
     }
   ],
