@@ -1,14 +1,18 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/60 pb-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E1D8] pb-6">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-          <BookOpenIcon class="w-7 h-7 text-amber-400" />
-          <span>随想日记</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[11px] font-mono tracking-widest text-[#C25438] uppercase font-semibold">FIELD NOTES & ESSAYS</span>
+          <span class="text-[#D4CEBF]">&middot;</span>
+          <span class="text-[11px] font-mono text-[#9E9B93]">随笔手札</span>
+        </div>
+        <h1 class="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-[#1D1C1A] flex items-center gap-3">
+          <span>随想手札</span>
         </h1>
-        <p class="mt-1 text-sm text-slate-400">
-          Markdown 富文本札记 · 心情温度与生活随感留痕
+        <p class="mt-1 text-sm text-[#747169] font-serif italic">
+          “纸短情长，记录下此时此刻的心情温度与思绪沉淀。”
         </p>
       </div>
 
@@ -16,89 +20,93 @@
       <div v-if="authStore.isAdmin" class="flex items-center gap-2">
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           @click="openWriteModal"
         >
-          <PenSquareIcon class="w-4 h-4" />
-          <span>撰写日记</span>
+          <PenSquareIcon class="w-3.5 h-3.5" />
+          <span>撰写手札</span>
         </button>
       </div>
     </div>
 
     <!-- Loading Skeleton -->
-    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div
         v-for="i in 4"
         :key="i"
-        class="h-44 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse"
-      ></div>
+        class="h-44 rounded-2xl bg-white border border-[#E5E1D8] p-6 animate-pulse space-y-3"
+      >
+        <div class="h-4 bg-[#EFECE4] rounded w-1/3"></div>
+        <div class="h-6 bg-[#EFECE4] rounded w-2/3"></div>
+        <div class="h-12 bg-[#EFECE4]/60 rounded w-full"></div>
+      </div>
     </div>
 
     <!-- Empty State -->
     <div
       v-else-if="journals.length === 0"
-      class="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center"
+      class="rounded-2xl border border-dashed border-[#D4CEBF] bg-white/60 p-16 text-center"
     >
-      <BookOpenIcon class="w-12 h-12 text-slate-600 mx-auto mb-3" />
-      <h3 class="text-base font-semibold text-slate-200">暂无日记记录</h3>
-      <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+      <BookOpenIcon class="w-12 h-12 text-[#9E9B93] mx-auto mb-3" />
+      <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">暂无日记手札</h3>
+      <p class="text-xs text-[#747169] mt-1 max-w-sm mx-auto">
         纸短情长，记录下此刻的所思所想、天气与生活琐碎吧。
       </p>
       <button
         v-if="authStore.isAdmin"
         type="button"
-        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-amber-400 transition-colors"
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors"
         @click="openWriteModal"
       >
-        <PenSquareIcon class="w-4 h-4" />
-        <span>撰写第一篇随想日记</span>
+        <PenSquareIcon class="w-3.5 h-3.5" />
+        <span>撰写第一篇随想手札</span>
       </button>
     </div>
 
     <!-- Journal Cards Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <article
         v-for="journal in journals"
         :key="journal.id"
-        class="group rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-sm transition-all duration-200 hover:border-amber-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-amber-500/5 cursor-pointer flex flex-col justify-between"
+        class="group rounded-2xl border border-[#E5E1D8] bg-white p-6 shadow-sm transition-all duration-200 hover:border-[#D4CEBF] hover:shadow-md hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
         @click="readJournal(journal)"
       >
         <div>
           <!-- Top Row: Mood, Weather & Date -->
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2.5">
+          <div class="flex items-center justify-between text-xs text-[#747169] mb-3">
             <div class="flex items-center gap-2">
-              <span v-if="journal.mood" class="text-amber-400 font-medium flex items-center gap-1">
+              <span v-if="journal.mood" class="text-[#C25438] font-medium flex items-center gap-1 font-mono text-[11px] bg-[#FDF8F6] px-2 py-0.5 rounded border border-[#F0D5CD]">
                 <span>✨ {{ journal.mood }}</span>
               </span>
-              <span v-if="journal.weather" class="text-slate-400 flex items-center gap-1">
-                <span>• {{ journal.weather }}</span>
+              <span v-if="journal.weather" class="text-[#747169] flex items-center gap-1 font-mono text-[11px]">
+                <span>{{ journal.weather }}</span>
               </span>
             </div>
-            <span class="font-mono text-xs text-slate-400">
+            <span class="font-mono text-xs text-[#9E9B93]">
               {{ formatOccurredAt(journal.occurredAt) }}
             </span>
           </div>
 
           <!-- Title -->
-          <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+          <h3 class="font-serif text-lg sm:text-xl font-medium text-[#1D1C1A] group-hover:text-[#C25438] transition-colors leading-snug">
             {{ journal.title }}
           </h3>
 
           <!-- Summary / Excerpt -->
-          <p class="mt-2 text-xs text-slate-300 line-clamp-3 leading-relaxed">
+          <p class="mt-2.5 text-xs text-[#747169] line-clamp-3 leading-relaxed">
             {{ journal.summary || journal.contentMarkdown || '点击阅读日记全文...' }}
           </p>
         </div>
 
-        <!-- Bottom Row: Word count & Tags -->
-        <div class="mt-4 pt-3 border-t border-slate-800/70 flex items-center justify-between text-xs text-slate-500">
+        <!-- Bottom Row: Word count & Read prompt -->
+        <div class="mt-5 pt-3 border-t border-[#F0ECE1] flex items-center justify-between text-xs text-[#9E9B93] font-mono">
           <div class="flex items-center gap-1">
             <span v-if="journal.wordCount">{{ journal.wordCount }} 字</span>
             <span v-else-if="journal.contentMarkdown">{{ journal.contentMarkdown.length }} 字符</span>
           </div>
-          <span class="text-amber-400/90 group-hover:text-amber-300 text-[11px] font-medium flex items-center gap-1">
-            <span>阅读全文</span>
-            <span>→</span>
+          <span class="text-[#C25438] group-hover:translate-x-0.5 text-xs font-sans font-medium flex items-center gap-1 transition-transform">
+            <span>翻阅全文</span>
+            <span>&rarr;</span>
           </span>
         </div>
       </article>
@@ -109,23 +117,23 @@
       v-if="readingJournal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     >
-      <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md" @click="readingJournal = null"></div>
+      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="readingJournal = null"></div>
       <div
-        class="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden backdrop-blur-xl"
+        class="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] shadow-2xl overflow-hidden"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-slate-800/80 px-6 py-4">
+        <div class="flex items-center justify-between border-b border-[#E5E1D8] px-6 py-4 bg-white">
           <div>
-            <h3 class="text-base font-semibold text-white">{{ readingJournal.title }}</h3>
-            <div class="mt-1 flex items-center gap-2 text-xs text-slate-400">
-              <span class="text-amber-400">{{ readingJournal.mood || '生活记录' }}</span>
-              <span>•</span>
+            <h3 class="font-serif text-xl font-medium text-[#1D1C1A]">{{ readingJournal.title }}</h3>
+            <div class="mt-1 flex items-center gap-2 text-xs font-mono text-[#747169]">
+              <span class="text-[#C25438]">{{ readingJournal.mood || '生活手札' }}</span>
+              <span>&middot;</span>
               <span>{{ formatOccurredAt(readingJournal.occurredAt) }}</span>
             </div>
           </div>
           <button
             type="button"
-            class="rounded-xl p-2 text-slate-400 hover:text-white hover:bg-slate-800"
+            class="rounded-lg p-2 text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] transition-colors"
             @click="readingJournal = null"
           >
             ✕
@@ -133,8 +141,8 @@
         </div>
 
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto px-6 py-5 prose prose-invert prose-sm max-w-none text-slate-200 leading-relaxed space-y-4">
-          <p class="whitespace-pre-line text-sm text-slate-200 leading-relaxed font-normal">
+        <div class="flex-1 overflow-y-auto px-8 py-6 leading-relaxed space-y-4 bg-[#F7F5F0]">
+          <p class="whitespace-pre-line text-sm text-[#1D1C1A] leading-loose font-normal">
             {{ readingJournal.contentMarkdown || readingJournal.summary || '暂无详细正文内容。' }}
           </p>
         </div>
@@ -146,16 +154,16 @@
       v-if="isWriteModalOpen"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     >
-      <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md" @click="isWriteModalOpen = false"></div>
-      <div class="relative w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl p-6 overflow-hidden">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-          <h3 class="text-base font-semibold text-white flex items-center gap-2">
-            <PenSquareIcon class="w-5 h-5 text-amber-400" />
-            <span>撰写时光日记</span>
+      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="isWriteModalOpen = false"></div>
+      <div class="relative w-full max-w-xl rounded-2xl border border-[#E5E1D8] bg-white shadow-2xl p-6 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-[#E5E1D8] pb-4 mb-4">
+          <h3 class="font-serif text-lg font-medium text-[#1D1C1A] flex items-center gap-2">
+            <PenSquareIcon class="w-4 h-4 text-[#C25438]" />
+            <span>撰写时光手札</span>
           </h3>
           <button
             type="button"
-            class="text-slate-400 hover:text-white"
+            class="text-[#747169] hover:text-[#1D1C1A]"
             @click="isWriteModalOpen = false"
           >
             ✕
@@ -164,22 +172,22 @@
 
         <form @submit.prevent="handleCreateJournal" class="space-y-4 text-xs">
           <div>
-            <label class="block text-slate-300 mb-1 font-medium">日记标题 *</label>
+            <label class="block text-[#1D1C1A] mb-1 font-medium">手札标题 *</label>
             <input
               v-model="newJournal.title"
               type="text"
               required
               placeholder="例如：冬日初雪漫谈 / 岁末思绪"
-              class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              class="w-full rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#C25438]/60 focus:bg-white transition-colors"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-300 mb-1 font-medium">今日心情</label>
+              <label class="block text-[#1D1C1A] mb-1 font-medium">今日心情</label>
               <select
                 v-model="newJournal.mood"
-                class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                class="w-full rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] focus:outline-none focus:border-[#C25438]/60 focus:bg-white transition-colors"
               >
                 <option value="晴朗">✨ 晴朗 / 心情畅快</option>
                 <option value="宁静">🌿 宁静 / 专注冥想</option>
@@ -188,10 +196,10 @@
               </select>
             </div>
             <div>
-              <label class="block text-slate-300 mb-1 font-medium">天气状况</label>
+              <label class="block text-[#1D1C1A] mb-1 font-medium">天气状况</label>
               <select
                 v-model="newJournal.weather"
-                class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                class="w-full rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] focus:outline-none focus:border-[#C25438]/60 focus:bg-white transition-colors"
               >
                 <option value="晴朗">☀️ 晴朗温暖</option>
                 <option value="多云">⛅ 微风多云</option>
@@ -202,39 +210,39 @@
           </div>
 
           <div>
-            <label class="block text-slate-300 mb-1 font-medium">简要导言</label>
+            <label class="block text-[#1D1C1A] mb-1 font-medium">简要导言</label>
             <input
               v-model="newJournal.summary"
               type="text"
               placeholder="一句话概括今日的心境..."
-              class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              class="w-full rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#C25438]/60 focus:bg-white transition-colors"
             />
           </div>
 
           <div>
-            <label class="block text-slate-300 mb-1 font-medium">日记正文 (Markdown) *</label>
+            <label class="block text-[#1D1C1A] mb-1 font-medium">手札正文 (Markdown) *</label>
             <textarea
               v-model="newJournal.contentMarkdown"
               required
               rows="6"
               placeholder="书写这一天的点点滴滴、灵感与思考..."
-              class="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 leading-relaxed font-mono text-xs"
+              class="w-full rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] p-3 text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#C25438]/60 focus:bg-white leading-relaxed font-mono text-xs transition-colors"
             ></textarea>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E1D8]">
             <button
               type="button"
-              class="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+              class="px-4 py-2 rounded-xl text-[#747169] hover:text-[#1D1C1A]"
               @click="isWriteModalOpen = false"
             >
               取消
             </button>
             <button
               type="submit"
-              class="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-semibold hover:bg-amber-400 transition-colors"
+              class="px-5 py-2 rounded-xl bg-[#C25438] text-white font-medium hover:bg-[#A9442C] transition-colors shadow-sm"
             >
-              保存日记
+              保存手札
             </button>
           </div>
         </form>

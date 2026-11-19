@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Archive · 方案B · 白盒现代策展 (Cosmos × Are.na × ReadCV)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAFAFA;
+      --card-bg: #FFFFFF;
+      --fg: #0F0F0F;
+      --fg-muted: #666666;
+      --fg-subtle: #999999;
+      --border: #E5E5E5;
+      --border-subtle: #F0F0F0;
+      --accent: #000000;
+      --pill-bg: #F2F2F2;
+      --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "Geist Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      padding-bottom: 120px;
+    }
+
+    /* Top Floating Navigation Bar */
+    header.top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(250, 250, 250, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1360px;
+      margin: 0 auto;
+      height: 64px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      display: inline-block;
+    }
+    .nav-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Center Pill Navigation */
+    .pill-tabs {
+      display: flex;
+      align-items: center;
+      background: #EEEEEE;
+      padding: 4px;
+      border-radius: 30px;
+      gap: 2px;
+    }
+    .pill-tab {
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg-muted);
+      text-decoration: none;
+      border-radius: 20px;
+      transition: all 0.2s ease;
+    }
+    .pill-tab:hover { color: var(--fg); }
+    .pill-tab.active {
+      background: #FFFFFF;
+      color: var(--fg);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .time-indicator {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--fg-muted);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: #FFF;
+    }
+    .keyhole-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--fg-muted);
+      transition: all 0.2s;
+    }
+    .keyhole-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    /* Header Masthead */
+    .masthead {
+      max-width: 1360px;
+      margin: 48px auto 36px;
+      padding: 0 32px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .masthead-info h1 {
+      font-size: 32px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    .masthead-info p {
+      font-size: 14px;
+      color: var(--fg-muted);
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .filter-chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #FFF;
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+    .filter-chip.active {
+      background: var(--fg);
+      color: #FFF;
+      border-color: var(--fg);
+    }
+
+    /* Exhibition Masonry / Bento Grid */
+    .exhibition-grid {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+
+    /* Grid Items */
+    .grid-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .grid-item:hover {
+      border-color: #BDBDBD;
+      transform: translateY(-2px);
+    }
+
+    .col-span-8 { grid-column: span 8; }
+    .col-span-4 { grid-column: span 4; }
+    .col-span-6 { grid-column: span 6; }
+    .col-span-12 { grid-column: span 12; }
+
+    /* Visual Exhibition Frame */
+    .artwork-frame {
+      width: 100%;
+      height: 380px;
+      background: #EBEBEB;
+      position: relative;
+      overflow: hidden;
+    }
+    .artwork-frame svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .optical-hud {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      background: rgba(15, 15, 15, 0.75);
+      backdrop-filter: blur(8px);
+      color: #FFF;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0.9;
+    }
+
+    .card-meta-bar {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .card-meta-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .meta-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+    }
+    .meta-cat {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--pill-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--fg-muted);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--fg);
+      letter-spacing: -0.01em;
+    }
+    .card-caption {
+      font-size: 13px;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* Note Card Specimen */
+    .note-specimen {
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .note-specimen .note-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+      margin-bottom: 16px;
+    }
+    .note-specimen h3 {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .note-specimen p {
+      font-size: 13px;
+      color: var(--fg-muted);
+      line-height: 1.65;
+    }
+    .note-footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-subtle);
+    }
+
+    /* Travel Route Map Card */
+    .route-specimen {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .route-canvas {
+      width: 100%;
+      height: 180px;
+      background: #F3F3F3;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Direction Badge */
+    .direction-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #000000;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 100;
+    }
+    .badge-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10B981;
+    }
+    .badge-info h4 {
+      font-size: 13px;
+      font-weight: 500;
+      color: #FFF;
+    }
+    .badge-info p {
+      font-size: 11px;
+      color: #999;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation -->
+  <header class="top-nav">
+    <div class="nav-inner">
+      <div class="brand-group">
+        <span class="brand-title">
+          <span class="status-dot"></span>
+          PERSONAL ARCHIVE
+        </span>
+        <span class="nav-breadcrumb">/ INDEX 2018–2026</span>
+      </div>
+
+      <nav class="pill-tabs">
+        <a href="#feed" class="pill-tab active">Chronicle</a>
+        <a href="#gallery" class="pill-tab">Exhibition</a>
+        <a href="#notes" class="pill-tab">Field Notes</a>
+        <a href="#expedition" class="pill-tab">Atlas Map</a>
+      </nav>
+
+      <div class="nav-actions">
+        <span class="time-indicator">16:42:09 UTC+8</span>
+        <button class="keyhole-btn" title="Archivist Keyhole (Ctrl+Shift+L)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2l-2 2m-1.5 1.5L10 13l-4 4-2-2 4-4 7.5-7.5z"/>
+            <circle cx="15.5" cy="8.5" r="3.5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Masthead Section -->
+  <section class="masthead">
+    <div class="masthead-info">
+      <h1>Curated Stream & Observations</h1>
+      <p>A living repository of photographs, expeditions, and unfiltered thoughts arranged by occurrence.</p>
+    </div>
+    <div class="filter-pills">
+      <button class="filter-chip active">All [248]</button>
+      <button class="filter-chip">Photography [86]</button>
+      <button class="filter-chip">Essays [34]</button>
+      <button class="filter-chip">Travel Route [12]</button>
+    </div>
+  </section>
+
+  <!-- Exhibition Bento Grid -->
+  <main class="exhibition-grid">
+
+    <!-- Item 1: Large Featured Photography Card (8 Cols) -->
+    <div class="grid-item col-span-8">
+      <div class="artwork-frame">
+        <svg viewBox="0 0 880 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="880" height="380" fill="#18181A"/>
+          <!-- Architecture geometry in monochrome & wood tones -->
+          <polygon points="120,40 760,40 680,340 200,340" fill="#252528"/>
+          <line x1="200" y1="340" x2="680" y2="340" stroke="#E5E5E5" stroke-width="1"/>
+          <!-- Warm daylight beam -->
+          <polygon points="440,40 620,40 560,340 380,340" fill="#C49B66" opacity="0.35"/>
+          <circle cx="480" cy="190" r="4" fill="#FFFFFF"/>
+          <text x="440" y="360" font-family="'Geist Mono', monospace" font-size="11" fill="#777" text-anchor="middle">
+            FIG. 01 · TSUKIJI BRUTALIST AUDITORIUM · TOKYO
+          </text>
+        </svg>
+        <div class="optical-hud">
+          <span>LEICA M11 · SUMMILUX-M 35MM F/1.4 ASPH</span>
+          <span>1/500S · F/2.0 · ISO 64 · OCCURRED 2024.10.18</span>
+        </div>
+      </div>
+      <div class="card-meta-bar">
+        <div class="card-meta-header">
+          <span class="meta-time">2024-10-18 · TOKYO, JAPAN</span>
+          <span class="meta-cat">Exhibition Plate</span>
+        </div>
+        <h2 class="card-title">光之切片：筑地清水混凝土讲堂的晨间投射</h2>
+        <p class="card-caption">低倾角斜阳穿透开敞式檐口，在深灰色骨料表面切出极锐利的几何阴影。记录于早晨八点三十分。</p>
+      </div>
+    </div>
+
+    <!-- Item 2: Field Note Specimen (4 Cols) -->
+    <div class="grid-item col-span-4">
+      <div class="note-specimen">
+        <div>
+          <div class="note-date">ENTRY #089 · 2024.08.02</div>
+          <h3>持久性记忆设计与独立数字主权</h3>
+          <p>
+            我们这一代人的大部分记忆正寄生在中心化的社交网络服务器中。一旦平台调整算法或倒闭，那些生活记录便灰飞烟灭。
+            构建这套个人档案的核心目标，是用最轻量的标准和纯文本将控制权彻底赎回。
+          </p>
+        </div>
+        <div class="note-footer">
+          <span>842 WORDS</span>
+          <span>STATUS: IMMUTABLE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item 3: Travel Polyline Card (6 Cols) -->
+    <div class="grid-item col-span-6">
+      <div class="route-specimen">
+        <div class="card-meta-header">
+          <span class="meta-time">2023.11.14 – 11.21 · REYKJAVIK TO VÍK</span>
+          <span class="meta-cat">Expedition Track</span>
+        </div>
+        <h3 class="card-title">冰岛一号公路南线：780 公里风暴与苔原航迹</h3>
+        <div class="route-canvas">
+          <svg viewBox="0 0 600 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="600" height="180" fill="#F0F0F0"/>
+            <!-- Coastline contour -->
+            <path d="M0 120 C150 140 300 90 450 130 C520 150 580 110 600 120 V180 H0 Z" fill="#E2E2E2"/>
+            <!-- Polyline GPS track -->
+            <path d="M60 80 Q160 50 260 75 T420 110 T540 85" stroke="#000000" stroke-width="2.5" fill="none" stroke-dasharray="4 2"/>
+            <!-- Pin Waypoints -->
+            <circle cx="60" cy="80" r="4" fill="#000000"/>
+            <text x="60" y="105" font-family="'Geist Mono'" font-size="10" fill="#666">Reykjavík</text>
+            <circle cx="260" cy="75" r="4" fill="#000000"/>
+            <text x="260" y="60" font-family="'Geist Mono'" font-size="10" fill="#666">Skógafoss</text>
+            <circle cx="540" cy="85" r="4" fill="#10B981"/>
+            <text x="540" y="110" font-family="'Geist Mono'" font-size="10" fill="#000" font-weight="600">Vík í Mýrdal</text>
+          </svg>
+        </div>
+        <p class="card-caption">全线记录 8 个航迹锚点，126 张 RAW 图像，最高风速 28m/s。</p>
+      </div>
+    </div>
+
+    <!-- Item 4: Secondary Photo Card (6 Cols) -->
+    <div class="grid-item col-span-6">
+      <div class="artwork-frame" style="height: 240px;">
+        <svg viewBox="0 0 600 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="600" height="240" fill="#202226"/>
+          <!-- Mountains and mist silhouette -->
+          <polygon points="80,240 240,80 400,240" fill="#32363D"/>
+          <polygon points="260,240 420,50 580,240" fill="#282C32"/>
+          <path d="M0 180 Q300 160 600 175" stroke="#7A8494" stroke-width="2" opacity="0.4"/>
+          <text x="300" y="215" font-family="'Geist Mono'" font-size="11" fill="#8892A0" text-anchor="middle">
+            FIG. 02 · DOLOMITES ALPINE RIDGE · ITALY
+          </text>
+        </svg>
+        <div class="optical-hud">
+          <span>SONY A7R V · FE 70-200MM F/2.8 GM II</span>
+          <span>1/1000S · F/5.6 · ISO 100</span>
+        </div>
+      </div>
+      <div class="card-meta-bar">
+        <div class="card-meta-header">
+          <span class="meta-time">2023.07.28 · ALTO ADIGE, ITALY</span>
+          <span class="meta-cat">Landscape</span>
+        </div>
+        <h3 class="card-title">多洛米蒂刀刃山：白云岩风蚀断崖与阿尔卑斯冷杉</h3>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Direction Indicator Tag -->
+  <div class="direction-badge">
+    <div class="badge-icon"></div>
+    <div class="badge-info">
+      <h4>方案 B · 现实标杆迁移 (Cosmos × Are.na × ReadCV)</h4>
+      <p>纯白策展盒 · 现代主义栅格 · 悬浮 HUD 参数 · 极致克制</p>
+    </div>
+  </div>
+
+</body>
+</html>

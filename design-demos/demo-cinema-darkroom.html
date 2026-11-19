@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Archive · 方案C · 沉浸黑房长廊 (Cinema Darkroom × Leica)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0B0D;
+      --bg-panel: #111316;
+      --bg-card: #16181D;
+      --border: #242730;
+      --border-focus: #3A3E4D;
+      --text-main: #EDEDED;
+      --text-muted: #8E94A0;
+      --text-dim: #545966;
+      --amber: #E5A93C;
+      --amber-glow: rgba(229, 169, 60, 0.12);
+      --leica-red: #D8292F;
+      --font-display: "Space Grotesk", sans-serif;
+      --font-serif: "Cinzel", serif;
+      --font-mono: "JetBrains Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-display);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Film Room Watermark */
+    .year-watermark {
+      position: fixed;
+      right: 4vw;
+      top: 15vh;
+      font-family: var(--font-serif);
+      font-size: 24vw;
+      color: rgba(255, 255, 255, 0.02);
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+      line-height: 0.8;
+      font-weight: 600;
+    }
+
+    /* Outer Shell Layout */
+    .cinema-layout {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Left Archival Console Pane */
+    aside.dark-console {
+      width: 340px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand-cluster {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .red-dot-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .leica-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--leica-red);
+      box-shadow: 0 0 10px rgba(216, 41, 47, 0.5);
+    }
+    .brand-cluster h1 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      color: #FFF;
+    }
+    .film-gauge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+    }
+
+    /* Chrono Tape Ruler on Console */
+    .tape-ruler-module {
+      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .ruler-header {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .ruler-stops {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ruler-stop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    .ruler-stop:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border);
+      color: #FFF;
+    }
+    .ruler-stop.active {
+      background: rgba(229, 169, 60, 0.08);
+      border-color: var(--amber);
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .ruler-stop .stop-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    /* Console Footer Telemetry */
+    .console-telemetry {
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .telemetry-row span.val {
+      color: var(--text-muted);
+    }
+
+    /* Main Showcase Stream */
+    main.dark-reel {
+      flex: 1;
+      padding: 48px 56px 120px;
+      max-width: 1080px;
+    }
+
+    .reel-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 48px;
+    }
+    .reel-header h2 {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #FFF;
+    }
+    .reel-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .reel-filter-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-panel);
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .reel-tab {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      color: var(--text-muted);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    .reel-tab.active {
+      background: var(--bg-card);
+      color: var(--amber);
+      font-weight: 600;
+    }
+
+    /* Darkroom Slide Mount Card */
+    .slide-mount-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 48px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-mount-card:hover {
+      border-color: var(--border-focus);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.7), 0 0 20px var(--amber-glow);
+      transform: translateY(-2px);
+    }
+
+    /* Film Stock Contact Strip Top Bar */
+    .contact-strip {
+      background: #0E0F12;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .contact-strip .sprocket-code {
+      color: var(--amber);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    /* Large Cinematic Visual Canvas */
+    .film-canvas {
+      width: 100%;
+      height: 440px;
+      background: #050507;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .film-canvas svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Optical Instrument Dashboard HUD */
+    .optical-dashboard {
+      background: #0E0F12;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .gauge-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .gauge-label {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .gauge-val {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .gauge-val.highlight {
+      color: var(--amber);
+    }
+
+    /* Story & Body */
+    .slide-body {
+      padding: 28px 32px;
+    }
+    .slide-body h3 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #FFF;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+    .slide-body p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* Direction Badge */
+    .direction-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111316;
+      border: 1px solid var(--border-focus);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 100;
+    }
+    .badge-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+    .badge-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFF;
+    }
+    .badge-info p {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Year Watermark -->
+  <div class="year-watermark">2024</div>
+
+  <div class="cinema-layout">
+    
+    <!-- Left Dark Console -->
+    <aside class="dark-console">
+      <div class="brand-cluster">
+        <div class="red-dot-brand">
+          <div class="leica-dot"></div>
+          <h1>CHRONICLE</h1>
+        </div>
+        <span class="film-gauge">35MM MASTER ARCHIVE · OCCURRED AT</span>
+      </div>
+
+      <div class="tape-ruler-module">
+        <div class="ruler-header">TEMPORAL TAPE RULER</div>
+        <div class="ruler-stops">
+          <a href="#2024" class="ruler-stop active">
+            <span>2024 · AUTUMN REEL</span>
+            <span class="stop-tag">#042–#089</span>
+          </a>
+          <a href="#2023" class="ruler-stop">
+            <span>2023 · NORDIC EXPEDITION</span>
+            <span class="stop-tag">#018–#041</span>
+          </a>
+          <a href="#2022" class="ruler-stop">
+            <span>2022 · URBAN CHRONICLE</span>
+            <span class="stop-tag">#001–#017</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="console-telemetry">
+        <div class="telemetry-row">
+          <span>STORE STATUS</span>
+          <span class="val">R2 REPLICATED</span>
+        </div>
+        <div class="telemetry-row">
+          <span>ACCESS MODE</span>
+          <span class="val">PUBLIC EXHIBIT</span>
+        </div>
+        <div class="telemetry-row">
+          <span>EXIF HUD ENGINE</span>
+          <span class="val">ZERO-DEP BINARY</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Darkroom Reel -->
+    <main class="dark-reel">
+      <header class="reel-header">
+        <div>
+          <h2>Master Darkroom Reel</h2>
+          <p>高保真胶片裱框 · 光学参数仪表盘 · 沉浸暗场叙事</p>
+        </div>
+        <div class="reel-filter-tabs">
+          <button class="reel-tab active">ROLL 01</button>
+          <button class="reel-tab">EXPEDITION</button>
+          <button class="reel-tab">JOURNAL</button>
+        </div>
+      </header>
+
+      <!-- Card 1: Kyoto Autumn Film Slide -->
+      <article class="slide-mount-card">
+        <div class="contact-strip">
+          <span class="sprocket-code">KODAK PORTRA 400 · EXP 24A</span>
+          <span>OCCURRED: 2024.10.18 · 16:42 JST</span>
+        </div>
+
+        <div class="film-canvas">
+          <!-- Artistic Darkroom Composition: Kyoto Temple -->
+          <svg viewBox="0 0 960 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="960" height="440" fill="#0C0D10"/>
+            <!-- Architecture Pillar & Frame -->
+            <rect x="80" y="40" width="800" height="360" stroke="#1F2229" stroke-width="2"/>
+            <line x1="80" y1="240" x2="880" y2="240" stroke="#1F2229" stroke-width="2"/>
+            <line x1="480" y1="40" x2="480" y2="400" stroke="#1F2229" stroke-width="2"/>
+            <!-- Lacquer Glow & Warm Maple Leaves -->
+            <ellipse cx="320" cy="180" rx="180" ry="80" fill="#993822" opacity="0.6"/>
+            <ellipse cx="640" cy="190" rx="160" ry="70" fill="#D4782A" opacity="0.5"/>
+            <!-- Reflection Mirror -->
+            <rect x="80" y="240" width="800" height="160" fill="#08080A" opacity="0.9"/>
+            <ellipse cx="320" cy="300" rx="160" ry="30" fill="#993822" opacity="0.3"/>
+            <ellipse cx="640" cy="310" rx="140" ry="25" fill="#D4782A" opacity="0.25"/>
+            <!-- Grain Texture Simulation & Target Crosshair -->
+            <circle cx="480" cy="240" r="12" stroke="#E5A93C" stroke-width="1" stroke-dasharray="2 2"/>
+            <circle cx="480" cy="240" r="2" fill="#E5A93C"/>
+          </svg>
+        </div>
+
+        <!-- Optical Instrument Dashboard -->
+        <div class="optical-dashboard">
+          <div class="gauge-item">
+            <span class="gauge-label">CAMERA BODY</span>
+            <span class="gauge-val">LEICA M11</span>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">FOCAL LENGTH</span>
+            <span class="gauge-val">35MM SUMMILUX</span>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">APERTURE</span>
+            <span class="gauge-val highlight">f/1.4 ASPH</span>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">SHUTTER</span>
+            <span class="gauge-val">1/250 SEC</span>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">ISO SENSITIVITY</span>
+            <span class="gauge-val highlight">ISO 64</span>
+          </div>
+        </div>
+
+        <div class="slide-body">
+          <h3>琉璃光院：雨止初晴的木格漆案反照</h3>
+          <p>
+            木质长廊泛着深褐色的冷光，落叶静止在石阶青苔边缘。黑室与光束在此交汇，光圈全开时焦外呈现出极其柔和的油润弥散。
+          </p>
+        </div>
+      </article>
+
+      <!-- Card 2: Field Journal in Dark Theme -->
+      <article class="slide-mount-card">
+        <div class="contact-strip">
+          <span class="sprocket-code">DISPATCH NOTE #041</span>
+          <span>OCCURRED: 2024.08.02 · 22:15 CST</span>
+        </div>
+        <div class="slide-body">
+          <h3>论记忆载体的“独立自持”：为什么拒绝中心化依赖</h3>
+          <p>
+            我们把数字生活的副本存放在这里，不仅仅是为了展示，更是为了建造一座抵抗时间侵蚀的个人避难所。
+            没有算法推荐，没有广告干扰，只有最纯粹的时间刻度与生命瞬间。
+          </p>
+        </div>
+      </article>
+
+    </main>
+  </div>
+
+  <!-- Direction Badge -->
+  <div class="direction-badge">
+    <div class="badge-icon"></div>
+    <div class="badge-info">
+      <h4>方案 C · 沉浸黑房暗场 (Cinema Darkroom × Leica)</h4>
+      <p>黑曜石暗调 · 35mm 胶片画框 · 光学仪表盘 HUD · 电影级影调</p>
+    </div>
+  </div>
+
+</body>
+</html>

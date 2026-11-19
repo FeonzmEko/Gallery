@@ -1,211 +1,167 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row relative overflow-x-hidden">
+  <div class="min-h-screen bg-[#F7F5F0] text-[#1D1C1A] flex flex-col relative selection:bg-[#C25438]/20 selection:text-[#C25438]">
     <!-- ========================================================= -->
-    <!-- DESKTOP SIDEBAR (Visible on md and up)                    -->
+    <!-- TOP STICKY CAPSULE NAVIGATION (Bento Header)              -->
     <!-- ========================================================= -->
-    <aside
-      class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30 border-r border-slate-800/80 bg-slate-900/80 backdrop-blur-xl"
-    >
-      <!-- Top Brand Header -->
-      <div class="flex h-16 items-center justify-between px-6 border-b border-slate-800/60">
+    <header class="sticky top-0 z-40 bg-[#F7F5F0]/90 backdrop-blur-md border-b border-[#E5E1D8] transition-all">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        <!-- Left: Archival Brand Mark -->
         <RouterLink to="/" class="flex items-center gap-3 group">
           <div
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-emerald-400 text-slate-950 font-bold shadow-lg shadow-sky-500/10 group-hover:scale-105 transition-transform"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-[#E5E1D8] shadow-sm text-[#C25438] group-hover:border-[#C25438]/50 group-hover:scale-105 transition-all"
           >
-            <ArchiveIcon class="w-5 h-5" />
+            <ArchiveIcon class="w-4 h-4" />
           </div>
-          <div>
-            <span class="font-bold text-sm tracking-tight text-white block group-hover:text-sky-300 transition-colors">
-              Archive
-            </span>
-            <span class="text-[10px] text-slate-400 tracking-wider font-mono block">
-              PERSONAL STREAM
-            </span>
-          </div>
-        </RouterLink>
-        <span
-          class="rounded-full bg-slate-800/90 px-2 py-0.5 text-[10px] font-mono text-slate-400 border border-slate-700/50"
-        >
-          v0.1
-        </span>
-      </div>
-
-      <!-- Navigation Links -->
-      <nav class="flex-1 space-y-1.5 px-3 py-6 overflow-y-auto">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all"
-          :class="[
-            isNavActive(item)
-              ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30 shadow-sm'
-              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent',
-          ]"
-        >
-          <component
-            :is="item.icon"
-            class="w-5 h-5 transition-transform group-hover:scale-110"
-            :class="isNavActive(item) ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'"
-          />
-          <span>{{ item.title }}</span>
-          <span
-            v-if="isNavActive(item)"
-            class="ml-auto h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"
-          ></span>
-        </RouterLink>
-      </nav>
-
-      <!-- Desktop Sidebar Footer / Auth Status -->
-      <div class="p-4 border-t border-slate-800/60 bg-slate-950/40">
-        <!-- If Admin: Show privileges and quick action -->
-        <div v-if="authStore.isAdmin" class="space-y-3">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col">
             <div class="flex items-center gap-2">
-              <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span class="font-serif font-medium text-base tracking-tight text-[#1D1C1A] group-hover:text-[#C25438] transition-colors">
+                Personal Archive
               </span>
-              <span class="text-xs font-semibold text-emerald-400">已解锁管理员</span>
+              <span
+                class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider bg-[#EFECE4] text-[#747169] border border-[#E5E1D8]"
+              >
+                VOL. I
+              </span>
             </div>
+            <span class="text-[10px] text-[#9E9B93] font-mono tracking-wider flex items-center gap-1.5">
+              <span
+                class="w-1.5 h-1.5 rounded-full"
+                :class="authStore.isAdmin ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-[#C25438]'"
+              ></span>
+              {{ authStore.isAdmin ? '已解锁管理员' : '公开只读展览 · OCCURRED AT' }}
+            </span>
+          </div>
+        </RouterLink>
+
+        <!-- Center: Floating Pill Navigation (Visible on md and up) -->
+        <nav class="hidden md:flex items-center bg-[#EFECE4] p-1 rounded-full border border-[#E5E1D8] gap-1 shadow-inner">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.path"
+            :to="item.path"
+            class="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium transition-all"
+            :class="[
+              isNavActive(item)
+                ? 'bg-white text-[#1D1C1A] font-semibold shadow-sm border border-[#E5E1D8]'
+                : 'text-[#747169] hover:text-[#1D1C1A] hover:bg-white/50',
+            ]"
+          >
+            <component
+              :is="item.icon"
+              class="w-3.5 h-3.5 transition-colors"
+              :class="isNavActive(item) ? 'text-[#C25438]' : 'text-[#9E9B93]'"
+            />
+            <span>{{ item.title }}</span>
+            <span
+              v-if="isNavActive(item)"
+              class="w-1.5 h-1.5 rounded-full bg-[#C25438]"
+            ></span>
+          </RouterLink>
+        </nav>
+
+        <!-- Right: Clock, Admin Keyhole & Quick Action -->
+        <div class="flex items-center gap-3">
+          <!-- Time indicator -->
+          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/70 border border-[#E5E1D8] font-mono text-[11px] text-[#747169]">
+            <ClockIcon class="w-3 h-3 text-[#9E9B93]" />
+            <span>{{ liveTimeString }}</span>
+          </div>
+
+          <!-- If Admin: User Pill + Logout -->
+          <div v-if="authStore.isAdmin" class="flex items-center gap-2">
+            <span class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-xs">
+              <ShieldCheckIcon class="w-3.5 h-3.5 text-emerald-600" />
+              <span>{{ authStore.user?.displayName || 'Archivist' }}</span>
+            </span>
             <button
               type="button"
-              class="text-xs text-slate-400 hover:text-red-400 transition-colors"
+              class="flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-[#E5E1D8] text-[#747169] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
               @click="handleLogout"
-              title="退出登录"
+              title="退出管理员身份"
             >
-              <LogOutIcon class="w-4 h-4" />
+              <LogOutIcon class="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div class="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-2.5">
-            <div class="text-[11px] text-slate-300 font-medium truncate">
-              {{ authStore.user?.displayName || authStore.user?.email || 'Archivist Owner' }}
-            </div>
-            <div class="mt-1 flex items-center gap-1 text-[10px] text-emerald-400/90 font-mono">
-              <ShieldCheckIcon class="w-3 h-3" />
-              <span>全量写与直传已就绪</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- If Guest: Discreet Guest Indicator + Secret Door Trigger -->
-        <div v-else class="flex items-center justify-between">
-          <div class="flex items-center gap-2 text-xs text-slate-400">
-            <span class="h-1.5 w-1.5 rounded-full bg-slate-600"></span>
-            <span>访客公开只读</span>
-          </div>
+          <!-- If Guest: Secret Keyhole Icon -->
           <button
+            v-else
             type="button"
-            class="rounded-lg p-1.5 text-slate-500 hover:text-sky-400 hover:bg-slate-800/80 transition-colors"
+            class="flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-[#E5E1D8] text-[#747169] hover:text-[#C25438] hover:border-[#C25438]/40 hover:bg-[#FDF8F6] transition-all shadow-sm"
             @click="authStore.openLoginModal"
-            title="管理员暗门 (Ctrl+Shift+L)"
+            title="管理员暗门 (快捷键: Ctrl + Shift + L)"
           >
             <KeyRoundIcon class="w-4 h-4" />
           </button>
         </div>
-      </div>
-    </aside>
 
-    <!-- ========================================================= -->
-    <!-- MOBILE TOP BAR (Visible only on < md)                     -->
-    <!-- ========================================================= -->
-    <header
-      class="md:hidden sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-800/80 bg-slate-900/90 px-4 backdrop-blur-xl"
-    >
-      <RouterLink to="/" class="flex items-center gap-2.5">
-        <div
-          class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-emerald-400 text-slate-950 font-bold shadow"
-        >
-          <ArchiveIcon class="w-4 h-4" />
-        </div>
-        <span class="font-bold text-sm tracking-tight text-white">Archive</span>
-      </RouterLink>
-
-      <div class="flex items-center gap-2">
-        <!-- Admin indicator or Guest secret door -->
-        <button
-          v-if="authStore.isAdmin"
-          type="button"
-          class="flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-xs text-emerald-400"
-          @click="authStore.openLoginModal"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-          <span class="text-[11px] font-medium">管理员</span>
-        </button>
-        <button
-          v-else
-          type="button"
-          class="rounded-lg p-1.5 text-slate-500 hover:text-slate-300 transition-colors"
-          @click="authStore.openLoginModal"
-          title="管理员暗门"
-        >
-          <KeyRoundIcon class="w-4 h-4" />
-        </button>
       </div>
     </header>
 
     <!-- ========================================================= -->
-    <!-- MAIN CONTENT VIEWPORT                                     -->
+    <!-- MAIN CONTENT VIEWPORT (Bento Canvas)                      -->
     <!-- ========================================================= -->
-    <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
-      <!-- Main Content Container -->
-      <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto pb-24 md:pb-12">
-        <slot>
-          <RouterView />
-        </slot>
-      </main>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-28 md:pb-16">
+      <slot>
+        <RouterView />
+      </slot>
+    </main>
 
-      <!-- Desktop Footer -->
-      <footer
-        class="hidden md:flex border-t border-slate-800/60 py-6 px-8 text-xs text-slate-500 items-center justify-between max-w-6xl w-full mx-auto"
-      >
-        <div class="flex items-center gap-2">
-          <span>Personal Archive &copy; 2026</span>
+    <!-- ========================================================= -->
+    <!-- DESKTOP EDITORIAL FOOTER                                  -->
+    <!-- ========================================================= -->
+    <footer class="hidden md:block border-t border-[#E5E1D8] bg-[#F7F5F0] py-8 text-xs text-[#747169]">
+      <div class="max-w-7xl mx-auto px-8 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="font-serif italic text-sm text-[#1D1C1A]">Personal Archive</span>
           <span>&middot;</span>
-          <span>自主持久化数字档案系统</span>
+          <span>独立自持数字长廊与记忆刻度</span>
+          <span>&middot;</span>
+          <span class="font-mono text-[#9E9B93]">OCCURRED AT 排序</span>
         </div>
-        <button
-          type="button"
-          class="hover:text-slate-400 transition-colors font-mono text-[11px]"
-          @click="authStore.openLoginModal"
-        >
-          {{ authStore.isAdmin ? 'Admin Console' : 'Archivist Gateway' }}
-        </button>
-      </footer>
-    </div>
+        <div class="flex items-center gap-4">
+          <span class="font-mono text-[11px] text-[#9E9B93]">EST. 2018–2026</span>
+          <button
+            type="button"
+            class="hover:text-[#C25438] transition-colors font-mono text-[11px] underline decoration-[#E5E1D8] underline-offset-4"
+            @click="authStore.openLoginModal"
+          >
+            {{ authStore.isAdmin ? '管理控制台' : 'Archivist Gateway' }}
+          </button>
+        </div>
+      </div>
+    </footer>
 
     <!-- ========================================================= -->
     <!-- MOBILE BOTTOM NAVIGATION (Visible only on < md)           -->
     <!-- ========================================================= -->
-    <nav
-      class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/80 bg-slate-900/95 backdrop-blur-xl pb-safe"
-    >
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#E5E1D8] bg-[#F7F5F0]/95 backdrop-blur-xl pb-safe shadow-lg">
       <div class="flex h-16 items-center justify-around px-2">
         <RouterLink
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex flex-col items-center justify-center flex-1 py-1 transition-colors relative"
+          class="flex flex-col items-center justify-center flex-1 py-1 transition-all relative"
           :class="[
             isNavActive(item)
-              ? 'text-sky-400 font-semibold'
-              : 'text-slate-400 hover:text-slate-200 font-normal',
+              ? 'text-[#C25438] font-semibold'
+              : 'text-[#747169] hover:text-[#1D1C1A]',
           ]"
         >
           <component :is="item.icon" class="w-5 h-5 mb-1" />
           <span class="text-[10px] tracking-tight">{{ item.title }}</span>
           <span
             v-if="isNavActive(item)"
-            class="absolute bottom-1 h-0.5 w-6 rounded-full bg-sky-400"
+            class="absolute bottom-1 h-1 w-5 rounded-full bg-[#C25438]"
           ></span>
         </RouterLink>
 
-        <!-- 5th Mobile Tab: Admin / Secret Entry -->
+        <!-- 5th Mobile Tab: Secret Entry -->
         <button
           type="button"
           class="flex flex-col items-center justify-center flex-1 py-1 transition-colors"
-          :class="authStore.isAdmin ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'"
+          :class="authStore.isAdmin ? 'text-emerald-700' : 'text-[#747169] hover:text-[#C25438]'"
           @click="authStore.openLoginModal"
         >
           <ShieldCheckIcon v-if="authStore.isAdmin" class="w-5 h-5 mb-1" />
@@ -232,7 +188,7 @@
       >
         <button
           type="button"
-          class="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-slate-950 shadow-xl shadow-sky-500/25 active:scale-95 transition-transform"
+          class="flex h-12 w-12 items-center justify-center rounded-full bg-[#C25438] text-white shadow-xl shadow-[#C25438]/30 active:scale-95 transition-transform"
           title="发布记录"
         >
           <PlusIcon class="w-6 h-6" />
@@ -249,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, RouterLink, RouterView } from 'vue-router';
 import {
   Archive as ArchiveIcon,
@@ -277,10 +233,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { title: '时间线', path: '/', altPaths: ['/timeline'], icon: ClockIcon },
-  { title: '画廊', path: '/media', icon: ImageIcon },
-  { title: '日记', path: '/journal', icon: BookOpenIcon },
-  { title: '足迹', path: '/travel', icon: CompassIcon },
+  { title: '时光编年', path: '/', altPaths: ['/timeline'], icon: ClockIcon },
+  { title: '影像长廊', path: '/media', icon: ImageIcon },
+  { title: '随想手札', path: '/journal', icon: BookOpenIcon },
+  { title: '足迹漫游', path: '/travel', icon: CompassIcon },
 ];
 
 function isNavActive(item: NavItem): boolean {
@@ -292,4 +248,25 @@ function isNavActive(item: NavItem): boolean {
 async function handleLogout(): Promise<void> {
   await authStore.logout();
 }
+
+// Live Time Display
+const liveTimeString = ref('');
+let timer: number | null = null;
+
+function updateLiveTime() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  liveTimeString.value = `${hours}:${minutes}:${seconds} CST`;
+}
+
+onMounted(() => {
+  updateLiveTime();
+  timer = window.setInterval(updateLiveTime, 1000);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>

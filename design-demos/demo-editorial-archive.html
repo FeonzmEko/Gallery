@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Archive · 方案A · 典雅记忆之书 (Warm Archival Editorial)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #F7F5F0;
+      --bg-card: #FFFFFF;
+      --bg-accent: #EFECE4;
+      --text-main: #1D1C1A;
+      --text-muted: #747169;
+      --text-dim: #9E9B93;
+      --line: #E5E1D8;
+      --line-strong: #D4CEBF;
+      --terracotta: #C25438;
+      --terracotta-soft: rgba(194, 84, 56, 0.08);
+      --olive: #4E6053;
+      --serif: "Newsreader", "Songti SC", "SimSun", serif;
+      --sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "JetBrains Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Left Sidebar */
+    aside.archive-sidebar {
+      width: 280px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      border-right: 1px solid var(--line);
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--bg-page);
+      flex-shrink: 0;
+    }
+
+    .brand-mark {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .brand-mark .tagline {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--terracotta);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .brand-mark h1 {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .brand-mark p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    nav.nav-menu {
+      margin: 48px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .nav-item:hover {
+      background: var(--bg-accent);
+      color: var(--text-main);
+    }
+    .nav-item.active {
+      background: #FFFFFF;
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.02);
+      border: 1px solid var(--line);
+    }
+    .nav-item .count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .nav-item.active .count {
+      color: var(--terracotta);
+      font-weight: 600;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--line);
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .archivist-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar-seal {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 14px;
+      font-style: italic;
+      color: var(--terracotta);
+      background: #FFF;
+    }
+    .archivist-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    .archivist-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .archivist-status {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-dim);
+    }
+
+    /* Main Content */
+    main.archive-body {
+      flex: 1;
+      max-width: 960px;
+      padding: 48px 64px 96px;
+      margin: 0 auto;
+    }
+
+    .editorial-header {
+      border-bottom: 1px solid var(--line-strong);
+      padding-bottom: 28px;
+      margin-bottom: 48px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .editorial-header .title-group h2 {
+      font-family: var(--serif);
+      font-size: 38px;
+      font-weight: 400;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+    .editorial-header .title-group p {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-style: italic;
+      font-family: var(--serif);
+    }
+    .curation-stats {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+    }
+    .curation-stats span strong {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Year Spine & Timeline */
+    .timeline-spine {
+      position: relative;
+      padding-left: 48px;
+    }
+    .timeline-spine::before {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 10px;
+      bottom: 20px;
+      width: 1px;
+      background: var(--line-strong);
+    }
+
+    .year-marker {
+      position: relative;
+      margin: 40px 0 24px -48px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .year-badge {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      background: var(--bg-page);
+      border: 1px solid var(--line-strong);
+      padding: 4px 12px;
+      border-radius: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      position: relative;
+      z-index: 2;
+    }
+    .year-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    /* Chronicle Entry Cards */
+    .chronicle-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 36px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      transition: all 0.25s ease;
+    }
+    .chronicle-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+      border-color: #D6D0C2;
+      transform: translateY(-2px);
+    }
+
+    .spine-dot {
+      position: absolute;
+      left: -40px;
+      top: 36px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bg-page);
+      border: 2px solid var(--terracotta);
+      z-index: 2;
+    }
+
+    .card-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .entry-date {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--terracotta);
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .entry-pill {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-accent);
+      color: var(--text-muted);
+    }
+
+    .card-content h3 {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text-main);
+      line-height: 1.35;
+      margin-bottom: 12px;
+    }
+    .card-content p.prose {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+
+    /* Embedded Photo Mount */
+    .photo-mount {
+      margin: 16px 0 20px;
+      background: #F2EFE9;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      position: relative;
+    }
+    .photo-frame {
+      width: 100%;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #E8E4DA;
+      position: relative;
+      overflow: hidden;
+    }
+    .photo-frame svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-caption {
+      padding: 12px 18px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .caption-text {
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: var(--serif);
+    }
+    .exif-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--bg-page);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+    }
+
+    /* Footnotes & Tags */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid var(--bg-accent);
+      margin-top: 14px;
+    }
+    .tags-group {
+      display: flex;
+      gap: 6px;
+    }
+    .tag-item {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .tag-item:hover { color: var(--terracotta); }
+    .geo-pill {
+      font-size: 12px;
+      color: var(--olive);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--mono);
+    }
+
+    /* Tweak / Direction Label Banner */
+    .direction-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #FFFFFF;
+      border: 1px solid var(--line-strong);
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 100;
+    }
+    .badge-icon {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--terracotta);
+    }
+    .badge-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .badge-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left Sidebar Navigation -->
+  <aside class="archive-sidebar">
+    <div class="brand-mark">
+      <span class="tagline">ARCHIVIST VOL. I</span>
+      <h1>时光纪要</h1>
+      <p>个人数字档案馆 · 生命发生刻度 (occurred_at) 与沉思标本</p>
+    </div>
+
+    <nav class="nav-menu">
+      <a href="#timeline" class="nav-item active">
+        <span>时光编年</span>
+        <span class="count">248 条</span>
+      </a>
+      <a href="#gallery" class="nav-item">
+        <span>影像长廊</span>
+        <span class="count">86 幅</span>
+      </a>
+      <a href="#journal" class="nav-item">
+        <span>随想手札</span>
+        <span class="count">34 篇</span>
+      </a>
+      <a href="#travel" class="nav-item">
+        <span>足迹漫游</span>
+        <span class="count">12 城</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="archivist-badge">
+        <div class="avatar-seal">Fe</div>
+        <div class="archivist-meta">
+          <span class="archivist-name">Qingfeng / Archivist</span>
+          <span class="archivist-status">只读公开展 · 密钥就绪</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Chronicle Body -->
+  <main class="archive-body">
+    <header class="editorial-header">
+      <div class="title-group">
+        <h2>时光纪流 · 编年篇</h2>
+        <p>“将那些散落于岁月中的光斑，逐一抚平并妥善归档。”</p>
+      </div>
+      <div class="curation-stats">
+        <span>跨度 <strong>2018–2026</strong></span>
+        <span>·</span>
+        <span>发生刻度优先</span>
+      </div>
+    </header>
+
+    <div class="timeline-spine">
+      
+      <!-- Year 2024 -->
+      <div class="year-marker">
+        <div class="year-badge">2024 年刻度</div>
+        <div class="year-rule"></div>
+      </div>
+
+      <!-- Card 1: Travel & Photography -->
+      <article class="chronicle-card">
+        <div class="spine-dot"></div>
+        <div class="card-topbar">
+          <span class="entry-date">2024.10.18 · 16:42 JST</span>
+          <span class="entry-pill">足迹 & 摄影</span>
+        </div>
+        <div class="card-content">
+          <h3>京都琉璃光院：秋水初寒与古檐反照</h3>
+          <p class="prose">
+            暮秋下午四点，光线穿过木格窗棱斜切入茶室漆案。雨意渐歇，长廊尽头的苔石还蓄着一层青灰水汽。记忆在这里停留了很久，快门声轻得几乎听不见。
+          </p>
+          <div class="photo-mount">
+            <div class="photo-frame">
+              <!-- High-Taste Visual Mockup: Kyoto Temple Window -->
+              <svg viewBox="0 0 800 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="800" height="480" fill="#2B2824"/>
+                <rect x="40" y="40" width="720" height="400" rx="4" fill="#3D3730"/>
+                <!-- Architectural wooden frame -->
+                <path d="M40 240H760M400 40V440" stroke="#1A1816" stroke-width="8"/>
+                <!-- Foliage colors reflected in lacquer desk -->
+                <ellipse cx="260" cy="180" rx="160" ry="90" fill="#8C3A27" opacity="0.85"/>
+                <ellipse cx="540" cy="190" rx="140" ry="80" fill="#D48B38" opacity="0.75"/>
+                <ellipse cx="400" cy="140" rx="120" ry="60" fill="#5A6B48" opacity="0.6"/>
+                <!-- Lacquer Reflection Horizon -->
+                <rect x="40" y="240" width="720" height="200" fill="#181615" opacity="0.88"/>
+                <ellipse cx="260" cy="300" rx="140" ry="40" fill="#8C3A27" opacity="0.35"/>
+                <ellipse cx="540" cy="310" rx="120" ry="35" fill="#D48B38" opacity="0.25"/>
+                <text x="400" y="415" font-family="'Newsreader', serif" font-size="14" fill="#8A8275" text-anchor="middle" font-style="italic">
+                  Autumn Reflections · Ruriko-in, Kyoto
+                </text>
+              </svg>
+            </div>
+            <div class="photo-caption">
+              <span class="caption-text">书院二层抄经案，漆木倒影与深秋枫槭</span>
+              <span class="exif-tag">LEICA M11 · 35mm f/1.4 · 1/250s · ISO 64</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="tags-group">
+            <span class="tag-item">#京都纪行</span>
+            <span class="tag-item">#秋日漫游</span>
+            <span class="tag-item">#建筑光影</span>
+          </div>
+          <div class="geo-pill">
+            <span>📍 35.0592°N, 135.8197°E · 八濑比睿山口</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: Journal Note -->
+      <article class="chronicle-card">
+        <div class="spine-dot"></div>
+        <div class="card-topbar">
+          <span class="entry-date">2024.08.02 · 22:15 CST</span>
+          <span class="entry-pill">随想日记</span>
+        </div>
+        <div class="card-content">
+          <h3>暴雨夜读：论“自主持久化档案”的心理安全感</h3>
+          <p class="prose">
+            云厂商的服务总在悄无声息地关闭或调整条款，当照片与文字被锁死在封闭格式里，我们实际并不真正拥有它们。建立这套个人数字档案馆的初衷，正是为了在十年、三十年之后，即使所有依赖的商业平台都已消亡，这段属于自身的数据依旧能以纯粹的文本与标准格式在本地和开放网络中安然读取。
+          </p>
+        </div>
+        <div class="card-footer">
+          <div class="tags-group">
+            <span class="tag-item">#数字归档</span>
+            <span class="tag-item">#深夜沉思</span>
+          </div>
+          <div class="geo-pill">
+            <span>⛈️ 暴雨 · 微风 · 24°C</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Year 2023 -->
+      <div class="year-marker">
+        <div class="year-badge">2023 年刻度</div>
+        <div class="year-rule"></div>
+      </div>
+
+      <!-- Card 3: Nordic Expedition -->
+      <article class="chronicle-card">
+        <div class="spine-dot"></div>
+        <div class="card-topbar">
+          <span class="entry-date">2023.11.14 · 11:30 GMT</span>
+          <span class="entry-pill">地理探险</span>
+        </div>
+        <div class="card-content">
+          <h3>冰岛维克：北大西洋尽头的黑沙滩海雾</h3>
+          <p class="prose">
+            海风如同重锤般掠过玄武岩石柱，细密的黑色玄武岩细沙被卷在白浪与冷雾之中。地球在这里显露出近乎月面般的冷峻原始感。
+          </p>
+          <div class="photo-mount">
+            <div class="photo-frame">
+              <svg viewBox="0 0 800 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="800" height="480" fill="#1C1F24"/>
+                <!-- Ocean & Mist Gradients -->
+                <path d="M0 260C200 240 600 280 800 250V480H0V260Z" fill="#121417"/>
+                <!-- Sea stacks -->
+                <polygon points="560,180 580,270 540,270" fill="#252A30"/>
+                <polygon points="610,140 635,270 595,270" fill="#1F2329"/>
+                <!-- Wave froth -->
+                <path d="M0 320C300 310 500 340 800 315" stroke="#8A95A5" stroke-width="2" opacity="0.6"/>
+                <path d="M0 370C250 350 600 390 800 360" stroke="#CAD3DE" stroke-width="3" opacity="0.8"/>
+                <text x="400" y="430" font-family="'Newsreader', serif" font-size="14" fill="#6A7380" text-anchor="middle" font-style="italic">
+                  Reynisfjara Black Sand Beach · Vík í Mýrdal
+                </text>
+              </svg>
+            </div>
+            <div class="photo-caption">
+              <span class="caption-text">雷尼斯德朗盖玄武岩海蚀柱群</span>
+              <span class="exif-tag">HASSELBLAD X2D · 45mm f/4 · 1/125s · ISO 100</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="tags-group">
+            <span class="tag-item">#冰岛环岛</span>
+            <span class="tag-item">#黑沙滩</span>
+          </div>
+          <div class="geo-pill">
+            <span>📍 63.4044°N, 19.0449°W · Vík</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <!-- Direction Indicator Tag -->
+  <div class="direction-badge">
+    <div class="badge-icon"></div>
+    <div class="badge-info">
+      <h4>方案 A · 暖色出版物 (Warm Archival Editorial)</h4>
+      <p>奶油纸底 · 衬线排印 · 编年体时间轴 · 典雅书籍质感</p>
+    </div>
+  </div>
+
+</body>
+</html>

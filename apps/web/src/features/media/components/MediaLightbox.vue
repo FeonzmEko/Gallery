@@ -63,7 +63,7 @@
               class="rounded-xl p-2 border shadow transition-colors"
               :class="[
                 showExifDrawer
-                  ? 'bg-sky-500/20 text-sky-400 border-sky-500/40'
+                  ? 'bg-[#C25438]/20 text-[#C25438] border-[#C25438]/40'
                   : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/50',
               ]"
               @click="showExifDrawer = !showExifDrawer"
@@ -197,7 +197,7 @@
             <div class="grid grid-cols-2 gap-2">
               <div class="rounded-xl border border-slate-800/80 bg-slate-950/40 p-2.5">
                 <span class="text-[10px] text-slate-500 block">光圈</span>
-                <span class="font-mono text-sm font-semibold text-sky-400">
+                <span class="font-mono text-sm font-semibold text-[#C25438]">
                   {{ currentItem.exif?.fNumber ? `f/${currentItem.exif.fNumber}` : '—' }}
                 </span>
               </div>

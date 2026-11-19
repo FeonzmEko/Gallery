@@ -1,14 +1,18 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
     <!-- Page Header & Action Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/60 pb-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E1D8] pb-6">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-          <ImageIcon class="w-7 h-7 text-emerald-400" />
-          <span>媒体长廊</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[11px] font-mono tracking-widest text-[#C25438] uppercase font-semibold">EXHIBITION GALLERY</span>
+          <span class="text-[#D4CEBF]">&middot;</span>
+          <span class="text-[11px] font-mono text-[#9E9B93]">EXIF OPTICAL SPECS</span>
+        </div>
+        <h1 class="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-[#1D1C1A] flex items-center gap-3">
+          <span>影像长廊</span>
         </h1>
-        <p class="mt-1 text-sm text-slate-400">
-          全网格自适应画廊与大图灯箱预览 · 预加载 WebP 缩略图与 EXIF 曝光参数
+        <p class="mt-1 text-sm text-[#747169] font-serif italic">
+          “定格于光影交织的瞬间，每一帧胶片皆附带真实光学参数与发生刻度。”
         </p>
       </div>
 
@@ -16,12 +20,12 @@
       <div class="flex items-center gap-3">
         <!-- Search Filter -->
         <div class="relative">
-          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9E9B93]" />
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="检索照片或标签..."
-            class="w-44 sm:w-56 rounded-xl bg-slate-900 border border-slate-800/80 pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+            placeholder="检索照片、机型或标签..."
+            class="w-48 sm:w-60 rounded-xl bg-white border border-[#E5E1D8] pl-9 pr-3 py-2 text-xs text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#C25438]/50 focus:ring-1 focus:ring-[#C25438]/30 transition-all shadow-sm"
           />
         </div>
 
@@ -29,11 +33,11 @@
         <button
           v-if="authStore.isAdmin"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           @click="isUploaderOpen = true"
         >
-          <UploadCloudIcon class="w-4 h-4" />
-          <span>并发直传 R2</span>
+          <UploadCloudIcon class="w-3.5 h-3.5" />
+          <span>直传照片 R2</span>
         </button>
       </div>
     </div>
@@ -43,81 +47,92 @@
       <div
         v-for="i in 10"
         :key="i"
-        class="aspect-square rounded-2xl bg-slate-900/60 border border-slate-800/60 animate-pulse flex items-center justify-center"
+        class="aspect-square rounded-2xl bg-white border border-[#E5E1D8] p-2 animate-pulse flex items-center justify-center"
       >
-        <ImageIcon class="w-8 h-8 text-slate-800" />
+        <div class="w-full h-full bg-[#EFECE4] rounded-xl flex items-center justify-center">
+          <ImageIcon class="w-8 h-8 text-[#D4CEBF]" />
+        </div>
       </div>
     </div>
 
     <!-- Empty State -->
     <div
       v-else-if="filteredPhotos.length === 0"
-      class="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-800/80 bg-slate-900/30 p-12 text-center"
+      class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#D4CEBF] bg-white/60 p-16 text-center"
     >
-      <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 mb-4 text-emerald-400/60">
+      <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F7F5F0] border border-[#E5E1D8] mb-4 text-[#C25438]">
         <ImageIcon class="w-8 h-8" />
       </div>
-      <h3 class="text-base font-semibold text-slate-200">暂无媒体照片</h3>
-      <p class="mt-1 text-xs text-slate-400 max-w-sm">
+      <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">暂无媒体照片</h3>
+      <p class="mt-1 text-xs text-[#747169] max-w-sm">
         {{ searchQuery ? '未检索到匹配的摄影记录，请尝试其他关键词。' : '媒体长廊目前为空，管理员可通过上方按钮直传照片。' }}
       </p>
       <button
         v-if="authStore.isAdmin && !searchQuery"
         type="button"
-        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-400 transition-colors"
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors"
         @click="isUploaderOpen = true"
       >
-        <UploadCloudIcon class="w-4 h-4" />
+        <UploadCloudIcon class="w-3.5 h-3.5" />
         <span>立即上传第一张照片</span>
       </button>
     </div>
 
-    <!-- Responsive Waterfall Photo Grid -->
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <!-- Responsive Exhibition Mat Grid -->
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
       <div
         v-for="(photo, index) in filteredPhotos"
         :key="photo.id"
-        class="group relative aspect-square overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/60 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 cursor-pointer"
+        class="group relative bg-white p-2 sm:p-2.5 rounded-2xl border border-[#E5E1D8] shadow-sm transition-all duration-300 hover:border-[#D4CEBF] hover:shadow-md hover:-translate-y-1 cursor-pointer flex flex-col"
         @click="openLightbox(index)"
       >
-        <!-- Background Image Thumbnail -->
-        <img
-          :src="photo.thumbUrl || photo.url"
-          :alt="photo.title || '画廊照片'"
-          loading="lazy"
-          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        <!-- Picture Frame with Aspect Ratio -->
+        <div class="aspect-square overflow-hidden rounded-xl bg-[#EFECE4] relative">
+          <!-- Background Image Thumbnail -->
+          <img
+            :src="photo.thumbUrl || photo.url"
+            :alt="photo.title || '画廊照片'"
+            loading="lazy"
+            class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
 
-        <!-- Hover Overlay Gradient -->
-        <div
-          class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3"
-        >
-          <!-- Top Badges -->
-          <div class="flex items-center justify-between gap-1">
-            <span
-              v-if="photo.visibility === 'private'"
-              class="rounded-md bg-amber-500/20 text-amber-400 px-1.5 py-0.5 text-[10px] font-mono border border-amber-500/30"
-            >
-              私密
-            </span>
-            <span
-              v-if="photo.exif?.model"
-              class="ml-auto rounded-md bg-slate-900/80 text-slate-300 px-1.5 py-0.5 text-[10px] font-mono truncate max-w-[120px] backdrop-blur-sm"
-            >
-              {{ photo.exif.model }}
-            </span>
-          </div>
-
-          <!-- Bottom Meta -->
-          <div>
-            <h4 class="text-xs font-semibold text-white truncate">{{ photo.title || '照片' }}</h4>
-            <div class="mt-0.5 flex items-center justify-between text-[10px] text-slate-400">
-              <span>{{ formatOccurredAt(photo.occurredAt) }}</span>
-              <span v-if="photo.exif?.fNumber" class="font-mono text-emerald-400">
-                f/{{ photo.exif.fNumber }}
+          <!-- Optical HUD Overlay on Hover -->
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-[#1D1C1A]/90 via-[#1D1C1A]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3"
+          >
+            <!-- Top Badges -->
+            <div class="flex items-center justify-between gap-1">
+              <span
+                v-if="photo.visibility === 'private'"
+                class="rounded-md bg-amber-500/30 text-amber-300 px-1.5 py-0.5 text-[10px] font-mono border border-amber-400/40"
+              >
+                私密
+              </span>
+              <span
+                v-if="photo.exif?.model"
+                class="ml-auto rounded-md bg-black/60 text-white/90 px-1.5 py-0.5 text-[10px] font-mono truncate max-w-[120px] backdrop-blur-xs border border-white/10"
+              >
+                {{ photo.exif.model }}
               </span>
             </div>
+
+            <!-- Bottom Meta -->
+            <div>
+              <h4 class="text-xs font-medium text-white truncate">{{ photo.title || '照片' }}</h4>
+              <div class="mt-0.5 flex items-center justify-between text-[10px] text-white/70 font-mono">
+                <span>{{ formatOccurredAt(photo.occurredAt) }}</span>
+                <span v-if="photo.exif?.fNumber" class="text-amber-300">
+                  f/{{ photo.exif.fNumber }}
+                </span>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Mat Board Caption Below -->
+        <div class="pt-2 px-1 flex items-center justify-between text-[11px] text-[#747169]">
+          <span class="truncate font-serif text-[#1D1C1A] text-xs">{{ photo.title || '无标题' }}</span>
+          <span class="font-mono text-[10px] text-[#9E9B93] flex-shrink-0 ml-1">{{ formatOccurredAt(photo.occurredAt) }}</span>
         </div>
       </div>
     </div>

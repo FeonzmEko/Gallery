@@ -3,18 +3,28 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --bg-page: #F7F5F0;
+  --bg-subtle: #EFECE4;
+  --bg-card: #FFFFFF;
+  --border-line: #E5E1D8;
+  --border-strong: #D4CEBF;
+  --ink-main: #1D1C1A;
+  --ink-muted: #747169;
+  --ink-dim: #9E9B93;
+  --terracotta: #C25438;
 }
 
 html, body {
-  background-color: #030712;
-  color: #f8fafc;
+  background-color: #F7F5F0;
+  color: #1D1C1A;
   min-height: 100%;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Custom scrollbars for dark theme */
+/* Custom scrollbars for paper aesthetic */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -25,12 +35,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #D4CEBF;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #BDB6A4;
 }
 
 /* Safe area support for iOS / PWA full screen */

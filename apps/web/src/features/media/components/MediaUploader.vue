@@ -7,23 +7,23 @@
   >
     <!-- Backdrop -->
     <div
-      class="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
       @click="handleClose"
     ></div>
 
     <!-- Modal Container -->
     <div
-      class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl overflow-hidden backdrop-blur-xl"
+      class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] shadow-2xl overflow-hidden"
     >
       <!-- Modal Header -->
-      <div class="flex items-center justify-between border-b border-slate-800/80 px-6 py-4">
+      <div class="flex items-center justify-between border-b border-[#E5E1D8] px-6 py-4 bg-white">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDF8F6] text-[#C25438] border border-[#F0D5CD]">
             <UploadCloudIcon class="w-5 h-5" />
           </div>
           <div>
-            <h3 class="text-base font-semibold text-white">多照片并发直传</h3>
-            <p class="text-xs text-slate-400">
+            <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">多照片并发直传</h3>
+            <p class="text-xs text-[#747169]">
               本地 Canvas 预压缩 WebP (<100KB) · 预签名安全直传 R2 / 对象存储
             </p>
           </div>
@@ -31,7 +31,7 @@
 
         <button
           type="button"
-          class="rounded-xl p-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+          class="rounded-lg p-2 text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] transition-colors"
           @click="handleClose"
         >
           <XIcon class="w-5 h-5" />
@@ -41,23 +41,23 @@
       <!-- Modal Body -->
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
         <!-- Settings Bar -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800/70 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-white border border-[#E5E1D8] text-xs">
           <!-- Visibility Selector -->
           <div class="flex items-center justify-between sm:justify-start gap-3">
-            <span class="text-slate-400">公开权限:</span>
-            <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+            <span class="text-[#747169]">公开权限:</span>
+            <div class="inline-flex rounded-lg bg-[#F7F5F0] p-1 border border-[#E5E1D8]">
               <button
                 type="button"
-                class="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-                :class="uploadVisibility === 'public' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-400 hover:text-white'"
+                class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                :class="uploadVisibility === 'public' ? 'bg-white text-[#C25438] shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
                 @click="uploadVisibility = 'public'"
               >
                 公开访问
               </button>
               <button
                 type="button"
-                class="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
-                :class="uploadVisibility === 'private' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white'"
+                class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                :class="uploadVisibility === 'private' ? 'bg-white text-amber-800 shadow-xs font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
                 @click="uploadVisibility = 'private'"
               >
                 私密隐藏
@@ -67,11 +67,11 @@
 
           <!-- Auto Create Entry Toggle -->
           <div v-if="!targetEntryId" class="flex items-center justify-between sm:justify-end gap-2">
-            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+            <label class="flex items-center gap-2 cursor-pointer text-[#1D1C1A]">
               <input
                 type="checkbox"
                 v-model="createTimelineEntry"
-                class="rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                class="rounded border-[#D4CEBF] text-[#C25438] focus:ring-[#C25438]"
               />
               <span>同步生成时间线记忆卡片</span>
             </label>
@@ -83,8 +83,8 @@
           class="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200 cursor-pointer"
           :class="[
             isDragging
-              ? 'border-emerald-400 bg-emerald-500/10'
-              : 'border-slate-800 hover:border-slate-700 bg-slate-950/40 hover:bg-slate-950/60',
+              ? 'border-[#C25438] bg-[#FDF8F6]'
+              : 'border-[#D4CEBF] hover:border-[#C25438]/50 bg-white hover:bg-[#FDF8F6]/30',
           ]"
           @dragover.prevent="isDragging = true"
           @dragleave.prevent="isDragging = false"
@@ -100,28 +100,28 @@
             @change="handleFileInputChange"
           />
 
-          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 shadow-inner mb-3">
-            <ImageIcon class="w-7 h-7 text-emerald-400 transition-transform group-hover:scale-110" />
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] shadow-xs mb-3">
+            <ImageIcon class="w-6 h-6 text-[#C25438]" />
           </div>
 
-          <p class="text-sm font-medium text-slate-200">
+          <p class="text-sm font-medium text-[#1D1C1A]">
             拖拽单张或多张照片至此处，或
-            <span class="text-emerald-400 hover:underline">点击选择文件</span>
+            <span class="text-[#C25438] hover:underline">点击选择文件</span>
           </p>
-          <p class="mt-1 text-xs text-slate-500">
+          <p class="mt-1 text-xs text-[#747169]">
             支持 JPG, PNG, WebP, AVIF, HEIC · 自动提取拍摄时间、相机 EXIF 并并发压缩
           </p>
         </div>
 
         <!-- Queue List -->
         <div v-if="queue.length > 0" class="space-y-3">
-          <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+          <div class="flex items-center justify-between text-xs text-[#747169] px-1 font-mono">
             <span>待传列表 ({{ queue.length }} 张照片)</span>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
               <button
                 v-if="hasCompletedTasks"
                 type="button"
-                class="text-xs text-slate-400 hover:text-white transition-colors"
+                class="text-xs text-[#747169] hover:text-[#1D1C1A] transition-colors"
                 @click="clearCompleted"
               >
                 清理已完成
@@ -129,7 +129,7 @@
               <button
                 v-if="hasFailedTasks"
                 type="button"
-                class="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                class="text-xs text-[#C25438] hover:underline transition-colors"
                 @click="retryFailed"
               >
                 重试失败项
@@ -141,17 +141,17 @@
             <div
               v-for="item in queue"
               :key="item.id"
-              class="flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/60 p-2.5 transition-all"
+              class="flex items-center gap-3 rounded-xl border border-[#E5E1D8] bg-white p-2.5 shadow-xs transition-all"
             >
               <!-- Thumbnail preview -->
-              <div class="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+              <div class="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-[#E5E1D8] bg-[#F7F5F0]">
                 <img
                   v-if="item.previewUrl"
                   :src="item.previewUrl"
                   :alt="item.name"
                   class="h-full w-full object-cover"
                 />
-                <div v-else class="flex h-full w-full items-center justify-center text-slate-600">
+                <div v-else class="flex h-full w-full items-center justify-center text-[#9E9B93]">
                   <ImageIcon class="w-5 h-5" />
                 </div>
               </div>
@@ -159,28 +159,28 @@
               <!-- Info & Progress -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-xs font-medium text-slate-200 truncate">{{ item.name }}</span>
+                  <span class="text-xs font-medium text-[#1D1C1A] truncate">{{ item.name }}</span>
                   <span class="text-[11px] font-mono" :class="statusColorClass(item.status)">
                     {{ statusText(item) }}
                   </span>
                 </div>
 
-                <div class="mt-1 flex items-center gap-2 text-[10px] text-slate-500">
+                <div class="mt-1 flex items-center gap-2 text-[10px] text-[#747169] font-mono">
                   <span>{{ formatFileSize(item.size) }}</span>
                   <span v-if="item.processedSize">➔ WebP {{ formatFileSize(item.processedSize) }}</span>
                   <span v-if="item.exif?.model" class="truncate">• {{ item.exif.model }}</span>
                 </div>
 
                 <!-- Progress Bar -->
-                <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EFECE4]">
                   <div
                     class="h-full transition-all duration-300"
                     :class="[
                       item.status === 'error'
                         ? 'bg-red-500'
                         : item.status === 'success'
-                        ? 'bg-emerald-500'
-                        : 'bg-sky-500',
+                        ? 'bg-emerald-600'
+                        : 'bg-[#C25438]',
                     ]"
                     :style="{ width: `${item.progress}%` }"
                   ></div>
@@ -191,7 +191,7 @@
               <button
                 v-if="item.status !== 'uploading' && item.status !== 'compressing'"
                 type="button"
-                class="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                class="p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
                 @click="removeFromQueue(item.id)"
                 title="移除"
               >
@@ -203,20 +203,20 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex items-center justify-between border-t border-slate-800/80 px-6 py-4 bg-slate-950/40">
-        <div class="text-xs text-slate-400">
-          <span v-if="isProcessing" class="flex items-center gap-2 text-sky-400">
+      <div class="flex items-center justify-between border-t border-[#E5E1D8] px-6 py-4 bg-white">
+        <div class="text-xs text-[#747169]">
+          <span v-if="isProcessing" class="flex items-center gap-2 text-[#C25438] font-mono">
             <Loader2Icon class="w-4 h-4 animate-spin" />
             <span>并发处理中...</span>
           </span>
           <span v-else-if="queue.length === 0">请选择或拖入图片</span>
-          <span v-else>共 {{ queue.length }} 项待处理</span>
+          <span v-else class="font-mono">共 {{ queue.length }} 项待处理</span>
         </div>
 
         <div class="flex items-center gap-3">
           <button
             type="button"
-            class="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            class="px-4 py-2 rounded-xl text-xs font-medium text-[#747169] hover:bg-[#F7F5F0] transition-colors"
             @click="handleClose"
           >
             {{ hasCompletedTasks ? '完成' : '取消' }}
@@ -224,11 +224,11 @@
           <button
             v-if="hasPendingTasks"
             type="button"
-            class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-500 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+            class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#C25438] text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors shadow-sm disabled:opacity-50"
             :disabled="isProcessing"
             @click="startUploadQueue"
           >
-            <UploadCloudIcon class="w-4 h-4" />
+            <UploadCloudIcon class="w-3.5 h-3.5" />
             <span>开始并发上传</span>
           </button>
         </div>

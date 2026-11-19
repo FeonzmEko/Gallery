@@ -1,14 +1,18 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
     <!-- Page Header & Action Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/60 pb-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E1D8] pb-6">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-          <ClockIcon class="w-7 h-7 text-sky-400" />
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[11px] font-mono tracking-widest text-[#C25438] uppercase font-semibold">CHRONICLE INDEX</span>
+          <span class="text-[#D4CEBF]">&middot;</span>
+          <span class="text-[11px] font-mono text-[#9E9B93]">OCCURRED AT 排序</span>
+        </div>
+        <h1 class="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-[#1D1C1A] flex items-center gap-3">
           <span>时光纪流</span>
         </h1>
-        <p class="mt-1 text-sm text-slate-400">
-          以真实记忆发生时间（occurred_at）为刻度的全局生命流
+        <p class="mt-1 text-sm text-[#747169] font-serif italic">
+          “将那些散落于岁月中的光斑，逐一抚平并妥善归档。”
         </p>
       </div>
 
@@ -16,12 +20,12 @@
       <div class="flex items-center gap-3">
         <!-- Live Search Input -->
         <div class="relative">
-          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9E9B93]" />
           <input
             v-model="searchKeyword"
             type="text"
             placeholder="检索时光记忆与标签..."
-            class="w-48 sm:w-60 rounded-xl bg-slate-900 border border-slate-800/80 pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all"
+            class="w-48 sm:w-64 rounded-xl bg-white border border-[#E5E1D8] pl-9 pr-3 py-2 text-xs text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#C25438]/50 focus:ring-1 focus:ring-[#C25438]/30 transition-all shadow-sm"
             @input="handleSearchDebounced"
           />
         </div>
@@ -30,43 +34,47 @@
         <button
           v-if="authStore.isAdmin"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 shadow-md shadow-sky-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           @click="openCreateModal"
         >
-          <PlusIcon class="w-4 h-4" />
+          <PlusIcon class="w-3.5 h-3.5" />
           <span>记录此刻</span>
         </button>
       </div>
     </div>
 
     <!-- Filter & Year Scale Ruler -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2 border-b border-slate-800/40">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 py-3 border-b border-[#E5E1D8]/70">
       <!-- Category Tabs (全部 / 旅行 / 日记 / 照片) -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
         <button
           v-for="cat in categories"
           :key="cat.value"
           type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
           :class="[
             selectedCategory === cat.value
-              ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent',
+              ? 'bg-white text-[#1D1C1A] font-semibold border border-[#E5E1D8] shadow-sm'
+              : 'text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] border border-transparent',
           ]"
           @click="selectCategory(cat.value)"
         >
-          <component :is="cat.icon" class="w-3.5 h-3.5" />
+          <component
+            :is="cat.icon"
+            class="w-3.5 h-3.5"
+            :class="selectedCategory === cat.value ? 'text-[#C25438]' : 'text-[#9E9B93]'"
+          />
           <span>{{ cat.label }}</span>
         </button>
       </div>
 
       <!-- Year Scale Ruler (快速定位年份) -->
-      <div v-if="availableYears.length > 0" class="flex items-center gap-1 text-xs text-slate-400">
-        <span class="text-[11px] font-mono mr-1 text-slate-500">年份刻度:</span>
+      <div v-if="availableYears.length > 0" class="flex items-center gap-1 text-xs text-[#747169]">
+        <span class="text-[11px] font-mono mr-1 text-[#9E9B93]">年份刻度:</span>
         <button
           type="button"
-          class="px-2 py-0.5 rounded-lg text-xs font-mono transition-colors"
-          :class="selectedYear === null ? 'bg-slate-800 text-sky-400 font-bold' : 'hover:text-slate-200'"
+          class="px-2 py-0.5 rounded-md text-xs font-mono transition-colors"
+          :class="selectedYear === null ? 'bg-white text-[#C25438] font-bold border border-[#E5E1D8] shadow-xs' : 'hover:text-[#1D1C1A]'"
           @click="selectedYear = null"
         >
           全部
@@ -75,8 +83,8 @@
           v-for="year in availableYears"
           :key="year"
           type="button"
-          class="px-2 py-0.5 rounded-lg text-xs font-mono transition-colors"
-          :class="selectedYear === year ? 'bg-slate-800 text-sky-400 font-bold border border-sky-500/30' : 'hover:text-slate-200'"
+          class="px-2 py-0.5 rounded-md text-xs font-mono transition-colors"
+          :class="selectedYear === year ? 'bg-white text-[#C25438] font-bold border border-[#E5E1D8] shadow-xs' : 'hover:text-[#1D1C1A]'"
           @click="selectedYear = year"
         >
           {{ year }}
@@ -85,34 +93,34 @@
     </div>
 
     <!-- Timeline Main Stream -->
-    <div class="relative pl-6 sm:pl-8 border-l border-slate-800/80 space-y-8 my-6">
+    <div class="relative pl-6 sm:pl-8 border-l border-[#E5E1D8] space-y-8 my-6">
       <!-- Loading Skeletons -->
       <div v-if="isLoading && entries.length === 0" class="space-y-6">
         <div
           v-for="i in 3"
           :key="i"
-          class="rounded-3xl border border-slate-800/80 bg-slate-900/40 p-6 animate-pulse space-y-3"
+          class="rounded-2xl border border-[#E5E1D8] bg-white p-6 animate-pulse space-y-3"
         >
-          <div class="h-4 bg-slate-800 rounded w-1/4"></div>
-          <div class="h-6 bg-slate-800 rounded w-1/2"></div>
-          <div class="h-14 bg-slate-800/60 rounded w-full"></div>
+          <div class="h-4 bg-[#EFECE4] rounded w-1/4"></div>
+          <div class="h-6 bg-[#EFECE4] rounded w-1/2"></div>
+          <div class="h-14 bg-[#EFECE4]/60 rounded w-full"></div>
         </div>
       </div>
 
       <!-- Empty State -->
       <div
         v-else-if="filteredEntries.length === 0"
-        class="rounded-3xl border border-dashed border-slate-800/80 bg-slate-900/30 p-10 text-center"
+        class="rounded-2xl border border-dashed border-[#D4CEBF] bg-white/60 p-12 text-center"
       >
-        <ClockIcon class="w-10 h-10 text-slate-600 mx-auto mb-3" />
-        <h4 class="text-sm font-semibold text-slate-300">暂无时间线记忆</h4>
-        <p class="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+        <ClockIcon class="w-10 h-10 text-[#9E9B93] mx-auto mb-3" />
+        <h4 class="font-serif text-base font-medium text-[#1D1C1A]">暂无时间线记忆</h4>
+        <p class="mt-1 text-xs text-[#747169] max-w-sm mx-auto">
           {{ searchKeyword ? '没有找到符合搜索条件的条目。' : '还没有记录任何历史足迹，点击上方“记录此刻”开始书写。' }}
         </p>
         <button
           v-if="authStore.isAdmin && !searchKeyword"
           type="button"
-          class="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-400 transition-colors"
+          class="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-4 py-2 text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors"
           @click="openCreateModal"
         >
           <PlusIcon class="w-3.5 h-3.5" />
@@ -133,14 +141,14 @@
       </div>
 
       <!-- Cursor Pagination: Load More Button -->
-      <div v-if="hasMore" class="pt-4 text-center">
+      <div v-if="hasMore" class="pt-6 text-center">
         <button
           type="button"
           :disabled="isLoadingMore"
-          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-300 hover:text-white shadow transition-all disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E5E1D8] hover:border-[#D4CEBF] text-xs font-medium text-[#1D1C1A] shadow-sm transition-all disabled:opacity-50"
           @click="loadMore"
         >
-          <Loader2Icon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin text-sky-400" />
+          <Loader2Icon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin text-[#C25438]" />
           <span>{{ isLoadingMore ? '正在溯流历史...' : '向下溯流更多历史记忆' }}</span>
         </button>
       </div>
@@ -178,7 +186,7 @@ const authStore = useAuthStore();
 const categories = [
   { label: '全部时光', value: 'all', icon: LayersIcon },
   { label: '旅行足迹', value: 'trip', icon: CompassIcon },
-  { label: '随想日记', value: 'journal', icon: BookOpenIcon },
+  { label: '随想手札', value: 'journal', icon: BookOpenIcon },
   { label: '摄影长廊', value: 'photo', icon: CameraIcon },
 ];
 
