@@ -83,7 +83,7 @@ export function mountJournalRoutes(
   // 2. Get Journal Detail
   router.get('/:idOrSlug', async (c) => {
     const service = resolveService(c);
-    const idOrSlug = c.req.param('idOrSlug');
+    const idOrSlug = c.req.param('idOrSlug')!;
     const user = c.get('user');
 
     const journal = await service.getJournal(idOrSlug, user);
@@ -105,7 +105,7 @@ export function mountJournalRoutes(
   router.put('/:id', requireAdmin, async (c) => {
     const service = resolveService(c);
     const user = c.get('user') as AuthUser;
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const body = await c.req.json().catch(() => ({}));
     const validated = UpdateJournalInputSchema.parse(body);
 
@@ -117,7 +117,7 @@ export function mountJournalRoutes(
   router.delete('/:id', requireAdmin, async (c) => {
     const service = resolveService(c);
     const user = c.get('user') as AuthUser;
-    const id = c.req.param('id');
+    const id = c.req.param('id')!;
     const soft = c.req.query('hard') !== 'true';
 
     await service.deleteJournal(id, user, soft);
