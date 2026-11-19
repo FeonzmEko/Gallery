@@ -25,6 +25,11 @@
       "types": "./src/schema.ts",
       "import": "./src/schema.ts",
       "default": "./src/schema.ts"
+    },
+    "./seed": {
+      "types": "./src/seed.ts",
+      "import": "./src/seed.ts",
+      "default": "./src/seed.ts"
     }
   },
   "scripts": {
@@ -40,6 +45,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250224.0",
+    "@types/node": "^26.6.6",
     "drizzle-kit": "^0.31.11",
     "typescript": "^5.7.3",
     "vitest": "^3.0.7"

@@ -4,7 +4,7 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": ["@cloudflare/workers-types", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["tests/**/*", "dist", "node_modules"]

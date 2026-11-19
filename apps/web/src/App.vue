@@ -1,0 +1,7 @@
+<template>
+  <DefaultLayout />
+</template>
+
+<script setup lang="ts">
+import DefaultLayout from '@/app/layouts/DefaultLayout.vue';
+</script>

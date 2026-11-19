@@ -9,18 +9,18 @@
 
 ## 0. 总体进度仪表盘
 
-- **总体进度**：[████████░░░░░░░░] 33% (8/24)
-- **当前活动任务**：M2 · 核心业务模块（Core / Media）与 API 组装 (M2-1 ~ M2-4)
+- **总体进度**：[████████████░░░░] 50% (12/24)
+- **当前活动任务**：M3 (Web前端与PWA) + M5 (日记与旅行扩展) 多代理并行推进中
 - **阻塞项**：无
 - **里程碑分布**：
   | 里程碑 | 内容摘要 | 任务数 | 完成数 | 状态 |
   | :--- | :--- | :---: | :---: | :---: |
   | **M0** | Monorepo 工程骨架与共享契约层 | 4 | 4 | 已完成 |
   | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 4 | 已完成 |
-  | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 0 | 待办 |
-  | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 0 | 待办 |
+  | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 4 | 已完成 |
+  | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 0 | 进行中 |
   | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 0 | 待办 |
-  | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 0 | 待办 |
+  | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 0 | 进行中 |
   | **M6** | 高扩展性（国内CDN/多存储/评论）验证与交付 | 2 | 0 | 待办 |
 
 ---
@@ -114,10 +114,10 @@ export interface CommentPort {
 ---
 
 ### M2 · 核心业务模块（Core / Media）与 API 组装
-- [ ] M2-1 实现 `@archive/module-core` 核心用例与 RBAC 中间件 [目标: `modules/core/src/`] [规范: docs/architecture.md#4.2-3] [验收: 单元测试覆盖访客只读过滤（仅 `public` & `published`）与 Admin 权限全量放行]
-- [ ] M2-2 实现 `@archive/module-media` 媒体授权与元数据登记服务 [目标: `modules/media/src/`] [规范: docs/architecture.md#5.2-6] [验收: 单元测试覆盖上传凭证签发、元数据写入与关联绑定校验]
-- [ ] M2-3 创建 `workers/api` 入口并完成依赖注入与路由装配 [目标: `workers/api/src/bootstrap.ts`, `workers/api/src/app.ts`, `workers/api/wrangler.jsonc`] [规范: docs/architecture.md#3] [验收: Hono 挂载 `/api/v1/entries`, `/api/v1/media`, `/api/v1/auth` 路由]
-- [ ] M2-4 编写 Workers 集成测试与种子数据脚本 [目标: `workers/api/tests/api.spec.ts`, `packages/database/src/seed.ts`] [验收: `pnpm test` 测试访客查询与 Admin 写入闭环，`pnpm db:seed` 成功生成初始 Admin]
+- [x] M2-1 实现 `@archive/module-core` 核心用例与 RBAC 中间件 [目标: `modules/core/src/`] [规范: docs/architecture.md#4.2-3] [验收: 单元测试覆盖访客只读过滤（仅 `public` & `published`）与 Admin 权限全量放行，10 项用例全部通过]
+- [x] M2-2 实现 `@archive/module-media` 媒体授权与元数据登记服务 [目标: `modules/media/src/`] [规范: docs/architecture.md#5.2-6] [验收: 单元测试覆盖上传凭证签发、元数据写入与关联绑定校验，6 项用例全部通过]
+- [x] M2-3 创建 `workers/api` 入口并完成依赖注入与路由装配 [目标: `workers/api/src/bootstrap.ts`, `workers/api/src/app.ts`, `workers/api/wrangler.jsonc`] [规范: docs/architecture.md#3] [验收: Hono 挂载 `/api/v1/entries`, `/api/v1/media`, `/api/v1/auth`, `/api/v1/tags`, `/api/health` 路由，CORS 与统一异常拦截完备]
+- [x] M2-4 编写 Workers 集成测试与种子数据脚本 [目标: `workers/api/tests/api.spec.ts`, `packages/database/src/seed.ts`] [验收: `pnpm test` 5 项端到端 API 场景验证访客过滤与 Admin 写操作闭环全部通过，`pnpm db:seed` 成功生成初始 Admin 与示例数据]
 
 ---
 
