@@ -9,14 +9,14 @@
 
 ## 0. 总体进度仪表盘
 
-- **总体进度**：[███░░░░░░░░░░░░░] 17% (4/24)
-- **当前活动任务**：M1 · 数据库公共模型、统一迁移与存储抽象 (M1-1 ~ M1-4)
+- **总体进度**：[████████░░░░░░░░] 33% (8/24)
+- **当前活动任务**：M2 · 核心业务模块（Core / Media）与 API 组装 (M2-1 ~ M2-4)
 - **阻塞项**：无
 - **里程碑分布**：
   | 里程碑 | 内容摘要 | 任务数 | 完成数 | 状态 |
   | :--- | :--- | :---: | :---: | :---: |
   | **M0** | Monorepo 工程骨架与共享契约层 | 4 | 4 | 已完成 |
-  | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 0 | 进行中 |
+  | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 4 | 已完成 |
   | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 0 | 待办 |
   | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 0 | 待办 |
   | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 0 | 待办 |
@@ -106,10 +106,10 @@ export interface CommentPort {
 ---
 
 ### M1 · 数据库公共模型、统一迁移与存储抽象
-- [/] M1-1 搭建 `@archive/database` 并封装 D1 AtomicBatch [目标: `packages/database/src/client.ts`, `packages/database/src/batch.ts`] [规范: docs/architecture.md#1.2] [验收: 单元测试验证 batch 原子写入构造与 D1 语法兼容]
-- [/] M1-2 编写 Core 与 Media 模块的 Drizzle Schema 定义 [目标: `modules/core/src/infrastructure/schema.ts`, `modules/media/src/infrastructure/schema.ts`] [规范: docs/architecture.md#5.2] [验收: 导出 users, entries, tags, entry_tags, entry_relations, search_index, media_assets, entry_media 及 Phase 3 预留 comments]
-- [/] M1-3 配置 Drizzle Kit 统揽扫描与线性迁移流水线 [目标: `packages/database/drizzle.config.ts`, `packages/database/migrations/`] [规范: docs/architecture.md#5.4] [验收: 运行 `pnpm db:generate` 成功在 migrations 目录生成 `0000_init_core_and_media.sql`]
-- [/] M1-4 实现轻量级 S3 / R2 `StoragePort` 适配器 [目标: `modules/media/src/infrastructure/r2-storage.adapter.ts`] [规范: docs/architecture.md#1.2] [验收: 基于 `aws4fetch` 单元测试通过预签名 PUT/GET 字符串生成与 Header 锁定]
+- [x] M1-1 搭建 `@archive/database` 并封装 D1 AtomicBatch [目标: `packages/database/src/client.ts`, `packages/database/src/batch.ts`] [规范: docs/architecture.md#1.2] [验收: 单元测试 12 项用例验证 batch 原子写入构造与 D1 语法兼容全部通过]
+- [x] M1-2 编写 Core 与 Media 模块的 Drizzle Schema 定义 [目标: `modules/core/src/infrastructure/schema.ts`, `modules/media/src/infrastructure/schema.ts`] [规范: docs/architecture.md#5.2] [验收: 成功导出 users, entries, tags, entry_tags, entry_relations, search_index, media_assets, entry_media 及 Phase 3 comments，类型检查 0 报错]
+- [x] M1-3 配置 Drizzle Kit 统揽扫描与线性迁移流水线 [目标: `packages/database/drizzle.config.ts`, `packages/database/migrations/`] [规范: docs/architecture.md#5.4] [验收: 运行 `pnpm db:generate` 成功在 migrations 目录生成完整初始迁移 SQL 文件，9 张表与全部关键索引健全无冗余]
+- [x] M1-4 实现轻量级 S3 / R2 `StoragePort` 适配器 [目标: `modules/media/src/infrastructure/r2-storage.adapter.ts`] [规范: docs/architecture.md#1.2] [验收: 基于 `aws4fetch` 14 项单元测试通过预签名 PUT/GET 字符串生成、Content-Type Header 锁定、自定义 CDN 域名与元数据解析]
 
 ---
 

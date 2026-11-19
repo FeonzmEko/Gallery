@@ -22,6 +22,14 @@
       "@archive/shared": ["packages/shared/src/index.ts"],
       "@archive/contracts": ["packages/contracts/src/index.ts"],
       "@archive/contracts/*": ["packages/contracts/src/*"],
+      "@archive/database": ["packages/database/src/index.ts"],
+      "@archive/database/*": ["packages/database/src/*"],
+      "@archive/module-core": ["modules/core/src/index.ts"],
+      "@archive/module-core/*": ["modules/core/src/*"],
+      "@archive/module-media": ["modules/media/src/index.ts"],
+      "@archive/module-media/*": ["modules/media/src/*"],
+      "@archive/module-comment": ["modules/comment/src/index.ts"],
+      "@archive/module-comment/*": ["modules/comment/src/*"],
       "@archive/ui": ["packages/ui/src/index.ts"],
       "@archive/ui/*": ["packages/ui/src/*"]
     }

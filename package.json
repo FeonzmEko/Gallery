@@ -8,6 +8,7 @@
     "build": "pnpm -r --filter=!personal-archive run build",
     "test": "vitest run",
     "typecheck": "pnpm -r --filter=!personal-archive run typecheck",
+    "db:generate": "pnpm --filter @archive/database db:generate",
     "lint": "echo \"Workspace lint check passed\""
   },
   "devDependencies": {
