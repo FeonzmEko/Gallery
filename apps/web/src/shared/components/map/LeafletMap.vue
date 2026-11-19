@@ -16,11 +16,33 @@
       点击地图任意位置以拾取经纬度坐标
     </div>
 
+    <!-- Map Tile Source Switcher -->
+    <div
+      class="absolute top-2.5 right-2.5 z-20 inline-flex rounded-lg bg-[#F7F5F0]/92 p-0.5 border border-[#E5E1D8] backdrop-blur-md shadow-xs text-[10px] font-mono"
+    >
+      <button
+        type="button"
+        class="px-2 py-1 rounded-md transition-colors"
+        :class="tileProvider === 'autonavi' ? 'bg-[#4E6053] text-white font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
+        @click="switchTileProvider('autonavi')"
+      >
+        国内地图
+      </button>
+      <button
+        type="button"
+        class="px-2 py-1 rounded-md transition-colors"
+        :class="tileProvider === 'osm' ? 'bg-[#4E6053] text-white font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
+        @click="switchTileProvider('osm')"
+      >
+        OSM
+      </button>
+    </div>
+
     <!-- Map Attribution Badge -->
     <div
       class="absolute bottom-2.5 left-2.5 z-20 pointer-events-none rounded-lg bg-[#F7F5F0]/90 px-2.5 py-1 text-[10px] font-mono text-[#747169] border border-[#E5E1D8] backdrop-blur-md shadow-xs"
     >
-      <span>OpenStreetMap 开源矢量瓦片 · 零商业 Key</span>
+      <span>{{ tileProvider === 'autonavi' ? '高德国内直连矢量底图 · 零 Key' : 'OpenStreetMap 开源矢量瓦片' }}</span>
     </div>
 
     <!-- Loading Placeholder until Map initializes -->
@@ -76,12 +98,43 @@ const emit = defineEmits<{
 
 const mapContainerRef = ref<HTMLElement | null>(null);
 const isMapReady = ref(false);
+const tileProvider = ref<'autonavi' | 'osm'>('autonavi');
 
 let mapInstance: any = null;
 let leafletLib: any = null;
+let tileLayer: any = null;
 let markerLayerGroup: any = null;
 let polylineLayer: any = null;
 let resizeObserver: ResizeObserver | null = null;
+
+function applyTileLayer(provider: 'autonavi' | 'osm') {
+  if (!mapInstance || !leafletLib) return;
+  const L = leafletLib;
+  if (tileLayer) {
+    mapInstance.removeLayer(tileLayer);
+  }
+  if (provider === 'autonavi') {
+    tileLayer = L.tileLayer(
+      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8',
+      {
+        subdomains: ['1', '2', '3', '4'],
+        maxZoom: 18,
+        attribution: '&copy; AutoNavi',
+      }
+    ).addTo(mapInstance);
+  } else {
+    tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(mapInstance);
+  }
+}
+
+function switchTileProvider(provider: 'autonavi' | 'osm') {
+  if (tileProvider.value === provider) return;
+  tileProvider.value = provider;
+  applyTileLayer(provider);
+}
 
 async function initMap() {
   if (typeof window === 'undefined' || !mapContainerRef.value) return;
@@ -98,10 +151,7 @@ async function initMap() {
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(mapInstance);
+    applyTileLayer(tileProvider.value);
 
     markerLayerGroup = L.layerGroup().addTo(mapInstance);
 

@@ -114,15 +114,17 @@ export class MediaService {
   private readonly db: ArchiveDb;
   private readonly storagePort: StoragePort;
   private readonly defaultStorageProvider: StorageProvider;
+  private readonly publicBaseUrl?: string;
 
   constructor(
     db: ArchiveDb,
     storagePort: StoragePort,
-    options?: { defaultStorageProvider?: StorageProvider }
+    options?: { defaultStorageProvider?: StorageProvider; publicBaseUrl?: string }
   ) {
     this.db = db;
     this.storagePort = storagePort;
     this.defaultStorageProvider = options?.defaultStorageProvider ?? 'r2';
+    this.publicBaseUrl = options?.publicBaseUrl?.replace(/\/+$/, '');
   }
 
   /**
@@ -157,7 +159,8 @@ export class MediaService {
       : 'bin';
     const cleanExt = rawExt.replace(/[^a-z0-9]/g, '');
 
-    const bucketKey = `originals/${yyyy}/${mm}/${mediaId}.${cleanExt}`;
+    const folderPrefix = input.visibility === 'private' ? 'private' : 'originals';
+    const bucketKey = `${folderPrefix}/${yyyy}/${mm}/${mediaId}.${cleanExt}`;
 
     // Call StoragePort to generate presigned upload URL with header locking
     const uploadResult = await this.storagePort.generateUploadUrl(
@@ -240,14 +243,22 @@ export class MediaService {
     return this.getMedia(assetId, user);
   }
 
+  private async resolveObjectUrl(key: string, visibility: string): Promise<string> {
+    if (visibility !== 'private' && this.publicBaseUrl) {
+      const cleanKey = key.replace(/^\/+/, '');
+      return `${this.publicBaseUrl}/${cleanKey}`;
+    }
+    const expiresIn = visibility === 'private' ? 900 : 3600;
+    return this.storagePort.getDownloadUrl(key, expiresIn);
+  }
+
   private async mapAssetToDto(asset: MediaAssetSelect): Promise<MediaAssetDto> {
-    const expiresIn = asset.visibility === 'private' ? 900 : 3600;
-    const originalUrl = await this.storagePort.getDownloadUrl(asset.bucketKey, expiresIn);
+    const originalUrl = await this.resolveObjectUrl(asset.bucketKey, asset.visibility);
     const thumbUrl = asset.thumbKey
-      ? await this.storagePort.getDownloadUrl(asset.thumbKey, expiresIn)
+      ? await this.resolveObjectUrl(asset.thumbKey, asset.visibility)
       : originalUrl;
     const previewUrl = asset.previewKey
-      ? await this.storagePort.getDownloadUrl(asset.previewKey, expiresIn)
+      ? await this.resolveObjectUrl(asset.previewKey, asset.visibility)
       : undefined;
 
     return {
@@ -366,10 +377,9 @@ export class MediaService {
     await Promise.all(
       rows.map(async (row) => {
         if (row.visibility === 'private' && !isAdmin) return;
-        const expiresIn = row.visibility === 'private' ? 900 : 3600;
-        const originalUrl = await this.storagePort.getDownloadUrl(row.bucketKey, expiresIn);
+        const originalUrl = await this.resolveObjectUrl(row.bucketKey, row.visibility);
         const thumbUrl = row.thumbKey
-          ? await this.storagePort.getDownloadUrl(row.thumbKey, expiresIn)
+          ? await this.resolveObjectUrl(row.thumbKey, row.visibility)
           : originalUrl;
         map.set(row.id, { originalUrl, thumbUrl });
       })
@@ -509,10 +519,9 @@ export class MediaService {
         continue; // Skip private media for guests
       }
 
-      const expiresIn = row.asset.visibility === 'private' ? 900 : 3600;
-      const originalUrl = await this.storagePort.getDownloadUrl(row.asset.bucketKey, expiresIn);
+      const originalUrl = await this.resolveObjectUrl(row.asset.bucketKey, row.asset.visibility);
       const thumbUrl = row.asset.thumbKey
-        ? await this.storagePort.getDownloadUrl(row.asset.thumbKey, expiresIn)
+        ? await this.resolveObjectUrl(row.asset.thumbKey, row.asset.visibility)
         : originalUrl;
 
       results.push({

@@ -431,7 +431,11 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     if (obj.httpEtag) {
       headers.set('etag', obj.httpEtag);
     }
-    headers.set('Cache-Control', 'public, max-age=86400');
+    const isPrivateKey = key.startsWith('private/');
+    headers.set(
+      'Cache-Control',
+      isPrivateKey ? 'private, no-store' : 'public, max-age=31536000, immutable'
+    );
     return new Response(obj.body as unknown as BodyInit, { headers });
   });
 

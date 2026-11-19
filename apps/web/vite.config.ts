@@ -43,13 +43,27 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            urlPattern: /^https:\/\/(?:fonts|gstatic)\.loli\.net\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'google-fonts',
+              cacheName: 'archive-fonts',
               expiration: {
-                maxEntries: 10,
+                maxEntries: 15,
                 maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/media\.feonzmeko\.qzz\.io\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'archive-media-cdn',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [200],
               },
             },
           },

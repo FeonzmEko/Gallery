@@ -208,7 +208,9 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
   const auth = new AuthService(db, { jwtSecret });
   const tag = new TagService(db);
   const relation = new RelationService(db);
-  const media = new MediaService(db, storage);
+  const media = new MediaService(db, storage, {
+    publicBaseUrl: customStorage ? undefined : env.R2_PUBLIC_DOMAIN,
+  });
   const entry = new EntryService(db, tag, (mediaIds, user) =>
     media.resolveMediaUrls(mediaIds, user)
   );
