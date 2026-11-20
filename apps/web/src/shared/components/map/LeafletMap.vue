@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full overflow-hidden rounded-xl border border-[#E5E1D8] bg-[#EFECE4]">
+  <div class="archival-map relative w-full overflow-hidden rounded-[2px] border border-[#DDD6C9] bg-[#EAE4D8]">
     <!-- Map Container Target -->
     <div
       ref="mapContainerRef"
@@ -11,48 +11,50 @@
     <!-- Pick Mode Helper Banner -->
     <div
       v-if="pickMode"
-      class="absolute top-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-[#1D1C1A]/90 px-3.5 py-1.5 text-[11px] font-mono text-[#F7F5F0] shadow-md backdrop-blur-md pointer-events-none"
+      class="absolute top-3 left-1/2 -translate-x-1/2 z-20 rounded-[2px] bg-[#161513]/90 px-4 py-1.5 text-[10px] font-mono tracking-[0.14em] uppercase text-[#FAF8F4] border border-white/10 pointer-events-none"
     >
       点击地图任意位置以拾取经纬度坐标
     </div>
 
     <!-- Map Tile Source Switcher -->
     <div
-      class="absolute top-2.5 right-2.5 z-20 inline-flex rounded-lg bg-[#F7F5F0]/92 p-0.5 border border-[#E5E1D8] backdrop-blur-md shadow-xs text-[10px] font-mono"
+      class="absolute top-3 right-3 z-20 inline-flex rounded-[2px] bg-[#FAF8F4]/95 border border-[#DDD6C9] text-[10px] font-mono tracking-[0.12em]"
     >
       <button
         type="button"
-        class="px-2 py-1 rounded-md transition-colors"
-        :class="tileProvider === 'autonavi' ? 'bg-[#4E6053] text-white font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
-        @click="switchTileProvider('autonavi')"
+        class="px-2.5 py-1 transition-colors"
+        :class="tileProvider === 'osm' ? 'bg-[#161513] text-[#FAF8F4]' : 'text-[#57534C] hover:text-[#161513]'"
+        @click="switchTileProvider('osm')"
       >
-        国内地图
+        OSM 图集
       </button>
       <button
         type="button"
-        class="px-2 py-1 rounded-md transition-colors"
-        :class="tileProvider === 'osm' ? 'bg-[#4E6053] text-white font-semibold' : 'text-[#747169] hover:text-[#1D1C1A]'"
-        @click="switchTileProvider('osm')"
+        class="px-2.5 py-1 border-l border-[#DDD6C9] transition-colors"
+        :class="tileProvider === 'autonavi' ? 'bg-[#161513] text-[#FAF8F4]' : 'text-[#57534C] hover:text-[#161513]'"
+        @click="switchTileProvider('autonavi')"
       >
-        OSM
+        高德底图
       </button>
     </div>
 
-    <!-- Map Attribution Badge -->
+    <!-- Cartographic Attribution Stamp -->
     <div
-      class="absolute bottom-2.5 left-2.5 z-20 pointer-events-none rounded-lg bg-[#F7F5F0]/90 px-2.5 py-1 text-[10px] font-mono text-[#747169] border border-[#E5E1D8] backdrop-blur-md shadow-xs"
+      class="absolute bottom-3 left-3 z-20 pointer-events-none rounded-[2px] bg-[#FAF8F4]/92 px-2.5 py-1 text-[10px] font-mono tracking-[0.1em] text-[#57534C] border border-[#DDD6C9]"
     >
-      <span>{{ tileProvider === 'autonavi' ? '高德国内直连矢量底图 · 零 Key' : 'OpenStreetMap 开源矢量瓦片' }}</span>
+      <span>
+        {{ tileProvider === 'osm' ? 'CARTOGRAPHY · OPENSTREETMAP' : 'CARTOGRAPHY · AUTONAVI' }}
+      </span>
     </div>
 
     <!-- Loading Placeholder until Map initializes -->
     <div
       v-if="!isMapReady"
-      class="absolute inset-0 z-30 flex items-center justify-center bg-[#F7F5F0]/95 text-[#747169]"
+      class="absolute inset-0 z-30 flex items-center justify-center bg-[#F3EFE7]/95 text-[#787268]"
     >
-      <div class="flex items-center gap-2 text-xs font-mono">
-        <CompassIcon class="w-4 h-4 text-[#4E6053] animate-spin" />
-        <span>正在加载地理档案图谱...</span>
+      <div class="flex items-center gap-2.5 text-[11px] font-mono tracking-[0.14em] uppercase">
+        <CompassIcon class="w-4 h-4 text-[#3D4E42] animate-spin" />
+        <span>Loading Cartography Plate...</span>
       </div>
     </div>
   </div>
@@ -96,9 +98,11 @@ const emit = defineEmits<{
   (e: 'map-click', coords: { lat: number; lng: number }): void;
 }>();
 
+type TileProvider = 'osm' | 'autonavi';
+
 const mapContainerRef = ref<HTMLElement | null>(null);
 const isMapReady = ref(false);
-const tileProvider = ref<'autonavi' | 'osm'>('autonavi');
+const tileProvider = ref<TileProvider>('osm');
 
 let mapInstance: any = null;
 let leafletLib: any = null;
@@ -107,7 +111,7 @@ let markerLayerGroup: any = null;
 let polylineLayer: any = null;
 let resizeObserver: ResizeObserver | null = null;
 
-function applyTileLayer(provider: 'autonavi' | 'osm') {
+function applyTileLayer(provider: TileProvider) {
   if (!mapInstance || !leafletLib) return;
   const L = leafletLib;
   if (tileLayer) {
@@ -130,7 +134,7 @@ function applyTileLayer(provider: 'autonavi' | 'osm') {
   }
 }
 
-function switchTileProvider(provider: 'autonavi' | 'osm') {
+function switchTileProvider(provider: TileProvider) {
   if (tileProvider.value === provider) return;
   tileProvider.value = provider;
   applyTileLayer(provider);
@@ -193,12 +197,12 @@ function renderFeatures() {
 
   if (props.polyline && props.polyline.length > 1) {
     polylineLayer = L.polyline(props.polyline, {
-      color: '#C25438',
-      weight: 3,
+      color: '#9A3F2B',
+      weight: 2.2,
       opacity: 0.85,
-      dashArray: '7, 7',
-      lineCap: 'round',
-      lineJoin: 'round',
+      dashArray: '6, 6',
+      lineCap: 'square',
+      lineJoin: 'miter',
     }).addTo(mapInstance);
 
     for (const pt of props.polyline) {
@@ -210,16 +214,15 @@ function renderFeatures() {
     return L.divIcon({
       className: 'custom-footprint-marker',
       html: `
-        <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; inset: 2px; border-radius: 9999px; background-color: rgba(78, 96, 83, 0.28); animation: archivePing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="position: relative; width: 22px; height: 22px; border-radius: 9999px; background-color: #4E6053; border: 2px solid #F7F5F0; box-shadow: 0 3px 8px rgba(29,28,26,0.28); display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace;">
+        <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: relative; width: 22px; height: 22px; border-radius: 2px; background-color: #161513; border: 1.5px solid #FAF8F4; box-shadow: 0 4px 10px rgba(22,21,19,0.28); display: flex; align-items: center; justify-content: center; color: #FAF8F4; font-size: 10px; font-weight: 500; font-family: 'JetBrains Mono', monospace;">
             ${index + 1}
           </div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -16],
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -14],
     });
   };
 
@@ -237,10 +240,10 @@ function renderFeatures() {
       const safeTime = m.time !== undefined && m.time !== null ? escapeHtml(String(m.time)) : '';
 
       const popupHtml = `
-        <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 160px; padding: 2px;">
-          <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #1D1C1A;">${safeTitle}</h4>
-          ${safeDesc ? `<p style="margin: 4px 0 0; font-size: 11px; color: #747169; line-height: 1.4;">${safeDesc}</p>` : ''}
-          ${safeTime ? `<div style="margin-top: 4px; font-size: 10px; color: #C25438; font-family: monospace;">${safeTime}</div>` : ''}
+        <div style="font-family: 'Noto Serif SC', Georgia, serif; min-width: 160px; padding: 2px;">
+          <h4 style="margin: 0; font-size: 13px; font-weight: 500; color: #161513;">${safeTitle}</h4>
+          ${safeDesc ? `<p style="margin: 4px 0 0; font-size: 11px; color: #57534C; line-height: 1.5;">${safeDesc}</p>` : ''}
+          ${safeTime ? `<div style="margin-top: 4px; font-size: 10px; color: #9A3F2B; font-family: 'JetBrains Mono', monospace;">${safeTime}</div>` : ''}
         </div>
       `;
 
@@ -284,12 +287,3 @@ onUnmounted(() => {
   }
 });
 </script>
-
-<style>
-@keyframes archivePing {
-  75%, 100% {
-    transform: scale(1.9);
-    opacity: 0;
-  }
-}
-</style>

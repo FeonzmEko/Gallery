@@ -1,64 +1,81 @@
 <template>
-  <div class="space-y-8">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E1D8] pb-6">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="text-[11px] font-mono tracking-widest text-[#4E6053] uppercase font-semibold">GEOGRAPHIC ATLAS</span>
-          <span class="text-[#D4CEBF]">&middot;</span>
-          <span class="text-[11px] font-mono text-[#9E9B93]">OPENSTREETMAP 航迹</span>
+  <div class="gallery-reveal space-y-10 sm:space-y-12">
+    <!-- ========================================================= -->
+    <!-- ATLAS MONOGRAPH MASTHEAD                                  -->
+    <!-- ========================================================= -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end pb-8 border-b border-[#DDD6C9]">
+      <div class="lg:col-span-7 space-y-3">
+        <div class="flex items-center gap-3 kicker-caps text-[#3D4E42]">
+          <span>CHAPTER IV</span>
+          <span class="w-6 h-[1px] bg-[#C4BBA9]"></span>
+          <span class="text-[#787268]">GEOGRAPHIC ATLAS · GEODESIC ROUTES</span>
         </div>
-        <h1 class="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-[#1D1C1A]">
-          足迹漫游
-        </h1>
-        <p class="mt-1 text-sm text-[#747169] font-serif italic">
-          “丈量山海与城郭，以经纬点位与大圆航距串联生命旅途。”
-        </p>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="relative">
-          <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9E9B93]" />
-          <input
-            v-model="searchKeyword"
-            type="text"
-            placeholder="检索目的地或城市..."
-            class="w-48 sm:w-56 rounded-xl bg-white border border-[#E5E1D8] pl-9 pr-3 py-2 text-xs text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#4E6053] transition-all shadow-xs"
-            @input="handleSearchDebounced"
-          />
-        </div>
-
-        <button
-          v-if="authStore.isAdmin"
-          type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-[#4E6053] px-4 py-2 text-xs font-semibold text-white hover:bg-[#3D4C41] shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
-          @click="openCreateTripModal"
-        >
-          <MapPinPlusIcon class="w-3.5 h-3.5" />
-          <span>标记新足迹</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Map + Active Trip Bento Board -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-      <!-- Left: Leaflet Interactive Map Mat Board -->
-      <div class="lg:col-span-8 bg-white p-2.5 sm:p-3 rounded-2xl border border-[#E5E1D8] shadow-xs flex flex-col gap-2.5">
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-[#747169] px-1.5 pt-0.5">
-          <span class="flex items-center gap-2 font-mono text-[11px]">
-            <span class="h-2 w-2 rounded-full bg-[#4E6053] animate-pulse"></span>
-            <span>当前航迹：<strong class="text-[#1D1C1A] font-medium">{{ activeTrip?.title || '全部足迹聚合视图' }}</strong></span>
+        <div class="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+          <h1 class="font-serif text-4xl sm:text-5xl lg:text-[54px] font-light tracking-[0.04em] text-[#161513] leading-[1.12]">
+            足迹漫游
+          </h1>
+          <span class="font-display italic text-2xl sm:text-3xl font-light text-[#9B9488] tracking-wide">
+            Atlas des voyages
           </span>
-          <div class="flex items-center gap-3 font-mono text-[11px] text-[#9E9B93]">
-            <span v-if="activeTrip?.distanceKm">{{ activeTrip.distanceKm.toFixed(1) }} km</span>
-            <span v-if="activeMarkers.length > 0">{{ activeMarkers.length }} 个坐标节点</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 flex flex-col lg:items-end justify-between gap-4">
+        <p class="font-serif text-[13.5px] sm:text-sm text-[#57534C] leading-[1.85] lg:text-right max-w-md font-light">
+          丈量山海与城郭，以经纬坐标与大圆航距串联生命旅途的地理档案。
+        </p>
+
+        <div class="flex flex-wrap items-center gap-5">
+          <div class="relative flex items-center">
+            <SearchIcon class="w-3.5 h-3.5 text-[#9B9488] pointer-events-none mr-2" />
+            <input
+              v-model="searchKeyword"
+              type="text"
+              placeholder="检索目的地或城市..."
+              class="w-40 sm:w-48 bg-transparent border-b border-[#C4BBA9] focus:border-[#161513] pb-1 text-xs text-[#161513] placeholder-[#9B9488] focus:outline-none transition-colors"
+              @input="handleSearchDebounced"
+            />
+          </div>
+
+          <button
+            v-if="authStore.isAdmin"
+            type="button"
+            class="inline-flex items-center gap-2 rounded-[2px] bg-[#3D4E42] px-4 py-2 text-xs font-serif tracking-[0.14em] text-[#FAF8F4] hover:bg-[#161513] transition-colors duration-200"
+            @click="openCreateTripModal"
+          >
+            <MapPinPlusIcon class="w-3.5 h-3.5" />
+            <span>标记新足迹</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- ARCHIVAL CARTOGRAPHY PLATE + EXPEDITION LEDGER            -->
+    <!-- ========================================================= -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-stretch">
+      <!-- Left: Framed Cartographic Plate -->
+      <div class="lg:col-span-8 passe-partout rounded-[2px] p-4 sm:p-5 flex flex-col gap-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-1">
+          <div class="flex items-center gap-2.5 text-xs">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#3D4E42]"></span>
+            <span class="kicker-caps text-[#787268]">ACTIVE ROUTE</span>
+            <span class="text-[#C4BBA9]">/</span>
+            <span class="font-serif text-[#161513] font-medium">
+              {{ activeTrip?.title || '全部足迹聚合图谱' }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-4 font-mono text-[11px] text-[#787268] tabular-nums">
+            <span v-if="activeTrip?.distanceKm">{{ activeTrip.distanceKm.toFixed(1) }} KM</span>
+            <span v-if="activeMarkers.length > 0">{{ activeMarkers.length }} NODES</span>
             <button
               v-if="activeTrip && trips.length > 1"
               type="button"
-              class="text-[#C25438] hover:underline"
+              class="text-[#9A3F2B] hover:underline underline-offset-4"
               @click="activeTrip = null"
             >
-              查看全部聚合
+              全部聚合
             </button>
           </div>
         </div>
@@ -66,121 +83,137 @@
         <LeafletMap
           :markers="activeMarkers"
           :polyline="activePolyline"
-          height="420px"
+          height="390px"
         />
       </div>
 
-      <!-- Right: Active Itinerary Stop List -->
-      <div class="lg:col-span-4 bg-white rounded-2xl border border-[#E5E1D8] p-5 shadow-xs flex flex-col">
-        <div class="flex items-center justify-between border-b border-[#F0ECE1] pb-3 mb-3">
-          <div>
-            <span class="text-[10px] font-mono uppercase tracking-wider text-[#4E6053] font-semibold">ITINERARY STOPS</span>
-            <h3 class="font-serif text-base font-medium text-[#1D1C1A] mt-0.5">
-              {{ activeTrip ? activeTrip.title : '全站行程概览' }}
-            </h3>
-          </div>
-          <span v-if="activeTrip?.countryCode" class="rounded-md bg-[#F7F5F0] px-2 py-0.5 text-[10px] font-mono text-[#747169] border border-[#E5E1D8]">
-            {{ activeTrip.countryCode }}
-          </span>
-        </div>
-
-        <div v-if="activeTrip && activeTrip.locations && activeTrip.locations.length > 0" class="flex-1 overflow-y-auto space-y-3 max-h-[340px] pr-1">
-          <div
-            v-for="(loc, idx) in activeTrip.locations"
-            :key="loc.id || idx"
-            class="flex items-start gap-3 rounded-xl bg-[#F7F5F0]/70 border border-[#E5E1D8] p-3"
-          >
-            <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#4E6053] text-white font-mono text-[11px] font-semibold">
-              {{ idx + 1 }}
+      <!-- Right: Expedition Stop Ledger -->
+      <div class="lg:col-span-4 museum-plate rounded-[2px] p-6 sm:p-7 flex flex-col justify-between">
+        <div>
+          <div class="flex items-start justify-between border-b border-[#DDD6C9] pb-4 mb-5">
+            <div class="space-y-1">
+              <span class="kicker-caps text-[#3D4E42] block">EXPEDITION LEDGER</span>
+              <h3 class="font-serif text-xl font-normal text-[#161513] leading-snug">
+                {{ activeTrip ? activeTrip.title : '全站行程概览' }}
+              </h3>
             </div>
-            <div class="min-w-0 flex-1">
-              <div class="text-xs font-medium text-[#1D1C1A] truncate">{{ loc.name }}</div>
-              <div v-if="loc.notes" class="text-[11px] text-[#747169] mt-0.5 leading-relaxed">{{ loc.notes }}</div>
-              <div class="text-[10px] font-mono text-[#9E9B93] mt-1">
-                {{ loc.latitude.toFixed(4) }}, {{ loc.longitude.toFixed(4) }}
+            <span
+              v-if="activeTrip?.countryCode"
+              class="font-mono text-[10px] tracking-[0.18em] text-[#787268] border border-[#DDD6C9] px-2 py-0.5 rounded-[2px]"
+            >
+              {{ activeTrip.countryCode }}
+            </span>
+          </div>
+
+          <div
+            v-if="activeTrip && activeTrip.locations && activeTrip.locations.length > 0"
+            class="overflow-y-auto divide-y divide-[#E8E2D6] max-h-[340px] pr-1"
+          >
+            <div
+              v-for="(loc, idx) in activeTrip.locations"
+              :key="loc.id || idx"
+              class="py-3.5 first:pt-0 flex items-start gap-3.5"
+            >
+              <span class="font-display italic text-lg text-[#9A3F2B] leading-none pt-0.5 w-5 shrink-0 tabular-nums">
+                {{ String(idx + 1).padStart(2, '0') }}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="font-serif text-[13.5px] text-[#161513] truncate">{{ loc.name }}</div>
+                <div v-if="loc.notes" class="text-xs text-[#57534C] mt-1 leading-relaxed font-light">{{ loc.notes }}</div>
+                <div class="text-[10px] font-mono text-[#9B9488] mt-1.5 tracking-wider tabular-nums">
+                  {{ loc.latitude.toFixed(4) }}° N, {{ loc.longitude.toFixed(4) }}° E
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div v-else class="flex-1 flex flex-col items-center justify-center text-center py-10 text-xs text-[#747169]">
-          <CompassIcon class="w-8 h-8 text-[#D4CEBF] mb-2" />
-          <p v-if="activeTrip">该行程暂未录入具体经纬节点。</p>
-          <p v-else>选择下方任意行程卡片即可聚焦查看该段路线的详细节点与里程。</p>
+
+          <div v-else class="flex flex-col items-center justify-center text-center py-16 text-xs text-[#787268]">
+            <span class="font-display italic text-2xl text-[#C4BBA9] mb-3">N / E</span>
+            <p class="font-serif leading-relaxed max-w-[220px]">
+              {{ activeTrip ? '该行程暂未录入具体经纬节点。' : '点选下方任一行程卷宗，即可聚焦查看路线坐标与航距。' }}
+            </p>
+          </div>
         </div>
 
-        <div v-if="activeTrip" class="mt-4 pt-3 border-t border-[#F0ECE1] flex items-center justify-between text-xs font-mono text-[#747169]">
-          <span>{{ formatDateRange(activeTrip) }}</span>
-          <span class="text-[#4E6053] font-semibold">总航距 {{ (activeTrip.distanceKm || 0).toFixed(1) }} km</span>
+        <div v-if="activeTrip" class="mt-6 pt-4 border-t border-[#DDD6C9] flex items-baseline justify-between">
+          <span class="font-mono text-[11px] text-[#787268] tabular-nums">{{ formatDateRange(activeTrip) }}</span>
+          <div class="text-right">
+            <span class="kicker-caps text-[#9B9488] mr-2">DISTANCE</span>
+            <span class="font-display italic text-2xl text-[#161513] tabular-nums">
+              {{ (activeTrip.distanceKm || 0).toFixed(1) }} <span class="text-sm font-mono not-italic text-[#787268]">km</span>
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Trips Cards Grid -->
-    <div class="space-y-4 pt-2">
-      <div class="flex items-center justify-between">
-        <h3 class="font-serif text-xl font-medium text-[#1D1C1A] flex items-center gap-2">
-          <MapPinIcon class="w-4 h-4 text-[#4E6053]" />
-          <span>行程画卷列表 ({{ trips.length }})</span>
-        </h3>
+    <!-- ========================================================= -->
+    <!-- VOYAGE INDEX CATALOGUE                                    -->
+    <!-- ========================================================= -->
+    <section class="space-y-6 pt-2">
+      <div class="flex items-baseline justify-between border-b border-[#DDD6C9] pb-3.5">
+        <div class="flex items-baseline gap-3">
+          <h3 class="font-serif text-xl font-normal text-[#161513]">行程图录</h3>
+          <span class="font-display italic text-base text-[#9B9488]">Voyage Index</span>
+        </div>
+        <span class="font-mono text-[11px] tracking-[0.14em] text-[#787268] tabular-nums">
+          {{ trips.length }} 段旅途 · 共 {{ totalDistanceKm.toFixed(0) }} KM
+        </span>
       </div>
 
-      <!-- Loading skeleton -->
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Loading Skeleton -->
+      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           v-for="i in 3"
           :key="i"
-          class="h-44 rounded-2xl bg-white border border-[#E5E1D8] p-5 animate-pulse space-y-3"
+          class="h-44 bg-[#FAF8F4] border border-[#DDD6C9] p-6 animate-pulse space-y-4"
         >
-          <div class="h-4 bg-[#EFECE4] rounded w-1/3"></div>
-          <div class="h-6 bg-[#EFECE4] rounded w-2/3"></div>
-          <div class="h-10 bg-[#EFECE4]/60 rounded w-full"></div>
+          <div class="h-3 bg-[#EAE4D8] w-1/3"></div>
+          <div class="h-6 bg-[#EAE4D8] w-2/3"></div>
+          <div class="h-10 bg-[#EAE4D8]/60 w-full"></div>
         </div>
       </div>
 
-      <!-- Empty State -->
+      <!-- Serene Empty State -->
       <div
         v-else-if="trips.length === 0"
-        class="rounded-2xl border border-dashed border-[#D4CEBF] bg-white/60 p-12 text-center"
+        class="py-20 px-6 text-center flex flex-col items-center justify-center border-y border-[#DDD6C9] bg-[#FAF8F4]/40"
       >
-        <CompassIcon class="w-10 h-10 text-[#9E9B93] mx-auto mb-2" />
-        <h4 class="font-serif text-base font-medium text-[#1D1C1A]">暂无旅行足迹记录</h4>
-        <p class="text-xs text-[#747169] mt-1 max-w-sm mx-auto">
-          {{ searchKeyword ? '没有找到匹配的行程记录。' : '尚未收录任何行程点位，管理员可点击“标记新足迹”绘制探索路线图。' }}
+        <div class="w-[1px] h-8 bg-[#C4BBA9] mb-5"></div>
+        <p class="font-display italic text-lg text-[#9B9488]">Uncharted Territory</p>
+        <h4 class="mt-2 font-serif text-xl font-light tracking-[0.08em] text-[#161513]">暂无旅行足迹记录</h4>
+        <p class="text-xs text-[#787268] mt-2 max-w-sm leading-[1.9] font-light">
+          {{ searchKeyword ? '没有找到匹配的行程记录。' : '尚未收录任何行程点位，管理员可点击右上角“标记新足迹”绘制探索图谱。' }}
         </p>
       </div>
 
-      <!-- Trip Cards List -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div
-          v-for="trip in trips"
+      <!-- Architectural Voyage Cards -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <article
+          v-for="(trip, idx) in trips"
           :key="trip.id"
-          class="group rounded-2xl border p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
-          :class="[
-            activeTrip?.id === trip.id
-              ? 'border-[#C25438] bg-[#FDF8F6] shadow-sm'
-              : 'border-[#E5E1D8] bg-white hover:border-[#D4CEBF] hover:shadow-md hover:-translate-y-0.5',
-          ]"
+          class="group museum-plate rounded-[2px] p-6 cursor-pointer flex flex-col justify-between gap-5 relative"
+          :class="activeTrip?.id === trip.id ? 'border-[#161513] bg-[#FAF8F4]' : ''"
           @click="selectTrip(trip)"
         >
-          <div>
-            <!-- Top Badges -->
-            <div class="flex items-center justify-between text-xs text-[#747169] mb-3">
-              <span class="inline-flex items-center gap-1 font-mono text-[11px] text-[#4E6053]">
-                <CalendarIcon class="w-3.5 h-3.5" />
-                <span>{{ formatDateRange(trip) }}</span>
-              </span>
+          <!-- Active Top Cinnabar Hairline -->
+          <span
+            v-if="activeTrip?.id === trip.id"
+            class="absolute top-0 inset-x-0 h-[2px] bg-[#9A3F2B]"
+          ></span>
+
+          <div class="space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2 kicker-caps text-[#787268]">
+                <span class="text-[#3D4E42] tabular-nums">{{ formatDateRange(trip) }}</span>
+                <span v-if="trip.countryCode" class="text-[#C4BBA9]">/</span>
+                <span v-if="trip.countryCode">{{ trip.countryCode }}</span>
+                <span v-if="trip.visibility === 'private'" class="text-[#9A6B2F]">· PRIVATE</span>
+              </div>
+
               <div class="flex items-center gap-1.5">
-                <span
-                  v-if="trip.visibility === 'private'"
-                  class="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-mono text-amber-800 border border-amber-200"
-                >
-                  私密
-                </span>
-                <span
-                  v-if="trip.countryCode"
-                  class="rounded-md bg-[#F7F5F0] px-2 py-0.5 text-[10px] font-mono text-[#747169] border border-[#E5E1D8]"
-                >
-                  {{ trip.countryCode }}
+                <span class="font-display italic text-lg text-[#C4BBA9] leading-none tabular-nums">
+                  {{ String(idx + 1).padStart(2, '0') }}
                 </span>
                 <div
                   v-if="authStore.isAdmin"
@@ -189,7 +222,7 @@
                 >
                   <button
                     type="button"
-                    class="p-1 rounded-md text-[#747169] hover:text-[#C25438] hover:bg-white"
+                    class="p-1 text-[#787268] hover:text-[#9A3F2B]"
                     @click="openEditTripModal(trip)"
                     title="编辑行程"
                   >
@@ -197,7 +230,7 @@
                   </button>
                   <button
                     type="button"
-                    class="p-1 rounded-md text-[#747169] hover:text-red-600 hover:bg-red-50"
+                    class="p-1 text-[#787268] hover:text-[#9A3F2B]"
                     @click="handleDeleteTrip(trip.id)"
                     title="删除行程"
                   >
@@ -207,52 +240,54 @@
               </div>
             </div>
 
-            <!-- Title & City -->
-            <h4
-              class="font-serif text-base font-medium transition-colors"
-              :class="activeTrip?.id === trip.id ? 'text-[#C25438]' : 'text-[#1D1C1A] group-hover:text-[#C25438]'"
-            >
-              {{ trip.title }}
-            </h4>
-            <p v-if="trip.citySummary" class="mt-1 text-[11px] font-mono text-[#4E6053]">
-              {{ trip.citySummary }}
-            </p>
-            <p v-if="trip.summary" class="mt-2 text-xs text-[#747169] line-clamp-2 leading-relaxed">
-              {{ trip.summary }}
-            </p>
+            <div>
+              <h4
+                class="font-serif text-lg font-normal transition-colors leading-snug"
+                :class="activeTrip?.id === trip.id ? 'text-[#9A3F2B]' : 'text-[#161513] group-hover:text-[#9A3F2B]'"
+              >
+                {{ trip.title }}
+              </h4>
+              <p v-if="trip.citySummary" class="mt-1 text-[11px] font-serif tracking-wider text-[#3D4E42]">
+                {{ trip.citySummary }}
+              </p>
+              <p v-if="trip.summary" class="mt-2.5 text-xs text-[#57534C] line-clamp-2 leading-[1.8] font-light">
+                {{ trip.summary }}
+              </p>
+            </div>
           </div>
 
-          <!-- Bottom Meta -->
-          <div class="mt-4 pt-3 border-t border-[#F0ECE1] flex items-center justify-between text-xs font-mono text-[#747169]">
-            <span class="flex items-center gap-2 text-[11px]">
-              <span>{{ trip.locations?.length || 0 }} 节点</span>
-              <span v-if="trip.distanceKm">&middot; {{ trip.distanceKm.toFixed(1) }} km</span>
+          <div class="pt-4 border-t border-[#E8E2D6] flex items-center justify-between text-[11px] font-mono text-[#787268] tabular-nums">
+            <span>
+              {{ trip.locations?.length || 0 }} 节点
+              <template v-if="trip.distanceKm"> · {{ trip.distanceKm.toFixed(1) }} km</template>
             </span>
             <span
-              class="text-[11px] font-medium"
-              :class="activeTrip?.id === trip.id ? 'text-[#C25438]' : 'text-[#9E9B93] group-hover:text-[#1D1C1A]'"
+              class="font-serif tracking-[0.12em]"
+              :class="activeTrip?.id === trip.id ? 'text-[#9A3F2B]' : 'text-[#9B9488] group-hover:text-[#161513]'"
             >
-              {{ activeTrip?.id === trip.id ? '当前聚焦' : '查看航迹 ->' }}
+              {{ activeTrip?.id === trip.id ? '当前聚焦' : '聚焦航迹 →' }}
             </span>
           </div>
-        </div>
+        </article>
       </div>
 
       <!-- Pagination -->
-      <div v-if="hasMore" class="pt-2 text-center">
+      <div v-if="hasMore" class="pt-6 text-center">
         <button
           type="button"
           :disabled="isLoadingMore"
-          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white hover:bg-[#F7F5F0] border border-[#E5E1D8] text-xs font-medium text-[#1D1C1A] shadow-xs transition-all disabled:opacity-50"
+          class="inline-flex items-center gap-3 px-8 py-3 rounded-[2px] border border-[#161513] text-xs font-serif tracking-[0.18em] text-[#161513] hover:bg-[#161513] hover:text-[#FAF8F4] transition-colors disabled:opacity-40"
           @click="loadTrips(false)"
         >
-          <Loader2Icon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin text-[#4E6053]" />
-          <span>{{ isLoadingMore ? '加载更多行程...' : '加载更多行程' }}</span>
+          <Loader2Icon v-if="isLoadingMore" class="w-3.5 h-3.5 animate-spin" />
+          <span>{{ isLoadingMore ? '加载更多行程...' : '展开更多行程' }}</span>
         </button>
       </div>
-    </div>
+    </section>
 
-    <!-- Create / Edit Trip Modal with Interactive Map Coordinate Picker -->
+    <!-- ========================================================= -->
+    <!-- CREATE / EDIT TRIP MODAL                                  -->
+    <!-- ========================================================= -->
     <Teleport to="body">
       <div
         v-if="isTripModalOpen"
@@ -260,114 +295,113 @@
         role="dialog"
         aria-modal="true"
       >
-        <div class="fixed inset-0 bg-[#1D1C1A]/40 backdrop-blur-xs" @click="isTripModalOpen = false"></div>
-        <div class="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] shadow-2xl overflow-hidden">
-          <div class="flex items-center justify-between border-b border-[#E5E1D8] px-6 py-4 bg-white">
-            <h3 class="font-serif text-lg font-medium text-[#1D1C1A] flex items-center gap-2">
-              <CompassIcon class="w-4 h-4 text-[#4E6053]" />
-              <span>{{ editingTripId ? '编辑旅行足迹' : '记录全新旅行足迹' }}</span>
-            </h3>
+        <div class="fixed inset-0 bg-[#161513]/55 backdrop-blur-xs" @click="isTripModalOpen = false"></div>
+        <div class="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-[2px] border border-[#DDD6C9] bg-[#F3EFE7] shadow-2xl overflow-hidden">
+          <div class="flex items-center justify-between border-b border-[#DDD6C9] px-6 py-4 bg-[#FAF8F4]">
+            <div class="space-y-0.5">
+              <span class="kicker-caps text-[#3D4E42] block">CARTOGRAPHY EDITOR</span>
+              <h3 class="font-serif text-lg font-normal text-[#161513]">
+                {{ editingTripId ? '编辑旅行足迹' : '记录全新旅行足迹' }}
+              </h3>
+            </div>
             <button
               type="button"
-              class="rounded-lg p-1.5 text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4]"
+              class="p-1.5 text-[#787268] hover:text-[#161513]"
               @click="isTripModalOpen = false"
             >
               <XIcon class="w-5 h-5" />
             </button>
           </div>
 
-          <form @submit.prevent="handleSaveTrip" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form @submit.prevent="handleSaveTrip" class="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div class="sm:col-span-2">
-                <label class="block text-[#1D1C1A] mb-1 font-medium">旅行名称 *</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">旅行名称 *</label>
                 <input
                   v-model="tripForm.title"
                   type="text"
                   required
                   placeholder="例如：日本关西红叶巡礼 2026"
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3.5 py-2 text-sm text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3.5 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">出发日期 *</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">出发日期 *</label>
                 <input
                   v-model="startDateStr"
                   type="date"
                   required
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3 py-2 text-[#1D1C1A] font-mono focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3 py-2 font-mono"
                 />
               </div>
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">返程日期 *</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">返程日期 *</label>
                 <input
                   v-model="endDateStr"
                   type="date"
                   required
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3 py-2 text-[#1D1C1A] font-mono focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3 py-2 font-mono"
                 />
               </div>
 
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">国家/地区码</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">国家 / 地区码</label>
                 <input
                   v-model="tripForm.countryCode"
                   type="text"
                   placeholder="例如：JPN 或 CHN"
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] font-mono focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3.5 py-2 font-mono"
                 />
               </div>
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">城市简述</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">城市简述</label>
                 <input
                   v-model="tripForm.citySummary"
                   type="text"
                   placeholder="例如：京都 · 大阪 · 奈良"
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3.5 py-2"
                 />
               </div>
 
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">可见权限</label>
-                <select
-                  v-model="tripForm.visibility"
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3 py-2 text-[#1D1C1A] focus:outline-none focus:border-[#4E6053]"
-                >
+                <label class="block kicker-caps text-[#787268] mb-1.5">可见权限</label>
+                <select v-model="tripForm.visibility" class="w-full editorial-field px-3 py-2">
                   <option value="public">公开策展 (Public)</option>
                   <option value="private">私密仅己可见 (Private)</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[#1D1C1A] mb-1 font-medium">标签 (逗号分隔)</label>
+                <label class="block kicker-caps text-[#787268] mb-1.5">标签 (逗号分隔)</label>
                 <input
                   v-model="tripTagsInput"
                   type="text"
                   placeholder="例如：旅行, 摄影, 徒步"
-                  class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] focus:outline-none focus:border-[#4E6053]"
+                  class="w-full editorial-field px-3.5 py-2"
                 />
               </div>
             </div>
 
             <div>
-              <label class="block text-[#1D1C1A] mb-1 font-medium">行程概述</label>
+              <label class="block kicker-caps text-[#787268] mb-1.5">行程概述</label>
               <textarea
                 v-model="tripForm.summary"
                 rows="2"
                 placeholder="记录本次旅途的主要亮点与路线..."
-                class="w-full rounded-xl bg-white border border-[#E5E1D8] px-3.5 py-2 text-[#1D1C1A] placeholder-[#9E9B93] focus:outline-none focus:border-[#4E6053]"
+                class="w-full editorial-field px-3.5 py-2"
               ></textarea>
             </div>
 
             <!-- Interactive Map Picker & Custom Waypoints -->
-            <div class="rounded-2xl border border-[#E5E1D8] bg-white p-4 space-y-3">
+            <div class="rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4] p-4 space-y-3.5">
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <span class="font-medium text-[#1D1C1A]">打卡节点编辑器 (在地图点击拾取坐标或手动添加)</span>
+                <span class="font-serif text-xs text-[#161513]">打卡节点编辑器 (点击地图拾取坐标或手动录入)</span>
                 <div class="flex items-center gap-2">
                   <button
                     v-for="preset in presets"
                     :key="preset.name"
                     type="button"
-                    class="px-2.5 py-1 rounded-lg border border-[#E5E1D8] bg-[#F7F5F0] text-[11px] text-[#747169] hover:border-[#4E6053] hover:text-[#1D1C1A]"
+                    class="px-2.5 py-1 rounded-[2px] border border-[#DDD6C9] bg-[#F3EFE7] text-[11px] text-[#787268] hover:border-[#3D4E42] hover:text-[#161513] transition-colors"
                     @click="applyPreset(preset)"
                   >
                     载入示例: {{ preset.shortLabel }}
@@ -383,59 +417,57 @@
                 @map-click="handleEditorMapClick"
               />
 
-              <!-- Add Custom Waypoint Row -->
               <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
                 <input
                   v-model="draftWaypoint.name"
                   type="text"
                   placeholder="地点名称 *"
-                  class="sm:col-span-4 rounded-lg bg-[#F7F5F0] border border-[#E5E1D8] px-2.5 py-1.5 text-xs"
+                  class="sm:col-span-4 editorial-field px-2.5 py-1.5 text-xs"
                 />
                 <input
                   v-model.number="draftWaypoint.latitude"
                   type="number"
                   step="any"
                   placeholder="纬度 (-90~90)"
-                  class="sm:col-span-2 rounded-lg bg-[#F7F5F0] border border-[#E5E1D8] px-2.5 py-1.5 text-xs font-mono"
+                  class="sm:col-span-2 editorial-field px-2.5 py-1.5 text-xs font-mono"
                 />
                 <input
                   v-model.number="draftWaypoint.longitude"
                   type="number"
                   step="any"
                   placeholder="经度 (-180~180)"
-                  class="sm:col-span-2 rounded-lg bg-[#F7F5F0] border border-[#E5E1D8] px-2.5 py-1.5 text-xs font-mono"
+                  class="sm:col-span-2 editorial-field px-2.5 py-1.5 text-xs font-mono"
                 />
                 <input
                   v-model="draftWaypoint.notes"
                   type="text"
                   placeholder="备注 (可选)"
-                  class="sm:col-span-3 rounded-lg bg-[#F7F5F0] border border-[#E5E1D8] px-2.5 py-1.5 text-xs"
+                  class="sm:col-span-3 editorial-field px-2.5 py-1.5 text-xs"
                 />
                 <button
                   type="button"
-                  class="sm:col-span-1 rounded-lg bg-[#4E6053] text-white px-2.5 py-1.5 font-medium hover:bg-[#3D4C41]"
+                  class="sm:col-span-1 rounded-[2px] bg-[#3D4E42] text-[#FAF8F4] px-2.5 py-1.5 font-serif hover:bg-[#161513] transition-colors"
                   @click="addDraftWaypoint"
                 >
                   添加
                 </button>
               </div>
 
-              <!-- Current Waypoints List -->
-              <div v-if="tripForm.locations.length > 0" class="space-y-1.5 max-h-40 overflow-y-auto pt-1">
+              <div v-if="tripForm.locations.length > 0" class="divide-y divide-[#E8E2D6] max-h-40 overflow-y-auto pt-1">
                 <div
                   v-for="(loc, idx) in tripForm.locations"
                   :key="idx"
-                  class="flex items-center justify-between gap-2 rounded-lg border border-[#E5E1D8] bg-[#F7F5F0]/70 px-3 py-1.5"
+                  class="flex items-center justify-between gap-2 py-2"
                 >
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span class="font-mono text-[10px] text-[#4E6053] font-semibold">#{{ idx + 1 }}</span>
-                    <span class="font-medium text-[#1D1C1A] truncate">{{ loc.name }}</span>
-                    <span class="font-mono text-[10px] text-[#9E9B93]">({{ loc.latitude.toFixed(4) }}, {{ loc.longitude.toFixed(4) }})</span>
-                    <span v-if="loc.notes" class="text-[11px] text-[#747169] truncate hidden sm:inline">· {{ loc.notes }}</span>
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="font-display italic text-sm text-[#9A3F2B] tabular-nums">{{ String(idx + 1).padStart(2, '0') }}</span>
+                    <span class="font-serif text-[#161513] truncate">{{ loc.name }}</span>
+                    <span class="font-mono text-[10px] text-[#9B9488] tabular-nums">({{ loc.latitude.toFixed(4) }}, {{ loc.longitude.toFixed(4) }})</span>
+                    <span v-if="loc.notes" class="text-[11px] text-[#787268] truncate hidden sm:inline">· {{ loc.notes }}</span>
                   </div>
                   <button
                     type="button"
-                    class="text-[#9E9B93] hover:text-[#C25438] p-1"
+                    class="text-[#9B9488] hover:text-[#9A3F2B] p-1"
                     @click="removeWaypoint(idx)"
                     title="移除节点"
                   >
@@ -445,10 +477,10 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E1D8]">
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#DDD6C9]">
               <button
                 type="button"
-                class="px-4 py-2 rounded-xl text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4]"
+                class="px-4 py-2 text-[#787268] hover:text-[#161513] font-serif tracking-wider"
                 @click="isTripModalOpen = false"
               >
                 取消
@@ -456,10 +488,10 @@
               <button
                 type="submit"
                 :disabled="isSubmitting"
-                class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#4E6053] text-white font-medium hover:bg-[#3D4C41] transition-colors shadow-xs disabled:opacity-50"
+                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-[2px] bg-[#3D4E42] text-[#FAF8F4] font-serif tracking-[0.14em] hover:bg-[#161513] transition-colors disabled:opacity-50"
               >
                 <Loader2Icon v-if="isSubmitting" class="w-3.5 h-3.5 animate-spin" />
-                <span>{{ editingTripId ? '保存修改' : '确认保存路线' }}</span>
+                <span>{{ editingTripId ? '保存修改' : '确认归档路线' }}</span>
               </button>
             </div>
           </form>
@@ -472,10 +504,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import {
-  Compass as CompassIcon,
   MapPinPlus as MapPinPlusIcon,
-  Calendar as CalendarIcon,
-  MapPin as MapPinIcon,
   Search as SearchIcon,
   Pencil as PencilIcon,
   Trash2 as Trash2Icon,
@@ -592,6 +621,10 @@ const draftWaypoint = ref<{
   longitude: null,
   notes: '',
 });
+
+const totalDistanceKm = computed(() =>
+  trips.value.reduce((sum, t) => sum + (t.distanceKm || 0), 0)
+);
 
 const activeMarkers = computed<MapMarker[]>(() => {
   if (activeTrip.value && activeTrip.value.locations?.length) {

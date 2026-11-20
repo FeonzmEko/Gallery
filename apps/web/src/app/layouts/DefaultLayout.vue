@@ -1,142 +1,136 @@
 <template>
-  <div class="min-h-screen bg-[#F7F5F0] text-[#1D1C1A] flex flex-col relative selection:bg-[#C25438]/20 selection:text-[#C25438]">
+  <div class="min-h-screen bg-[#F3EFE7] text-[#161513] flex flex-col relative selection:bg-[#9A3F2B]/15 selection:text-[#9A3F2B]">
     <!-- ========================================================= -->
-    <!-- TOP STICKY CAPSULE NAVIGATION (Warm Paper + Pill Bar)     -->
+    <!-- ARCHITECTURAL GALLERY MASTHEAD                            -->
     <!-- ========================================================= -->
-    <header class="sticky top-0 z-40 bg-[#F7F5F0]/88 backdrop-blur-md border-b border-[#E5E1D8] transition-all">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-        <!-- Left: Archival Brand Mark -->
-        <RouterLink to="/" class="flex items-center gap-3 group min-w-0">
-          <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white border border-[#E5E1D8] shadow-xs text-[#C25438] group-hover:border-[#C25438]/50 group-hover:scale-105 transition-all"
-          >
-            <ArchiveIcon class="w-4 h-4" />
+    <header class="sticky top-0 z-40 bg-[#F3EFE7]/92 backdrop-blur-md border-b border-[#DDD6C9]">
+      <div class="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12 h-[72px] flex items-center justify-between gap-6">
+        <!-- Left: Minimalist Museum Emblem & Wordmark -->
+        <RouterLink to="/" class="flex items-center gap-3.5 group min-w-0 shrink-0">
+          <!-- Architectural Aperture Frame Mark -->
+          <div class="relative w-7 h-7 flex items-center justify-center shrink-0">
+            <span class="absolute inset-0 border border-[#161513] transition-transform duration-500 ease-gallery group-hover:scale-95"></span>
+            <span class="absolute inset-[4px] border border-[#DDD6C9] transition-colors duration-300 group-hover:border-[#9A3F2B]/60"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#9A3F2B] transition-transform duration-300 group-hover:scale-125"></span>
           </div>
-          <div class="flex flex-col min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-serif font-medium text-base tracking-tight text-[#1D1C1A] group-hover:text-[#C25438] transition-colors truncate">
-                Personal Archive
-              </span>
-              <span
-                class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider bg-[#EFECE4] text-[#747169] border border-[#E5E1D8]"
-              >
-                VOL. I
-              </span>
-            </div>
-            <span class="text-[10px] text-[#9E9B93] font-mono tracking-wider flex items-center gap-1.5 truncate">
-              <span
-                class="w-1.5 h-1.5 rounded-full shrink-0"
-                :class="authStore.isAdmin ? 'bg-[#4E6053] animate-pulse' : 'bg-[#C25438]'"
-              ></span>
-              {{ authStore.isAdmin ? '策展管理员已解锁' : '公开只读策展 · OCCURRED AT' }}
+          <div class="flex items-baseline gap-2.5 min-w-0">
+            <span
+              translate="no"
+              class="font-display italic text-[22px] font-medium tracking-[0.02em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors leading-none"
+            >
+              Personal Archive
+            </span>
+            <span class="hidden sm:inline-block h-3 w-[1px] bg-[#C4BBA9] self-center"></span>
+            <span class="hidden sm:inline-block font-serif text-xs tracking-[0.18em] text-[#57534C] truncate">
+              私人数字展馆
             </span>
           </div>
         </RouterLink>
 
-        <!-- Center: Floating Pill Navigation (Visible on md and up) -->
-        <nav class="hidden md:flex items-center bg-[#EFECE4] p-1 rounded-full border border-[#E5E1D8] gap-1 shadow-inner">
+        <!-- Center: Pure Typographic Chapter Navigation (Desktop) -->
+        <nav aria-label="主导航" class="hidden md:flex items-center gap-9 lg:gap-11 h-full">
           <RouterLink
             v-for="item in navItems"
             :key="item.path"
             :to="item.path"
-            class="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium transition-all"
-            :class="[
+            class="group relative h-full inline-flex items-center gap-2 text-[13px] tracking-[0.1em] transition-colors duration-300"
+            :class="
               isNavActive(item)
-                ? 'bg-white text-[#1D1C1A] font-semibold shadow-xs border border-[#E5E1D8]'
-                : 'text-[#747169] hover:text-[#1D1C1A] hover:bg-white/60 border border-transparent',
-            ]"
+                ? 'text-[#161513] font-medium'
+                : 'text-[#57534C] hover:text-[#161513]'
+            "
           >
-            <component
-              :is="item.icon"
-              class="w-3.5 h-3.5 transition-colors"
-              :class="isNavActive(item) ? 'text-[#C25438]' : 'text-[#9E9B93]'"
-            />
-            <span>{{ item.title }}</span>
             <span
-              v-if="isNavActive(item)"
-              class="w-1.5 h-1.5 rounded-full bg-[#C25438]"
+              class="font-display italic text-[13.5px] tracking-normal transition-colors"
+              :class="isNavActive(item) ? 'text-[#9A3F2B]' : 'text-[#787268] group-hover:text-[#161513]'"
+            >
+              {{ item.roman }}
+            </span>
+            <span class="font-serif">{{ item.title }}</span>
+            <span
+              class="absolute bottom-0 inset-x-0 h-[1.5px] bg-[#9A3F2B] transition-transform duration-300 ease-gallery origin-left"
+              :class="isNavActive(item) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50 group-hover:bg-[#C4BBA9]'"
             ></span>
           </RouterLink>
         </nav>
 
-        <!-- Right: Live Clock, Admin Quick Console / Keyhole -->
-        <div class="flex items-center gap-2.5 shrink-0 relative">
-          <!-- Time indicator -->
-          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 border border-[#E5E1D8] font-mono text-[11px] text-[#747169]">
-            <ClockIcon class="w-3 h-3 text-[#9E9B93]" />
-            <span>{{ liveTimeString }}</span>
-          </div>
-
-          <!-- If Admin: Quick Console Trigger + Logout -->
-          <div v-if="authStore.isAdmin" class="flex items-center gap-2">
+        <!-- Right: Quiet Curatorial Gateway -->
+        <div class="flex items-center gap-3 shrink-0 relative">
+          <template v-if="authStore.isAdmin">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#4E6053]/10 text-[#4E6053] border border-[#4E6053]/25 hover:bg-[#4E6053]/15 font-mono text-xs transition-colors"
+              class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-[2px] border border-[#3D4E42]/40 bg-[#FAF8F4] text-[#3D4E42] hover:bg-[#3D4E42] hover:text-[#FAF8F4] text-xs tracking-[0.12em] font-serif transition-colors duration-200"
               @click="uiStore.isQuickMenuOpen = !uiStore.isQuickMenuOpen"
               title="打开策展快捷工作台"
             >
-              <ShieldCheckIcon class="w-3.5 h-3.5" />
-              <span class="hidden lg:inline">{{ authStore.user?.displayName || 'Archivist' }}</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+              <span>策展台</span>
               <PlusIcon class="w-3 h-3" />
             </button>
             <button
               type="button"
-              class="flex items-center justify-center h-8 w-8 rounded-full bg-white border border-[#E5E1D8] text-[#747169] hover:text-[#C25438] hover:border-[#C25438]/40 hover:bg-[#FDF8F6] transition-colors"
+              class="inline-flex items-center justify-center h-8 w-8 rounded-[2px] border border-[#DDD6C9] text-[#57534C] hover:text-[#9A3F2B] hover:border-[#9A3F2B]/50 transition-colors"
               @click="handleLogout"
-              title="退出管理员身份"
+              title="锁定并退出管理"
             >
               <LogOutIcon class="w-3.5 h-3.5" />
             </button>
-          </div>
+          </template>
 
-          <!-- If Guest: Secret Keyhole Icon -->
           <button
             v-else
             type="button"
-            class="flex items-center justify-center h-8 w-8 rounded-full bg-white border border-[#E5E1D8] text-[#747169] hover:text-[#C25438] hover:border-[#C25438]/40 hover:bg-[#FDF8F6] transition-all shadow-xs"
+            translate="no"
+            class="group inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-mono tracking-[0.16em] uppercase text-[#57534C] hover:text-[#161513] border border-transparent hover:border-[#DDD6C9] rounded-[2px] transition-all duration-200"
             @click="authStore.openLoginModal"
-            title="管理员暗门 (快捷键: Ctrl + Shift + L)"
+            title="管理员暗门 (Ctrl + Shift + L)"
           >
-            <KeyRoundIcon class="w-4 h-4" />
+            <KeyRoundIcon class="w-3.5 h-3.5 text-[#787268] group-hover:text-[#9A3F2B] transition-colors" />
+            <span class="hidden sm:inline">CURATOR</span>
           </button>
 
-          <!-- Admin Quick Action Popover -->
+          <!-- Admin Curatorial Workbench Popover -->
           <Transition
-            enter-active-class="transition duration-150 ease-out"
-            enter-from-class="opacity-0 translate-y-1 scale-95"
-            enter-to-class="opacity-100 translate-y-0 scale-100"
-            leave-active-class="transition duration-100 ease-in"
-            leave-from-class="opacity-100 translate-y-0 scale-100"
-            leave-to-class="opacity-0 translate-y-1 scale-95"
+            enter-active-class="transition duration-200 ease-gallery"
+            enter-from-class="opacity-0 translate-y-1.5"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 translate-y-1"
           >
             <div
               v-if="authStore.isAdmin && uiStore.isQuickMenuOpen"
-              class="absolute right-0 top-11 w-60 rounded-2xl border border-[#E5E1D8] bg-white p-2 shadow-xl z-50"
+              class="absolute right-0 top-12 w-64 rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4] shadow-[0_24px_48px_-20px_rgba(22,21,19,0.22)] z-50 overflow-hidden"
             >
-              <div class="px-3 py-2 border-b border-[#F0ECE1] mb-1">
-                <p class="text-[10px] font-mono tracking-wider text-[#9E9B93] uppercase">ARCHIVIST WORKBENCH</p>
-                <p class="text-xs font-medium text-[#1D1C1A] truncate mt-0.5">
+              <div class="px-4 py-3 border-b border-[#E8E2D6] bg-[#F3EFE7]/60">
+                <p class="kicker-caps text-[#9B9488]">CURATOR WORKBENCH</p>
+                <p class="text-xs font-mono text-[#161513] truncate mt-1">
                   {{ authStore.user?.email || 'admin@archive.internal' }}
                 </p>
               </div>
-              <button
-                v-for="action in quickActions"
-                :key="action.target"
-                type="button"
-                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#1D1C1A] hover:bg-[#F7F5F0] transition-colors text-left"
-                @click="dispatchQuickAction(action.target, action.route)"
-              >
-                <component :is="action.icon" class="w-3.5 h-3.5 text-[#C25438]" />
-                <span>{{ action.label }}</span>
-              </button>
-              <div class="border-t border-[#F0ECE1] mt-1 pt-1">
+              <div class="py-1.5">
+                <button
+                  v-for="action in quickActions"
+                  :key="action.target"
+                  type="button"
+                  class="w-full flex items-center justify-between px-4 py-2.5 text-xs text-[#161513] hover:bg-[#F3EFE7] transition-colors text-left group"
+                  @click="dispatchQuickAction(action.target, action.route)"
+                >
+                  <span class="flex items-center gap-2.5 font-serif tracking-wide">
+                    <component :is="action.icon" class="w-3.5 h-3.5 text-[#9A3F2B]" />
+                    <span>{{ action.label }}</span>
+                  </span>
+                  <span class="font-mono text-[10px] text-[#9B9488] group-hover:text-[#9A3F2B] transition-colors">+</span>
+                </button>
+              </div>
+              <div class="border-t border-[#E8E2D6] py-1.5 bg-[#F3EFE7]/40">
                 <button
                   type="button"
-                  class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#747169] hover:text-[#C25438] hover:bg-[#FDF8F6] transition-colors text-left"
+                  class="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-[#787268] hover:text-[#9A3F2B] transition-colors text-left"
                   @click="handleLogout"
                 >
                   <LogOutIcon class="w-3.5 h-3.5" />
-                  <span>锁定并退出管理</span>
+                  <span class="font-serif">锁定并退出管理</span>
                 </button>
               </div>
             </div>
@@ -153,99 +147,114 @@
     ></div>
 
     <!-- ========================================================= -->
-    <!-- MAIN CONTENT VIEWPORT (Bento Canvas)                      -->
+    <!-- EXHIBITION VIEWPORT                                       -->
     <!-- ========================================================= -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 md:pb-16">
+    <main class="flex-1 max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-28 md:pb-24">
       <slot>
         <RouterView />
       </slot>
     </main>
 
     <!-- ========================================================= -->
-    <!-- DESKTOP EDITORIAL FOOTER                                  -->
+    <!-- PRINT MONOGRAPH COLOPHON FOOTER (Desktop)                 -->
     <!-- ========================================================= -->
-    <footer class="hidden md:block border-t border-[#E5E1D8] bg-[#F7F5F0] py-8 text-xs text-[#747169]">
-      <div class="max-w-7xl mx-auto px-8 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="font-serif italic text-sm text-[#1D1C1A]">Personal Archive</span>
-          <span>&middot;</span>
-          <span>独立自持数字长廊与记忆刻度</span>
-          <span>&middot;</span>
-          <span class="font-mono text-[#9E9B93]">OCCURRED AT 排序</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <span class="font-mono text-[11px] text-[#9E9B93]">EST. 2018–2026</span>
-          <button
-            type="button"
-            class="hover:text-[#C25438] transition-colors font-mono text-[11px] underline decoration-[#E5E1D8] underline-offset-4"
-            @click="handleGatewayClick"
-          >
-            {{ authStore.isAdmin ? '策展工作台' : 'Archivist Gateway' }}
-          </button>
+    <footer class="hidden md:block border-t border-[#DDD6C9] bg-[#F3EFE7]">
+      <div class="max-w-[1360px] mx-auto px-8 lg:px-12 py-10">
+        <div class="flex items-center justify-between gap-8">
+          <div class="flex items-baseline gap-4">
+            <span translate="no" class="font-display italic text-lg text-[#161513]">Personal Archive</span>
+            <span class="text-[#C4BBA9]">/</span>
+            <span class="font-serif text-xs tracking-[0.14em] text-[#57534C]">
+              独立自持数字展馆 · 以发生刻度典藏光阴
+            </span>
+          </div>
+
+          <div class="flex items-center gap-7">
+            <div class="flex items-center gap-5 text-[11px] font-mono tracking-[0.14em] text-[#6E685E]">
+              <RouterLink
+                v-for="item in navItems"
+                :key="item.path"
+                :to="item.path"
+                class="hover:text-[#161513] transition-colors"
+              >
+                {{ item.roman }}
+              </RouterLink>
+            </div>
+            <span class="h-3 w-[1px] bg-[#DDD6C9]"></span>
+            <span class="font-mono text-[10px] tracking-[0.18em] text-[#6E685E]">MMXVIII — MMXXVI</span>
+            <button
+              type="button"
+              translate="no"
+              class="font-mono text-[10px] tracking-[0.18em] uppercase text-[#57534C] hover:text-[#9A3F2B] transition-colors underline decoration-[#C4BBA9] underline-offset-4"
+              @click="handleGatewayClick"
+            >
+              {{ authStore.isAdmin ? 'Workbench' : 'Curator' }}
+            </button>
+          </div>
         </div>
       </div>
     </footer>
 
     <!-- ========================================================= -->
-    <!-- MOBILE BOTTOM NAVIGATION (Visible only on < md)           -->
+    <!-- ARCHITECTURAL MOBILE BOTTOM RAIL (< md)                   -->
     <!-- ========================================================= -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#E5E1D8] bg-[#F7F5F0]/95 backdrop-blur-xl pb-safe shadow-lg">
-      <div class="flex h-16 items-center justify-around px-2">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#DDD6C9] bg-[#F3EFE7]/95 backdrop-blur-xl pb-safe">
+      <div class="flex h-16 items-stretch justify-around px-1">
         <RouterLink
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex flex-col items-center justify-center flex-1 py-1 transition-all relative"
-          :class="[
-            isNavActive(item)
-              ? 'text-[#C25438] font-semibold'
-              : 'text-[#747169] hover:text-[#1D1C1A]',
-          ]"
+          class="relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors"
+          :class="isNavActive(item) ? 'text-[#161513]' : 'text-[#8E887E]'"
         >
-          <component :is="item.icon" class="w-5 h-5 mb-1" />
-          <span class="text-[10px] tracking-tight">{{ item.title }}</span>
           <span
             v-if="isNavActive(item)"
-            class="absolute bottom-1 h-1 w-5 rounded-full bg-[#C25438]"
+            class="absolute top-0 inset-x-4 h-[1.5px] bg-[#9A3F2B]"
           ></span>
+          <span
+            class="font-display italic text-sm leading-none"
+            :class="isNavActive(item) ? 'text-[#9A3F2B]' : 'text-[#9B9488]'"
+          >
+            {{ item.roman }}
+          </span>
+          <span class="font-serif text-[11px] tracking-[0.1em]">{{ item.shortTitle }}</span>
         </RouterLink>
 
-        <!-- 5th Mobile Tab: Admin Gateway / Workbench -->
         <button
           type="button"
-          class="flex flex-col items-center justify-center flex-1 py-1 transition-colors"
-          :class="authStore.isAdmin ? 'text-[#4E6053]' : 'text-[#747169] hover:text-[#C25438]'"
+          class="relative flex flex-col items-center justify-center flex-1 gap-1 transition-colors"
+          :class="authStore.isAdmin ? 'text-[#3D4E42]' : 'text-[#8E887E]'"
           @click="handleGatewayClick"
         >
-          <ShieldCheckIcon v-if="authStore.isAdmin" class="w-5 h-5 mb-1" />
-          <KeyRoundIcon v-else class="w-5 h-5 mb-1" />
-          <span class="text-[10px] tracking-tight">
-            {{ authStore.isAdmin ? '工作台' : '暗门' }}
+          <ShieldCheckIcon v-if="authStore.isAdmin" class="w-4 h-4" />
+          <KeyRoundIcon v-else class="w-4 h-4" />
+          <span class="font-serif text-[11px] tracking-[0.1em]">
+            {{ authStore.isAdmin ? '策展' : '暗门' }}
           </span>
         </button>
       </div>
     </nav>
 
-    <!-- Floating Action Button for Admin on Mobile -->
+    <!-- Floating Curatorial Create Trigger (Admin Mobile) -->
     <Transition
-      enter-active-class="transform ease-out duration-200 transition"
-      enter-from-class="scale-0 opacity-0"
+      enter-active-class="transform ease-gallery duration-200 transition"
+      enter-from-class="scale-90 opacity-0"
       enter-to-class="scale-100 opacity-100"
       leave-active-class="transition ease-in duration-150"
       leave-from-class="scale-100 opacity-100"
-      leave-to-class="scale-0 opacity-0"
+      leave-to-class="scale-90 opacity-0"
     >
       <div
         v-if="authStore.isAdmin"
-        class="md:hidden fixed bottom-20 right-4 z-30"
+        class="md:hidden fixed bottom-20 right-5 z-30"
       >
         <button
           type="button"
-          class="flex h-12 w-12 items-center justify-center rounded-full bg-[#C25438] text-white shadow-xl shadow-[#C25438]/30 active:scale-95 transition-transform"
+          class="flex h-11 w-11 items-center justify-center rounded-[2px] bg-[#161513] text-[#FAF8F4] border border-[#161513] shadow-xl active:scale-95 transition-transform"
           title="快速记录"
           @click="uiStore.isQuickMenuOpen = !uiStore.isQuickMenuOpen"
         >
-          <PlusIcon class="w-6 h-6" />
+          <PlusIcon class="w-5 h-5" />
         </button>
       </div>
     </Transition>
@@ -259,14 +268,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import {
-  Archive as ArchiveIcon,
   Clock as ClockIcon,
-  Image as ImageIcon,
-  BookOpen as BookOpenIcon,
-  Compass as CompassIcon,
   KeyRound as KeyRoundIcon,
   ShieldCheck as ShieldCheckIcon,
   LogOut as LogOutIcon,
@@ -288,17 +292,18 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 interface NavItem {
+  roman: string;
   title: string;
+  shortTitle: string;
   path: string;
   altPaths?: string[];
-  icon: any;
 }
 
 const navItems: NavItem[] = [
-  { title: '时光编年', path: '/', altPaths: ['/timeline'], icon: ClockIcon },
-  { title: '影像长廊', path: '/media', icon: ImageIcon },
-  { title: '随想手札', path: '/journal', icon: BookOpenIcon },
-  { title: '足迹漫游', path: '/travel', icon: CompassIcon },
+  { roman: 'I.', title: '时光纪流', shortTitle: '时光', path: '/', altPaths: ['/timeline'] },
+  { roman: 'II.', title: '影像长廊', shortTitle: '影像', path: '/media' },
+  { roman: 'III.', title: '随想手札', shortTitle: '手札', path: '/journal' },
+  { roman: 'IV.', title: '足迹漫游', shortTitle: '足迹', path: '/travel' },
 ];
 
 const quickActions: { label: string; target: QuickCreateTarget; route: string; icon: any }[] = [
@@ -334,25 +339,4 @@ async function handleLogout(): Promise<void> {
   await authStore.logout();
   uiStore.notifyInfo('已锁定管理权限，切换为公开访客视图');
 }
-
-// Live Time Display
-const liveTimeString = ref('');
-let timer: number | null = null;
-
-function updateLiveTime() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  liveTimeString.value = `${hours}:${minutes}:${seconds}`;
-}
-
-onMounted(() => {
-  updateLiveTime();
-  timer = window.setInterval(updateLiveTime, 1000);
-});
-
-onUnmounted(() => {
-  if (timer) clearInterval(timer);
-});
 </script>

@@ -1,17 +1,20 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-    <div class="text-7xl font-extrabold text-[#D4CEBF] tracking-widest font-mono">
+  <div class="gallery-reveal flex flex-col items-center justify-center min-h-[62vh] text-center px-6 py-16">
+    <div class="w-[1px] h-12 bg-[#C4BBA9] mb-6"></div>
+    <div class="font-display italic text-7xl sm:text-8xl font-light text-[#C4BBA9] leading-none">
       404
     </div>
-    <h2 class="mt-4 font-serif text-2xl font-medium text-[#1D1C1A]">未找到对应档案记录</h2>
-    <p class="mt-2 text-sm text-[#747169] max-w-sm">
-      该页面不存在或已被移除。您可以返回时光纪流主线。
+    <h2 class="mt-6 font-serif text-2xl font-light tracking-[0.08em] text-[#161513]">
+      未检得此卷档案
+    </h2>
+    <p class="mt-3 text-xs text-[#787268] max-w-sm leading-[1.9] font-light">
+      该页已从展馆目录中移去，或从未被编入卷宗。您可以返回时光纪流继续阅览。
     </p>
     <RouterLink
       to="/"
-      class="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#C25438] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#A9442C] transition-colors shadow-sm"
+      class="mt-8 inline-flex items-center gap-2 rounded-[2px] border border-[#161513] px-6 py-2.5 text-xs font-serif tracking-[0.18em] text-[#161513] hover:bg-[#161513] hover:text-[#FAF8F4] transition-colors"
     >
-      返回时光主页
+      返回展馆主厅
     </RouterLink>
   </div>
 </template>

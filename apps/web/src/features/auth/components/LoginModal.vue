@@ -1,12 +1,12 @@
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 scale-95"
+      enter-active-class="transition duration-200 ease-gallery"
+      enter-from-class="opacity-0 scale-98"
       enter-to-class="opacity-100 scale-100"
       leave-active-class="transition duration-150 ease-in"
       leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
+      leave-to-class="opacity-0 scale-98"
     >
       <div
         v-if="authStore.isLoginModalOpen"
@@ -15,65 +15,58 @@
         aria-modal="true"
         aria-labelledby="login-modal-title"
       >
-        <!-- Backdrop -->
         <div
-          class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          class="fixed inset-0 bg-[#161513]/55 backdrop-blur-xs transition-opacity"
           @click="authStore.closeLoginModal"
         ></div>
 
-        <!-- Modal Dialog -->
         <div
-          class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] p-6 sm:p-8 shadow-2xl transition-all"
+          class="relative w-full max-w-md overflow-hidden rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4] p-8 sm:p-10 shadow-[0_32px_80px_-20px_rgba(22,21,19,0.45)] transition-all"
         >
-          <!-- Close button -->
           <button
             type="button"
-            class="absolute top-4 right-4 rounded-lg p-1.5 text-[#747169] hover:bg-[#EFECE4] hover:text-[#1D1C1A] transition-colors focus:outline-none"
+            class="absolute top-5 right-5 p-1.5 text-[#787268] hover:text-[#161513] transition-colors focus:outline-none"
             @click="authStore.closeLoginModal"
             title="关闭 (Esc)"
           >
-            <XIcon class="w-5 h-5" />
+            <XIcon class="w-4 h-4" />
           </button>
 
-          <!-- Header -->
-          <div class="flex flex-col items-center text-center mb-6">
-            <div
-              class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#C25438] border border-[#E5E1D8] mb-3 shadow-sm"
-            >
-              <LockIcon class="w-5 h-5" />
+          <!-- Architectural Seal Header -->
+          <div class="flex flex-col items-center text-center mb-8">
+            <div class="relative w-10 h-10 flex items-center justify-center mb-5">
+              <span class="absolute inset-0 border border-[#161513]"></span>
+              <span class="absolute inset-[5px] border border-[#DDD6C9]"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-[#9A3F2B]"></span>
             </div>
-            <h2 id="login-modal-title" class="font-serif text-2xl font-medium tracking-tight text-[#1D1C1A]">
-              管理员暗门认证
+            <span class="kicker-caps text-[#9A3F2B] mb-2">CURATOR GATEWAY</span>
+            <h2 id="login-modal-title" class="font-serif text-2xl font-light tracking-[0.06em] text-[#161513]">
+              馆长暗门认证
             </h2>
-            <p class="mt-1 text-xs text-[#747169]">
-              请输入档案管理员密钥以解锁发布、编辑与直传权限
+            <p class="mt-2 text-xs text-[#787268] font-light">
+              输入档案馆密钥以解锁发布、修订与影像直传权限
             </p>
           </div>
 
-          <!-- Form -->
-          <form @submit.prevent="handleSubmit" class="space-y-4">
-            <!-- Optional Email Toggle or Input -->
-            <div v-if="showCustomEmail" class="space-y-1">
-              <label class="block text-xs font-medium text-[#1D1C1A]">管理员账号 (Email)</label>
-              <div class="relative">
-                <input
-                  v-model="email"
-                  type="email"
-                  placeholder="admin@archive.internal"
-                  class="w-full rounded-xl border border-[#E5E1D8] bg-white px-3.5 py-2.5 text-sm text-[#1D1C1A] placeholder-[#9E9B93] focus:border-[#C25438]/60 focus:outline-none focus:ring-1 focus:ring-[#C25438]/30 transition-colors shadow-xs"
-                  autocomplete="username"
-                  required
-                />
-              </div>
+          <form @submit.prevent="handleSubmit" class="space-y-5">
+            <div v-if="showCustomEmail" class="space-y-1.5">
+              <label class="block kicker-caps text-[#787268]">管理员账号</label>
+              <input
+                v-model="email"
+                type="email"
+                placeholder="admin@archive.internal"
+                class="w-full editorial-field px-3.5 py-2.5 text-sm"
+                autocomplete="username"
+                required
+              />
             </div>
 
-            <!-- Password Input -->
-            <div class="space-y-1">
+            <div class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <label class="block text-xs font-medium text-[#1D1C1A]">管理员密钥</label>
+                <label class="block kicker-caps text-[#787268]">管理员密钥</label>
                 <button
                   type="button"
-                  class="text-[11px] font-mono text-[#747169] hover:text-[#C25438] transition-colors"
+                  class="text-[11px] font-mono text-[#787268] hover:text-[#9A3F2B] transition-colors"
                   @click="showCustomEmail = !showCustomEmail"
                 >
                   {{ showCustomEmail ? '使用默认账号' : '切换自定义账号' }}
@@ -85,13 +78,13 @@
                   v-model="password"
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="••••••••••••"
-                  class="w-full rounded-xl border border-[#E5E1D8] bg-white px-3.5 py-2.5 pr-10 text-sm text-[#1D1C1A] placeholder-[#9E9B93] focus:border-[#C25438]/60 focus:outline-none focus:ring-1 focus:ring-[#C25438]/30 transition-colors shadow-xs"
+                  class="w-full editorial-field px-3.5 py-2.5 pr-10 text-sm"
                   autocomplete="current-password"
                   required
                 />
                 <button
                   type="button"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#9B9488] hover:text-[#161513] transition-colors"
                   @click="showPassword = !showPassword"
                 >
                   <EyeOffIcon v-if="showPassword" class="w-4 h-4" />
@@ -100,30 +93,27 @@
               </div>
             </div>
 
-            <!-- Error Feedback -->
             <div
               v-if="errorMessage"
-              class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700 flex items-center gap-2"
+              class="rounded-[2px] bg-[#FAF4F2] border border-[#9A3F2B]/35 px-3.5 py-2.5 text-xs text-[#9A3F2B] flex items-center gap-2"
             >
-              <AlertCircleIcon class="w-4 h-4 shrink-0 text-red-500" />
+              <AlertCircleIcon class="w-4 h-4 shrink-0" />
               <span>{{ errorMessage }}</span>
             </div>
 
-            <!-- Submit Button -->
             <button
               type="submit"
               :disabled="isLoading || !password.trim()"
-              class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#C25438] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#A9442C] focus:outline-none focus:ring-2 focus:ring-[#C25438]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex items-center justify-center gap-2 rounded-[2px] bg-[#161513] px-4 py-3 text-xs font-serif tracking-[0.2em] text-[#FAF8F4] transition-colors hover:bg-[#9A3F2B] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Loader2Icon v-if="isLoading" class="w-4 h-4 animate-spin" />
-              <span>{{ isLoading ? '验证授权中...' : '确认进入管理权限' }}</span>
+              <span>{{ isLoading ? '验证授权中...' : '解锁策展权限' }}</span>
             </button>
           </form>
 
-          <!-- Footer hint -->
-          <div class="mt-5 text-center">
-            <span class="text-[11px] text-[#747169]">
-              提示: 可随时使用 <kbd class="px-1.5 py-0.5 rounded bg-white border border-[#E5E1D8] text-[#1D1C1A] font-mono text-[10px] shadow-xs">Ctrl+Shift+L</kbd> 快捷键唤起暗门
+          <div class="mt-6 pt-5 border-t border-[#E8E2D6] text-center">
+            <span class="text-[11px] text-[#787268]">
+              快捷键 <kbd class="px-1.5 py-0.5 rounded-[2px] bg-[#F3EFE7] border border-[#DDD6C9] text-[#161513] font-mono text-[10px]">Ctrl+Shift+L</kbd> 可随时唤起暗门
             </span>
           </div>
         </div>
@@ -136,7 +126,6 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import {
   X as XIcon,
-  Lock as LockIcon,
   Eye as EyeIcon,
   EyeOff as EyeOffIcon,
   Loader2 as Loader2Icon,
@@ -183,7 +172,6 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-// Global hotkey handler (Ctrl+Shift+L / Cmd+Shift+L / Escape)
 function handleKeydown(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
     e.preventDefault();

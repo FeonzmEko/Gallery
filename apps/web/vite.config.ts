@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Personal Archive',
         short_name: 'Archive',
         description: 'Personal Life Stream & Multi-Modal Archive',
-        theme_color: '#F7F5F0',
-        background_color: '#F7F5F0',
+        theme_color: '#F3EFE7',
+        background_color: '#F3EFE7',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
@@ -48,7 +48,7 @@ export default defineConfig({
             options: {
               cacheName: 'archive-fonts',
               expiration: {
-                maxEntries: 15,
+                maxEntries: 80,
                 maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
             },

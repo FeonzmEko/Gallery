@@ -15,35 +15,36 @@
         aria-modal="true"
       >
         <div
-          class="fixed inset-0 bg-[#1D1C1A]/40 backdrop-blur-xs"
+          class="fixed inset-0 bg-[#161513]/55 backdrop-blur-xs"
           @click="uiStore.resolveConfirm(false)"
         ></div>
         <div
-          class="relative w-full max-w-sm rounded-2xl border border-[#E5E1D8] bg-[#F7F5F0] p-6 shadow-2xl space-y-4"
+          class="relative w-full max-w-sm rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4] p-7 shadow-2xl space-y-5"
         >
-          <div class="space-y-1.5">
-            <h3 class="font-serif text-lg font-medium text-[#1D1C1A]">
+          <div class="space-y-2">
+            <span class="kicker-caps text-[#9A3F2B] block">CONFIRMATION</span>
+            <h3 class="font-serif text-xl font-normal text-[#161513]">
               {{ uiStore.confirmState.title }}
             </h3>
-            <p class="text-xs text-[#747169] leading-relaxed">
+            <p class="text-xs text-[#57534C] leading-[1.85] font-light">
               {{ uiStore.confirmState.message }}
             </p>
           </div>
-          <div class="flex items-center justify-end gap-2.5 pt-2">
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#E8E2D6]">
             <button
               type="button"
-              class="px-4 py-2 rounded-xl text-xs font-medium text-[#747169] hover:text-[#1D1C1A] hover:bg-[#EFECE4] transition-colors"
+              class="px-4 py-2 text-xs font-serif tracking-wider text-[#787268] hover:text-[#161513] transition-colors"
               @click="uiStore.resolveConfirm(false)"
             >
               {{ uiStore.confirmState.cancelLabel }}
             </button>
             <button
               type="button"
-              class="px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-sm transition-colors"
+              class="px-5 py-2 rounded-[2px] text-xs font-serif tracking-[0.14em] text-[#FAF8F4] transition-colors"
               :class="
                 uiStore.confirmState.danger
-                  ? 'bg-[#C25438] hover:bg-[#A9442C]'
-                  : 'bg-[#1D1C1A] hover:bg-[#3A3834]'
+                  ? 'bg-[#9A3F2B] hover:bg-[#7E3120]'
+                  : 'bg-[#161513] hover:bg-[#3A3834]'
               "
               @click="uiStore.resolveConfirm(true)"
             >

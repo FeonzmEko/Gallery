@@ -4,30 +4,140 @@
 
 :root {
   color-scheme: light;
-  --bg-page: #F7F5F0;
-  --bg-subtle: #EFECE4;
-  --bg-card: #FFFFFF;
-  --border-line: #E5E1D8;
-  --border-strong: #D4CEBF;
-  --ink-main: #1D1C1A;
-  --ink-muted: #747169;
-  --ink-dim: #9E9B93;
-  --terracotta: #C25438;
+  --canvas: #F3EFE7;
+  --alabaster: #FAF8F4;
+  --linen: #EAE4D8;
+  --rule: #DDD6C9;
+  --rule-strong: #C4BBA9;
+  --ink: #161513;
+  --ink-secondary: #57534C;
+  --ink-muted: #787268;
+  --ink-dim: #9B9488;
+  --seal: #9A3F2B;
+  --moss: #3D4E42;
+  --obsidian: #11100F;
 }
 
-html, body {
-  background-color: #F7F5F0;
-  color: #1D1C1A;
+html,
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
   min-height: 100%;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom scrollbars for paper aesthetic */
+/* Tactile Cotton-Rag Fine Art Paper Grain Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.032;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Museum Hairline & Frame Utilities */
+@layer components {
+  .museum-plate {
+    background-color: var(--alabaster);
+    border: 1px solid var(--rule);
+    transition: border-color 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .museum-plate:hover {
+    border-color: var(--rule-strong);
+    box-shadow: 0 22px 48px -28px rgba(22, 21, 19, 0.16),
+      0 4px 12px -6px rgba(22, 21, 19, 0.06);
+  }
+
+  .passe-partout {
+    background-color: var(--alabaster);
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 14px 32px -24px rgba(22, 21, 19, 0.22);
+  }
+
+  .kicker-caps {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .editorial-input {
+    background-color: transparent;
+    border-bottom: 1px solid var(--rule-strong);
+    color: var(--ink);
+    transition: border-color 240ms ease;
+  }
+
+  .editorial-input:focus {
+    outline: none;
+    border-bottom-color: var(--ink);
+  }
+
+  .editorial-field {
+    background-color: var(--alabaster);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    color: var(--ink);
+    transition: border-color 220ms ease, background-color 220ms ease;
+  }
+
+  .editorial-field:focus {
+    outline: none;
+    border-color: var(--ink);
+    background-color: #FFFFFF;
+  }
+}
+
+/* Warm Archival Cartography Filter for Leaflet Maps */
+.archival-map .leaflet-tile-pane {
+  filter: sepia(18%) saturate(72%) contrast(96%) brightness(101%);
+}
+
+.archival-map .leaflet-control-zoom {
+  border: 1px solid #DDD6C9 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.archival-map .leaflet-control-zoom a {
+  background-color: #FAF8F4 !important;
+  color: #161513 !important;
+  border-color: #DDD6C9 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13px !important;
+}
+
+.archival-map .leaflet-control-zoom a:hover {
+  background-color: #EAE4D8 !important;
+}
+
+.archival-map .leaflet-popup-content-wrapper {
+  background: #FAF8F4 !important;
+  border: 1px solid #DDD6C9 !important;
+  border-radius: 2px !important;
+  box-shadow: 0 12px 28px -12px rgba(22, 21, 19, 0.22) !important;
+}
+
+.archival-map .leaflet-popup-tip {
+  background: #FAF8F4 !important;
+}
+
+/* Custom ultra-thin archival scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -35,12 +145,28 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D4CEBF;
-  border-radius: 9999px;
+  background: #CFC7B8;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #BDB6A4;
+  background: #A99F8C;
+}
+
+/* Subtle editorial page reveal */
+@keyframes galleryFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gallery-reveal {
+  animation: galleryFadeIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Safe area support for iOS / PWA full screen */

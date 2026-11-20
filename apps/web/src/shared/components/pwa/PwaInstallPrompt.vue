@@ -1,8 +1,8 @@
 <template>
-  <div class="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-40 pointer-events-none">
+  <div class="fixed bottom-20 md:bottom-6 right-5 left-5 md:left-auto md:w-96 z-40 pointer-events-none">
     <!-- SW Update Available Notification -->
     <Transition
-      enter-active-class="transform ease-out duration-300 transition"
+      enter-active-class="transform ease-gallery duration-300 transition"
       enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
       enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
       leave-active-class="transition ease-in duration-200"
@@ -11,28 +11,26 @@
     >
       <div
         v-if="needRefresh"
-        class="pointer-events-auto mb-3 rounded-2xl border border-[#C25438]/30 bg-white/95 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#1D1C1A]"
+        class="pointer-events-auto mb-3 rounded-[2px] border border-[#9A3F2B]/40 bg-[#FAF8F4]/98 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#161513]"
       >
         <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FDF8F6] border border-[#F0D5CD] text-[#C25438]">
-            <RefreshCwIcon class="w-4 h-4 animate-spin" />
-          </div>
+          <RefreshCwIcon class="w-4 h-4 text-[#9A3F2B] animate-spin shrink-0" />
           <div>
-            <p class="font-medium text-[#1D1C1A] text-xs sm:text-sm">发现档案馆新版本</p>
-            <p class="text-[11px] text-[#747169]">点击刷新以加载最新功能与离线资源</p>
+            <p class="font-serif text-xs sm:text-sm text-[#161513]">发现档案馆新版本</p>
+            <p class="text-[11px] text-[#787268] font-light">点击刷新以加载最新展陈与离线资源</p>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            class="rounded-lg bg-[#C25438] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A9442C] transition-colors"
+            class="rounded-[2px] bg-[#161513] px-3 py-1.5 text-xs font-serif tracking-wider text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors"
             @click="handleUpdate"
           >
             刷新
           </button>
           <button
             type="button"
-            class="rounded-lg p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
+            class="p-1 text-[#9B9488] hover:text-[#161513] transition-colors"
             @click="needRefresh = false"
           >
             <XIcon class="w-4 h-4" />
@@ -43,7 +41,7 @@
 
     <!-- PWA Install Prompt Banner -->
     <Transition
-      enter-active-class="transform ease-out duration-300 transition"
+      enter-active-class="transform ease-gallery duration-300 transition"
       enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
       enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
       leave-active-class="transition ease-in duration-200"
@@ -52,28 +50,26 @@
     >
       <div
         v-if="canInstall && !isDismissed && !isStandalone"
-        class="pointer-events-auto rounded-2xl border border-[#E5E1D8] bg-white/95 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#1D1C1A]"
+        class="pointer-events-auto rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4]/98 p-4 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3 text-sm text-[#161513]"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F7F5F0] border border-[#E5E1D8] text-[#C25438]">
-            <DownloadCloudIcon class="w-5 h-5" />
-          </div>
+          <DownloadCloudIcon class="w-4 h-4 text-[#9A3F2B] shrink-0" />
           <div class="min-w-0">
-            <p class="font-serif font-medium text-[#1D1C1A] text-xs sm:text-sm truncate">添加为独立档案馆应用</p>
-            <p class="text-[11px] text-[#747169] truncate">支持离线浏览与独立全屏窗口体验</p>
+            <p class="font-serif text-xs sm:text-sm text-[#161513] truncate">添加为独立展馆应用</p>
+            <p class="text-[11px] text-[#787268] truncate font-light">支持离线浏览与沉浸式窗口体验</p>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            class="rounded-xl bg-[#C25438] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A9442C] shadow-xs transition-colors active:scale-95"
+            class="rounded-[2px] bg-[#161513] px-3 py-1.5 text-xs font-serif tracking-wider text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors"
             @click="handleInstallClick"
           >
             添加
           </button>
           <button
             type="button"
-            class="rounded-lg p-1 text-[#9E9B93] hover:text-[#1D1C1A] transition-colors"
+            class="p-1 text-[#9B9488] hover:text-[#161513] transition-colors"
             @click="dismissPrompt"
             title="暂不需要"
           >

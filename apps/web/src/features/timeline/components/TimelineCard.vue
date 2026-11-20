@@ -1,61 +1,179 @@
 <template>
-  <!-- BENTO EXHIBITION MODE (Demo B Layout + Demo A Paper Palette) -->
+  <!-- ========================================================= -->
+  <!-- MODE 1: LEAD EDITORIAL SPREAD (Full-width Opening Plate)  -->
+  <!-- ========================================================= -->
   <article
-    v-if="layout === 'bento'"
-    class="group rounded-2xl border border-[#E5E1D8] bg-white overflow-hidden shadow-xs transition-all duration-200 hover:border-[#BDB6A4] hover:shadow-md hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
+    v-if="layout === 'lead'"
+    class="group museum-plate rounded-[2px] overflow-hidden cursor-pointer grid grid-cols-1 lg:grid-cols-12"
     @click="$emit('select', entry)"
   >
-    <!-- Featured Image Frame if coverUrl exists -->
+    <!-- Left: Passe-Partout Framed Artwork -->
     <div
       v-if="entry.coverUrl"
-      class="relative w-full bg-[#EFECE4] overflow-hidden border-b border-[#E5E1D8]"
-      :class="featured ? 'h-64 sm:h-72' : 'h-52'"
+      class="lg:col-span-7 bg-[#EAE4D8]/60 p-4 sm:p-6 lg:p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#DDD6C9] relative overflow-hidden"
     >
-      <img
-        :src="entry.coverThumbUrl || entry.coverUrl"
-        :alt="entry.title"
-        loading="lazy"
-        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <!-- Translucent Optical HUD on Hover -->
-      <div
-        class="absolute inset-x-3 bottom-3 rounded-lg bg-[#1D1C1A]/80 backdrop-blur-md px-3 py-1.5 text-[11px] font-mono text-[#F7F5F0] flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-      >
-        <span class="truncate">{{ typeTheme.code }} · {{ formattedDate }}</span>
-        <span v-if="entry.tags?.length" class="text-[#E58D76] shrink-0 ml-2">#{{ entry.tags[0] }}</span>
+      <div class="relative w-full aspect-[16/10] bg-[#161513]/5 overflow-hidden passe-partout p-2 sm:p-2.5">
+        <div class="relative w-full h-full overflow-hidden bg-[#EAE4D8]">
+          <img
+            :src="entry.coverThumbUrl || entry.coverUrl"
+            :alt="entry.title"
+            loading="lazy"
+            class="h-full w-full object-cover transition-transform duration-700 ease-gallery group-hover:scale-[1.035]"
+          />
+          <!-- Discreet Darkroom Plate Strip on Hover -->
+          <div
+            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#11100F]/85 via-[#11100F]/40 to-transparent px-4 pt-8 pb-3 text-[10px] font-mono tracking-[0.16em] uppercase text-[#FAF8F4]/90 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          >
+            <span>{{ typeTheme.code }} · {{ formattedDate }}</span>
+            <span v-if="entry.tags?.length" class="text-[#E2A998]">#{{ entry.tags[0] }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
-      <div class="space-y-2.5">
-        <!-- Top Meta Row -->
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2 font-mono text-[11px] text-[#747169]">
-            <span class="text-[#1D1C1A] font-medium">{{ formattedDate }}</span>
-            <span class="text-[#D4CEBF]">&middot;</span>
-            <span
-              class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium border"
-              :class="typeTheme.badgeClass"
-            >
-              <component :is="typeTheme.icon" class="w-3 h-3" />
+    <!-- Right: Museum Wall Placard & Editorial Copy -->
+    <div
+      class="p-7 sm:p-9 lg:p-11 flex flex-col justify-between gap-8"
+      :class="entry.coverUrl ? 'lg:col-span-5' : 'lg:col-span-12'"
+    >
+      <div class="space-y-5">
+        <!-- Plate Number + Meta Line -->
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2.5 kicker-caps">
+              <span :class="typeTheme.textColor">{{ typeTheme.code }}</span>
+              <span class="text-[#C4BBA9]">/</span>
+              <span class="text-[#787268] tabular-nums">{{ formattedDate }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px] font-serif text-[#787268]">
               <span>{{ typeTheme.label }}</span>
-            </span>
+              <span v-if="entry.visibility === 'private'" class="text-[#9A6B2F] font-mono text-[10px] tracking-widest uppercase">
+                · PRIVATE
+              </span>
+              <span v-else-if="entry.status === 'draft'" class="text-[#9B9488] font-mono text-[10px] tracking-widest uppercase">
+                · DRAFT
+              </span>
+            </div>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span
-              v-if="entry.visibility === 'private'"
-              class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-mono text-amber-800"
-            >
-              <LockIcon class="w-2.5 h-2.5" />
-              <span>私密</span>
+          <div class="flex items-center gap-2">
+            <span v-if="plateIndex" class="font-display italic text-3xl sm:text-4xl font-light text-[#C4BBA9] leading-none select-none tabular-nums">
+              {{ plateIndex }}
             </span>
-            <span
-              v-else-if="entry.status === 'draft'"
-              class="rounded-md bg-[#EFECE4] border border-[#E5E1D8] px-1.5 py-0.5 text-[10px] font-mono text-[#747169]"
+            <div
+              v-if="isAdmin"
+              class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+              @click.stop
             >
-              草稿
+              <button
+                type="button"
+                class="p-1.5 text-[#787268] hover:text-[#9A3F2B] transition-colors"
+                @click="$emit('edit', entry)"
+                title="编辑条目"
+              >
+                <PencilIcon class="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                class="p-1.5 text-[#787268] hover:text-[#9A3F2B] transition-colors"
+                @click="$emit('delete', entry.id)"
+                title="删除条目"
+              >
+                <TrashIcon class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-[1px] w-10 bg-[#9A3F2B]/50"></div>
+
+        <!-- Monumental Title -->
+        <h3 class="font-serif text-2xl sm:text-3xl font-normal tracking-[0.01em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors duration-300 leading-[1.35]">
+          {{ entry.title }}
+        </h3>
+
+        <!-- Excerpt -->
+        <p
+          v-if="entry.summary"
+          class="text-[14px] text-[#57534C] leading-[1.85] line-clamp-4 font-light"
+        >
+          {{ entry.summary }}
+        </p>
+      </div>
+
+      <!-- Bottom Colophon -->
+      <div class="pt-5 border-t border-[#E8E2D6] flex items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+          <button
+            v-for="tag in (entry.tags || []).slice(0, 3)"
+            :key="tag"
+            type="button"
+            class="text-[11px] font-mono tracking-[0.08em] text-[#787268] hover:text-[#9A3F2B] transition-colors"
+            @click.stop="$emit('tag-click', tag)"
+          >
+            #{{ tag }}
+          </button>
+        </div>
+        <span class="inline-flex items-center gap-2 text-[11px] font-serif tracking-[0.16em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors shrink-0">
+          <span>展开卷宗</span>
+          <span class="font-mono transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+        </span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ========================================================= -->
+  <!-- MODE 2: CURATED EXHIBITION PLATE (Bento Gallery Grid)     -->
+  <!-- ========================================================= -->
+  <article
+    v-else-if="layout === 'bento'"
+    class="group museum-plate rounded-[2px] overflow-hidden cursor-pointer flex flex-col justify-between"
+    @click="$emit('select', entry)"
+  >
+    <!-- Framed Image Area if coverUrl exists -->
+    <div
+      v-if="entry.coverUrl"
+      class="bg-[#EAE4D8]/45 p-3.5 sm:p-4 border-b border-[#E8E2D6] relative"
+    >
+      <div
+        class="relative w-full overflow-hidden bg-[#EAE4D8]"
+        :class="featured ? 'aspect-[16/10]' : 'aspect-[4/3]'"
+      >
+        <img
+          :src="entry.coverThumbUrl || entry.coverUrl"
+          :alt="entry.title"
+          loading="lazy"
+          class="h-full w-full object-cover transition-transform duration-700 ease-gallery group-hover:scale-[1.04]"
+        />
+        <!-- Darkroom Optical Strip on Hover -->
+        <div
+          class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#11100F]/85 via-[#11100F]/35 to-transparent px-3.5 pt-7 pb-2.5 text-[10px] font-mono tracking-[0.15em] uppercase text-[#FAF8F4]/90 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        >
+          <span class="truncate">{{ typeTheme.code }} · {{ formattedDate }}</span>
+          <span v-if="entry.tags?.length" class="text-[#E2A998] shrink-0 ml-2">#{{ entry.tags[0] }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Typography & Placard Body -->
+    <div class="p-6 sm:p-7 flex-1 flex flex-col justify-between gap-6">
+      <div class="space-y-3.5">
+        <!-- Top Architectural Meta Row -->
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 kicker-caps">
+            <span class="text-[#161513] tabular-nums">{{ formattedDate }}</span>
+            <span class="text-[#C4BBA9]">&mdash;</span>
+            <span :class="typeTheme.textColor">{{ typeTheme.code }}</span>
+            <span v-if="entry.visibility === 'private'" class="text-[#9A6B2F]">· PRIVATE</span>
+            <span v-else-if="entry.status === 'draft'" class="text-[#9B9488]">· DRAFT</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span
+              v-if="plateIndex"
+              class="font-display italic text-xl font-light text-[#C4BBA9] leading-none select-none tabular-nums"
+            >
+              {{ plateIndex }}
             </span>
             <div
               v-if="isAdmin"
@@ -64,7 +182,7 @@
             >
               <button
                 type="button"
-                class="rounded-md p-1 text-[#747169] hover:text-[#C25438] hover:bg-[#F7F5F0] transition-colors"
+                class="p-1 text-[#787268] hover:text-[#9A3F2B] transition-colors"
                 @click="$emit('edit', entry)"
                 title="编辑条目"
               >
@@ -72,7 +190,7 @@
               </button>
               <button
                 type="button"
-                class="rounded-md p-1 text-[#747169] hover:text-red-600 hover:bg-red-50 transition-colors"
+                class="p-1 text-[#787268] hover:text-[#9A3F2B] transition-colors"
                 @click="$emit('delete', entry.id)"
                 title="删除条目"
               >
@@ -84,8 +202,8 @@
 
         <!-- Title -->
         <h3
-          class="font-serif font-medium tracking-tight text-[#1D1C1A] group-hover:text-[#C25438] transition-colors leading-snug"
-          :class="featured ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'"
+          class="font-serif font-normal tracking-[0.01em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors duration-300 leading-[1.4]"
+          :class="featured ? 'text-xl sm:text-2xl' : 'text-lg sm:text-[21px]'"
         >
           {{ entry.title }}
         </h3>
@@ -93,80 +211,80 @@
         <!-- Summary -->
         <p
           v-if="entry.summary"
-          class="text-sm text-[#747169] leading-relaxed"
+          class="text-[13.5px] text-[#57534C] leading-[1.8] font-light"
           :class="entry.coverUrl ? 'line-clamp-2' : 'line-clamp-4'"
         >
           {{ entry.summary }}
         </p>
       </div>
 
-      <!-- Footer: Tags & Open Prompt -->
-      <div class="pt-3 border-t border-[#F0ECE1] flex items-center justify-between gap-2">
-        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+      <!-- Footer: Minimal Tags & Open Action -->
+      <div class="pt-4 border-t border-[#E8E2D6] flex items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
           <button
             v-for="tag in (entry.tags || []).slice(0, 3)"
             :key="tag"
             type="button"
-            class="inline-flex items-center gap-1 rounded-md bg-[#F7F5F0] hover:bg-[#EFECE4] px-2 py-0.5 text-[10px] font-mono text-[#747169] border border-[#E5E1D8] transition-colors"
+            class="text-[11px] font-mono text-[#57534C] hover:text-[#9A3F2B] transition-colors"
             @click.stop="$emit('tag-click', tag)"
           >
-            <span>#{{ tag }}</span>
+            #{{ tag }}
           </button>
+          <span v-if="!entry.tags?.length" class="text-[11px] font-serif text-[#6E685E]">
+            {{ typeTheme.label }}
+          </span>
         </div>
-        <span class="text-[11px] font-mono text-[#9E9B93] group-hover:text-[#C25438] transition-colors shrink-0">
-          展开卷宗 &rarr;
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-serif tracking-[0.14em] text-[#57534C] group-hover:text-[#9A3F2B] transition-colors shrink-0">
+          <span>阅览</span>
+          <span class="font-mono transition-transform duration-300 group-hover:translate-x-0.5">&rarr;</span>
         </span>
       </div>
     </div>
   </article>
 
-  <!-- CHRONICLE SPINE MODE (Demo A Editorial Timeline) -->
-  <div v-else class="relative group">
-    <div
-      class="absolute -left-[31px] sm:-left-[39px] top-6 flex h-4 w-4 items-center justify-center rounded-full bg-[#F7F5F0] border-2 shadow-xs transition-transform group-hover:scale-125 z-10"
-      :class="typeTheme.borderColor"
-    >
-      <div class="h-1.5 w-1.5 rounded-full" :class="typeTheme.dotColor"></div>
+  <!-- ========================================================= -->
+  <!-- MODE 3: CHRONICLE ANNALS SPINE (Book Ledger View)         -->
+  <!-- ========================================================= -->
+  <article
+    v-else
+    class="group grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 py-8 border-b border-[#DDD6C9] cursor-pointer transition-colors hover:bg-[#FAF8F4]/55 -mx-4 px-4"
+    @click="$emit('select', entry)"
+  >
+    <!-- Left Column: Monumental Date & Index -->
+    <div class="md:col-span-3 flex md:flex-col justify-between md:justify-start gap-1.5">
+      <div class="flex items-baseline gap-2.5">
+        <span class="font-display text-3xl sm:text-4xl font-light text-[#161513] leading-none tabular-nums">
+          {{ dateParts.monthDay }}
+        </span>
+        <span class="font-mono text-[11px] text-[#9B9488] tabular-nums">
+          {{ dateParts.year }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2 kicker-caps mt-1">
+        <span :class="typeTheme.textColor">{{ typeTheme.code }}</span>
+        <span v-if="entry.visibility === 'private'" class="text-[#9A6B2F]">· PRIVATE</span>
+        <span v-else-if="entry.status === 'draft'" class="text-[#9B9488]">· DRAFT</span>
+      </div>
     </div>
 
-    <article
-      class="rounded-2xl border border-[#E5E1D8] bg-white p-5 sm:p-6 shadow-xs transition-all duration-200 hover:border-[#BDB6A4] hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-      @click="$emit('select', entry)"
+    <!-- Middle Column: Title, Summary, Tags -->
+    <div
+      class="flex flex-col justify-between gap-3"
+      :class="entry.coverUrl ? 'md:col-span-6' : 'md:col-span-9'"
     >
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0ECE1] pb-3 mb-4">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-lg bg-[#F7F5F0] px-2.5 py-1 text-xs font-mono font-medium text-[#747169] border border-[#E5E1D8]">
-            <CalendarIcon class="w-3.5 h-3.5 text-[#C25438]" />
-            <span>{{ formattedDate }}</span>
-          </span>
-          <span
-            class="inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-medium border"
-            :class="typeTheme.badgeClass"
+      <div class="space-y-2.5">
+        <div class="flex items-start justify-between gap-4">
+          <h3 class="font-serif text-xl sm:text-2xl font-normal text-[#161513] group-hover:text-[#9A3F2B] transition-colors leading-[1.38]">
+            {{ entry.title }}
+          </h3>
+          <div
+            v-if="isAdmin"
+            class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            @click.stop
           >
-            <component :is="typeTheme.icon" class="w-3 h-3" />
-            <span>{{ typeTheme.label }}</span>
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <span
-            v-if="entry.visibility === 'private'"
-            class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-mono text-amber-800"
-          >
-            <LockIcon class="w-3 h-3" />
-            <span>私密</span>
-          </span>
-          <span
-            v-else-if="entry.status === 'draft'"
-            class="inline-flex items-center gap-1 rounded-md bg-[#EFECE4] border border-[#E5E1D8] px-2 py-0.5 text-[10px] font-mono text-[#747169]"
-          >
-            草稿
-          </span>
-
-          <div v-if="isAdmin" class="flex items-center gap-1 ml-1 opacity-70 group-hover:opacity-100 transition-opacity" @click.stop>
             <button
               type="button"
-              class="rounded-md p-1.5 text-[#747169] hover:text-[#C25438] hover:bg-[#F7F5F0] transition-colors"
+              class="p-1 text-[#787268] hover:text-[#9A3F2B]"
               @click="$emit('edit', entry)"
               title="编辑条目"
             >
@@ -174,7 +292,7 @@
             </button>
             <button
               type="button"
-              class="rounded-md p-1.5 text-[#747169] hover:text-red-600 hover:bg-red-50 transition-colors"
+              class="p-1 text-[#787268] hover:text-[#9A3F2B]"
               @click="$emit('delete', entry.id)"
               title="删除条目"
             >
@@ -182,58 +300,51 @@
             </button>
           </div>
         </div>
+
+        <p v-if="entry.summary" class="text-[13.5px] text-[#57534C] leading-[1.8] line-clamp-3 font-light">
+          {{ entry.summary }}
+        </p>
       </div>
 
-      <div class="flex flex-col-reverse sm:flex-row gap-5">
-        <div class="flex-1 space-y-2.5">
-          <h3 class="font-serif text-lg sm:text-xl font-medium tracking-tight text-[#1D1C1A] group-hover:text-[#C25438] transition-colors leading-snug">
-            {{ entry.title }}
-          </h3>
-          <p v-if="entry.summary" class="text-sm text-[#747169] leading-relaxed line-clamp-3 sm:line-clamp-4">
-            {{ entry.summary }}
-          </p>
-          <div v-if="entry.tags && entry.tags.length > 0" class="flex flex-wrap items-center gap-1.5 pt-2">
-            <button
-              v-for="tag in entry.tags"
-              :key="tag"
-              type="button"
-              class="inline-flex items-center gap-1 rounded-md bg-[#F7F5F0] hover:bg-[#EFECE4] px-2 py-0.5 text-[11px] font-mono text-[#747169] border border-[#E5E1D8] transition-colors"
-              @click.stop="$emit('tag-click', tag)"
-            >
-              <TagIcon class="w-3 h-3 text-[#9E9B93]" />
-              <span>{{ tag }}</span>
-            </button>
-          </div>
+      <div class="flex items-center justify-between pt-2">
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            v-for="tag in entry.tags || []"
+            :key="tag"
+            type="button"
+            class="text-[11px] font-mono text-[#787268] hover:text-[#9A3F2B] transition-colors"
+            @click.stop="$emit('tag-click', tag)"
+          >
+            #{{ tag }}
+          </button>
         </div>
+        <span class="text-[11px] font-serif tracking-[0.14em] text-[#9B9488] group-hover:text-[#9A3F2B] transition-colors">
+          展开卷宗 &rarr;
+        </span>
+      </div>
+    </div>
 
-        <div
-          v-if="entry.coverUrl"
-          class="sm:w-48 sm:h-32 w-full h-44 flex-shrink-0 overflow-hidden rounded-xl border border-[#E5E1D8] bg-[#EFECE4]"
-        >
+    <!-- Right Column: Framed Thumbnail -->
+    <div v-if="entry.coverUrl" class="md:col-span-3 flex items-center">
+      <div class="w-full aspect-[4/3] passe-partout p-1.5 overflow-hidden">
+        <div class="w-full h-full overflow-hidden bg-[#EAE4D8]">
           <img
             :src="entry.coverThumbUrl || entry.coverUrl"
             :alt="entry.title"
             loading="lazy"
-            class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            class="h-full w-full object-cover transition-transform duration-700 ease-gallery group-hover:scale-105"
           />
         </div>
       </div>
-    </article>
-  </div>
+    </div>
+  </article>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
-  Calendar as CalendarIcon,
-  Tag as TagIcon,
-  Lock as LockIcon,
   Pencil as PencilIcon,
   Trash as TrashIcon,
-  Compass as CompassIcon,
-  BookOpen as BookOpenIcon,
-  Camera as CameraIcon,
-  Clock as ClockIcon,
 } from 'lucide-vue-next';
 import type { EntryDto } from '@archive/contracts';
 import { formatDate } from '@archive/shared';
@@ -242,12 +353,14 @@ const props = withDefaults(
   defineProps<{
     entry: EntryDto;
     isAdmin: boolean;
-    layout?: 'bento' | 'spine';
+    layout?: 'lead' | 'bento' | 'spine';
     featured?: boolean;
+    index?: number;
   }>(),
   {
     layout: 'bento',
     featured: false,
+    index: undefined,
   }
 );
 
@@ -260,13 +373,24 @@ defineEmits<{
 
 const formattedDate = computed(() => formatDate(props.entry.occurredAt, '.'));
 
+const plateIndex = computed(() => {
+  if (props.index === undefined) return '';
+  return String(props.index + 1).padStart(2, '0');
+});
+
+const dateParts = computed(() => {
+  const str = formattedDate.value;
+  const parts = str.split('.');
+  if (parts.length === 3) {
+    return { year: parts[0], monthDay: `${parts[1]}.${parts[2]}` };
+  }
+  return { year: '', monthDay: str };
+});
+
 interface TypeTheme {
   label: string;
   code: string;
-  badgeClass: string;
-  icon: any;
-  dotColor: string;
-  borderColor: string;
+  textColor: string;
 }
 
 const typeTheme = computed<TypeTheme>(() => {
@@ -275,37 +399,25 @@ const typeTheme = computed<TypeTheme>(() => {
       return {
         label: '旅行足迹',
         code: 'EXPEDITION',
-        badgeClass: 'bg-[#4E6053]/10 text-[#4E6053] border-[#4E6053]/25',
-        icon: CompassIcon,
-        dotColor: 'bg-[#4E6053]',
-        borderColor: 'border-[#4E6053]',
+        textColor: 'text-[#3D4E42]',
       };
     case 'journal':
       return {
         label: '随想手札',
-        code: 'FIELD NOTE',
-        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
-        icon: BookOpenIcon,
-        dotColor: 'bg-amber-700',
-        borderColor: 'border-amber-700',
+        code: 'CAHIER',
+        textColor: 'text-[#7A5B32]',
       };
     case 'photo':
       return {
         label: '摄影胶片',
         code: 'PLATE',
-        badgeClass: 'bg-[#FDF8F6] text-[#C25438] border-[#F0D5CD]',
-        icon: CameraIcon,
-        dotColor: 'bg-[#C25438]',
-        borderColor: 'border-[#C25438]',
+        textColor: 'text-[#9A3F2B]',
       };
     default:
       return {
         label: '记忆时光',
         code: 'ARCHIVE',
-        badgeClass: 'bg-[#EFECE4] text-[#747169] border-[#E5E1D8]',
-        icon: ClockIcon,
-        dotColor: 'bg-[#747169]',
-        borderColor: 'border-[#747169]',
+        textColor: 'text-[#787268]',
       };
   }
 });
