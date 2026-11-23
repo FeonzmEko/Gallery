@@ -3,7 +3,7 @@
 > 一个属于个人的、长期可维护、低运作成本、兼备强扩展性的数字档案馆与记忆长廊。  
 > 默认公开只读展览（个人数字名片/公开时光轴），安全管理员写保护；融合响应式 Web、PWA 移动端独立窗口、发生时间（`occurred_at`）时间轴、瀑布流媒体灯箱、前端 WebP 压缩直传与 Leaflet 开源足迹地图。
 
-[![Tests](https://img.shields.io/badge/tests-166%20passed-success)](https://github.com/FeonzmEko/Gallery)
+[![Tests](https://img.shields.io/badge/tests-183%20passed-success)](https://github.com/FeonzmEko/Gallery)
 [![TypeScript](https://img.shields.io/badge/typescript-strict-blue)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/cloudflare-workers%20%2B%20d1%20%2B%20r2-orange)](https://workers.cloudflare.com/)
 [![Vue 3](https://img.shields.io/badge/vue-3.5-brightgreen)](https://vuejs.org/)
@@ -19,9 +19,12 @@
   - **暗门登录快捷键**：支持全局快捷键 `Ctrl + Shift + L`（Mac: `Cmd + Shift + L`）或点击页脚暗门图标调起暗色毛玻璃登录弹窗。
 - **全局发生时间轴（`occurred_at`）**：
   - 严格以记忆实际发生的时间排序，而非数据创建时间；支持跨年甚至十年前的旧照片、旅行记忆精准“历史归位”补录，支持流式游标向上/向下翻阅。
-- **媒体长廊与 EXIF 曝光灯箱**：
-  - 自适应瀑布流网格，全屏大图灯箱预览（支持键盘左右箭头切图、ESC 退出、手势与双击放大）；
-  - 内建零依赖纯二进制 EXIF 解析器，展开抽屉即可查看相机品牌型号、光圈、ISO、快门速度、焦距与拍摄时间。
+- **媒体长廊、旅行合集与单图批注抽屉**：
+  - 支持「全部影像 / 旅行合集」切换；合集（如《青海湖》）以 `< 100KB` WebP 缩略图配合锁定 `aspect-ratio` 展开高流畅度瀑布流长卷，支持全屏灯箱预览（键盘左右箭头切图、ESC 逐层退出、手势缩放）；
+  - 每张照片支持单图批注角标与非打断式侧边/底部留言抽屉（`PhotoCommentDrawer`），展示高清大图与完整二进制 EXIF 拍摄参数，管理员留言自动高亮为「策展人注」；关闭抽屉原地保留浏览进度。
+- **自适应卷宗观展、随机抽卷与夜间暖墨模式**：
+  - 卷宗详情弹窗按图片比例自动切换**竖图左图右文宽版**与**横图加宽版**，支持点击直达全屏看图室；
+  - 首页提供克制的「随机抽一卷」与「关于馆主」展签，支持「夜间暖墨模式」护眼主题切换、Workers `HTMLRewriter` 动态 Open Graph 社交分享卡片与管理员一键全量 JSON 备份导出。
 - **零服务端额外计算开销的直传体系**：
   - 前端浏览器 Canvas 离线预压缩原图，自动生成 `< 100KB` WebP 缩略图；
   - 结合存储适配层签发短时预签名凭证，客户端直接并发 PUT 上传至 Cloudflare R2，不经过 Worker 中转，无体积与流量损耗。
@@ -90,7 +93,7 @@ pnpm install
 | :--- | :--- |
 | `pnpm dev:web` | 启动前端本地开发热更新服务器（默认 `http://localhost:5173`） |
 | `pnpm dev:api` | 启动本地 Cloudflare Worker 模拟运行环境 |
-| `pnpm test` | 运行全工作区 **166 项自动化测试套件**（Vitest） |
+| `pnpm test` | 运行全工作区 **183 项自动化测试套件**（Vitest） |
 | `pnpm typecheck` | 执行全工作区 11 个子项目 TypeScript 严格类型检查 |
 | `pnpm build` | 全量构建前端产物与各子包产物 |
 | `pnpm db:generate` | 基于 Drizzle Schema 自动生成线性 SQL 迁移文件 |

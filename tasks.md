@@ -1,161 +1,162 @@
-# Personal Archive 个人数字档案馆 · 开发任务清单与实时进度看板
+# Personal Archive 个人数字档案馆 · 体验升级与新玩法开发任务清单
 
-> **更新时间**：2026-11-19 17:38  
-> **文档基准**：[docs/architecture.md](file:///d:/code/Gallery/docs/architecture.md) (v1.1 正式版)  
+> **更新时间**：2026-11-23 14:00  
+> **文档基准**：[用户需求.md](file:///d:/code/Gallery/用户需求.md)（最终评审清单）、[README.md](file:///d:/code/Gallery/README.md)（v1.0 架构与底座说明，原 24/24 奠基任务已全量交付）  
+> **项目评级**：标准工程型（Standard · 15 项迭代任务，分 4 轮推进）  
 > **状态标记**：`[ ]` 待办 | `[/]` 进行中 | `[x]` 已完成并验收 | `[!]` 阻塞 | `[-]` 跳过  
-> **铁律**：本文件是过程工单而非陈述性文档。未运行验证的代码与功能严禁提前勾选 `[x]`；未实测条目标记“待验证”；遇阻如实标记 `[!]`。
+> **铁律**：本文件为过程工单。未运行验证的代码、样式与接口严禁提前勾选 `[x]`；未实测条目标记“待验证”；遇阻如实标记 `[!]` 并写明阻塞原因。
 
 ---
 
 ## 0. 总体进度仪表盘
 
-- **总体进度**：[████████████████████████] 100% (24/24)
-- **当前活动任务**：全部 24 项任务开发与自动化测试（166 项用例）100% 通过，已全量验收交付
+- **总体进度**：`[████████████████████]` 100% (15/15)
+- **当前活动任务**：全部交付（M1–M4 已合入 `main` 并完成全工作区 `typecheck`、`183` 项测试、`build` 与线性迁移校验）
 - **阻塞项**：无
 - **里程碑分布**：
-  | 里程碑 | 内容摘要 | 任务数 | 完成数 | 状态 |
-  | :--- | :--- | :---: | :---: | :---: |
-  | **M0** | Monorepo 工程骨架与共享契约层 | 4 | 4 | 已完成 |
-  | **M1** | 数据库公共模型、统一迁移与存储抽象 | 4 | 4 | 已完成 |
-  | **M2** | 核心业务模块（Core / Media）与 API 组装 | 4 | 4 | 已完成 |
-  | **M3** | Web 应用基础骨架、PWA 移动端与权限控制 | 4 | 4 | 已完成 |
-  | **M4** | 全局时间线、媒体长廊灯箱与直传体验 | 4 | 4 | 已完成 |
-  | **M5** | Phase 2 扩展（日记/旅行）与 Leaflet 免费地图 | 2 | 2 | 已完成 |
-  | **M6** | 高扩展性（国内CDN/多存储/评论）验证与交付 | 2 | 2 | 已完成 |
+
+  | 里程碑 | 对应推进节奏 | 核心内容摘要 | 任务数 | 完成数 | 状态 |
+  | :--- | :--- | :--- | :---: | :---: | :---: |
+  | **M1** | 第一轮 · 微调收口 | 隐藏足迹漫游入口、移除 PWA 浮窗、清掉 3 个细节 Bug | 3 | 3 | 已完成 |
+  | **M2** | 第二轮 · 视觉大改观 | 横/竖图自适应卷宗弹窗、主页柔和磨砂玻璃留白、首页「随机抽一卷」 | 3 | 3 | 已完成 |
+  | **M3** | 第三轮 · 核心新玩法 | 影像长廊《青海湖》瀑布流旅行合集、单图侧边留言抽屉（含策展人注）、批量传图归属合集 | 5 | 5 | 已完成 |
+  | **M4** | 第四轮 · 锦上添花 | 关于馆主角落、社交分享卡片、夜间暖墨模式与一键备份导出、全量验收 | 4 | 4 | 已完成 |
 
 ---
 
 ## 1. 目标与范围边界
 
-### 1.1 核心目标
-构建一个属于个人的、长期可维护、低成本运作且具备极强扩展性的数字档案馆：
-- **访问控制**：全站默认**公开只读浏览**，无需登录即可访问公开时间线与图文；**内容修改/新增/删除强制管理员权限**，支持单条私密（`private`）隐藏。
-- **用户体验**：响应式 Web + PWA 移动端独立窗口；全局发生时间（`occurred_at`）时间轴；瀑布流长廊与 EXIF 灯箱；前端 WebP 缩略图生成与 R2 直传；Leaflet + OSM 免费旅行足迹地图。
-- **高扩展性底座**：存储层通过 `StoragePort` 抽象，未来可直接平滑切换至阿里云 OSS / 腾讯云 COS / MinIO 并挂载国内 CDN；评论系统通过 `CommentPort` 契约预留扩展点。
+### 1.1 本轮迭代核心目标
+在现有 `Personal Archive`（Vue 3 + Pinia + Tailwind + Cloudflare Workers/Hono + D1 + R2，Public Read + Admin Write）完整底座上，围绕**观展纯粹感、看图沉浸度、内容厚度**完成三轮主迭代与一轮体验增补：
 
-### 1.2 边界约束（明令不做的事项）
-- **杜绝重型 DDD 样板代码**：采用务实整洁分层，避免过度封装导致初期个人开发心智过载。
-- **不使用公开的 `r2.dev` 访问**：图片与媒体资源统一使用私有预签名直传/下载 URL 或 Worker 流代理。
-- **不引入收费商业地图与商业图片处理服务**：地图采用 Leaflet + OSM，缩略图采用前端浏览器 Canvas/Worker 预压缩，保持零额外月费。
-- **不强求重型离线双向同步**：PWA 仅通过 Service Worker 缓存 App Shell 静态骨架，不在此版本引入复杂的 IndexedDB 双向合并算法。
+```text
+第一轮：减法与收口          第二轮：视觉与逛展升级            第三轮：旅行合集与单图批注         第四轮：展馆质感收尾
+(聚焦三大板块 + 去噪修Bug) ─> (自适应弹窗 + 玻璃留白 + 随机逛展) ─> (瀑布流特展 + 非打断侧边留言 + 批量归类) ─> (关于馆主 + 分享卡 + 暖墨 + 备份)
+```
+
+### 1.2 边界约束（明确保留与明令不做）
+- **保留首页现有图文混排留白版式**：纯文字卡片与图片卡片对齐的现有排版维持原样，不做重排改动。
+- **隐藏而非删除“足迹漫游”模块**：`modules/travel/`、`apps/web/src/pages/TravelPage.vue`、`LeafletMap.vue` 及对应后端接口/数据库表原封不动保留，仅关闭前台导航与页脚入口，确保未来随时可重新启用。
+- **PWA 安装浮窗直接移除**：不做折叠收纳，也不移入页脚；仅移除前台悬浮窗组件挂载，保留 `manifest.webmanifest` 与 Service Worker 离线 App Shell 能力。
+- **延续底座零额外成本原则**：旅行合集瀑布流复用前端 Canvas 离线 `< 100KB` WebP 缩略图与 R2 预签名直传链路，不引入第三方付费图床或服务端实时转码；公开 GET 接口延续 `Cache-Control` 缓存策略，所有写操作强制 Admin 鉴权。
 
 ---
 
-## 2. 目录规划与接口契约
+## 2. 涉及目录与核心契约规划
 
-### 2.1 规划目录树
+### 2.1 本轮主要变更目录映射
 ```text
 personal-archive/
-├── apps/
-│   └── web/                              # Vue 3 + Vite + Pinia + Tailwind + PWA
-│       ├── public/manifest.webmanifest
-│       └── src/
-│           ├── app/                      # 路由、Pinia、全局布局
-│           ├── shared/                   # API Client、LeafletMap、PWA 引导、WebP 生成器
-│           └── features/                 # timeline / media / journal / travel / auth
-├── workers/
-│   └── api/                              # Cloudflare Worker 部署入口（Composition Root）
-│       └── src/                          # Hono 应用、bootstrap 依赖装配、RBAC 守卫
+├── apps/web/src/
+│   ├── app/layouts/DefaultLayout.vue                 # 隐藏足迹入口、移除 PWA 浮窗、玻璃留白容器、关于馆主/主题切换入口
+│   ├── app/styles/main.css                           # 环境光斑与磨砂玻璃层样式、夜间暖墨模式 Design Tokens
+│   ├── pages/
+│   │   ├── TimelinePage.vue                          # 标签去重、编年热区修复、骨架屏过渡、随机抽一卷按钮
+│   │   ├── MediaPage.vue                             # 「全部影像 / 旅行合集」切换与合集瀑布流长卷
+│   │   └── JournalPage.vue                           # 留白玻璃质感与切频道过渡一致性
+│   ├── features/
+│   │   ├── timeline/components/
+│   │   │   ├── TimelineCard.vue                      # 首页标签去重与编年视图点击热区补全
+│   │   │   └── EntryDetailModal.vue                  # 横/竖图自适应宽版卷宗弹窗 + 联动全屏灯箱
+│   │   └── media/components/
+│   │       ├── MediaLightbox.vue                     # 与弹窗/抽屉衔接的全屏看图室
+│   │       ├── MediaUploader.vue                     # 批量传图时顺手选择/新建旅行合集
+│   │       └── PhotoCommentDrawer.vue (新增)         # 桌面右侧滑出 / 移动端底部弹出的单图 EXIF 与留言抽屉
+│   └── shared/api/client.ts                          # 随机抽卷、旅行合集、单图留言、关于馆主、数据导出强类型接口
 ├── modules/
-│   ├── core/                             # @archive/module-core：用户/Entry/标签/检索/时间线
-│   ├── media/                            # @archive/module-media：StoragePort 适配/元数据/预签名
-│   ├── journal/                          # @archive/module-journal（Phase 2）
-│   ├── travel/                           # @archive/module-travel（Phase 2，足迹与地点）
-│   └── comment/                          # @archive/module-comment（Phase 3 预留契约）
+│   ├── core/src/                                     # 随机公开卷宗抽取、站点馆主配置/一键导出服务
+│   ├── media/src/                                    # 旅行合集（Collection）领域模型、绑定与查询服务
+│   └── comment/src/                                  # 扩展单图（media_asset_id）独立留言与「策展人注」标识
 ├── packages/
-│   ├── contracts/                        # @archive/contracts：Ports / DTO / 错误码 / 领域事件
-│   ├── shared/                           # @archive/shared：ULID、UUIDv7、分页、日期工具
-│   ├── database/                         # @archive/database：D1 Drizzle 统一迁移与 AtomicBatch
-│   └── ui/                               # @archive/ui：无业务基础组件库
-├── docs/                                 # 架构设计与接口文档
-└── tasks.md                              # 本工单
+│   ├── contracts/src/                                # Collection / RandomEntry / MediaComment / CuratorProfile 契约
+│   └── database/migrations/                          # 本轮新增合集与单图评论字段的线性 SQL 迁移文件
+└── workers/api/src/                                  # 新路由挂载、公开接口缓存头、分享页 OG Meta 注入
 ```
 
-### 2.2 核心接口契约规范（Port 抽象）
+### 2.2 本轮新增/扩展核心接口契约草案
 ```typescript
-// packages/contracts/src/ports/storage.port.ts
-export interface StoragePort {
-  generateUploadUrl(key: string, contentType: string, maxSizeBytes: number): Promise<{ uploadUrl: string; publicUrl: string }>;
-  getDownloadUrl(key: string, expiresInSeconds?: number): Promise<string>;
-  deleteObject(key: string): Promise<void>;
-}
+// 1. 随机逛展（公开只读，仅抽取 public & published，可传 excludeId 避免连续抽中同一条）
+// GET /api/v1/entries/random?excludeId=<entryId>
 
-// packages/contracts/src/ports/auth.port.ts
-export interface AuthPort {
-  verifyToken(token: string): Promise<{ userId: string; role: 'admin' | 'owner' | 'guest' } | null>;
-  createSession(userId: string): Promise<{ token: string; expiresAt: number }>;
+// 2. 旅行合集（Collection）与批量归属
+export interface MediaCollection {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  coverMediaId?: string;
+  occurredRange?: string;           // 如 "2026-07 · 青海湖"
+  visibility: 'public' | 'private';
+  mediaCount: number;
 }
+// GET  /api/v1/collections                     (公开合集列表，带 Cache-Control)
+// GET  /api/v1/collections/:slug/media         (合集内照片流，返回 width/height、WebP 缩略图与批注数)
+// POST /api/v1/collections                     (Admin 创建合集)
+// POST /api/v1/collections/:id/media           (Admin 批量绑定/排序媒体)
 
-// packages/contracts/src/ports/comment.port.ts (扩展预留)
-export interface CommentPort {
-  listComments(entryId: string, pagination: { cursor?: string; limit: number }): Promise<any>;
-  createComment(entryId: string, data: any, ipHash: string): Promise<any>;
+// 3. 单图独立留言与「策展人注」
+export interface MediaComment {
+  id: string;
+  mediaAssetId: string;             // 绑定至单张照片（兼容原有 entryId 评论）
+  authorName: string;
+  content: string;
+  isCuratorNote: boolean;           // Admin 登录状态下发表自动标记为「策展人注」
+  createdAt: string;
 }
+// GET  /api/v1/media/:mediaId/comments
+// POST /api/v1/media/:mediaId/comments
 ```
 
 ---
 
 ## 3. 分阶段开发任务
 
-### M0 · Monorepo 工程骨架与共享契约层
-- [x] M0-1 初始化 pnpm workspace 与根目录配置 [目标: `pnpm-workspace.yaml`, `package.json`, `tsconfig.base.json`, `.gitignore`] [规范: docs/architecture.md#3] [验收: `pnpm -v` 与 `pnpm i` 正常解析工作区]
-- [x] M0-2 搭建 `@archive/shared` 通用工具包 [目标: `packages/shared/src/index.ts`] [验收: UUIDv7/ULID 生成、Cursor 分页解析与日期格式化单元测试通过]
-- [x] M0-3 搭建 `@archive/contracts` 契约定义包 [目标: `packages/contracts/src/index.ts`] [规范: docs/architecture.md#4.2] [验收: 导出 EntryType、Visibility、StoragePort、AuthPort、CommentPort 纯类型定义且无运行时框架依赖]
-- [x] M0-4 搭建基础 UI 组件包 `@archive/ui` 骨架 [目标: `packages/ui/src/index.ts`] [验收: TypeScript 类型检查 `pnpm --filter @archive/ui build` 成功]
+### M1 · 第一轮：页面减法与小瑕疵收口
+> 目标：先做减法、清掉视觉噪音与已知小瑕疵，让主站底子干净聚焦。
+
+- [x] **M1-1** 隐藏「足迹漫游」前台入口，使主站聚焦于时光纪流、影像长廊与随想手札三大板块 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`, `apps/web/src/app/router/index.ts`] [规范: 用户需求.md#一] [验收: 桌面顶部导航、移动端底部导航及页脚 `IV.` 不再显示足迹入口；`modules/travel/` 与 `TravelPage.vue` 代码完整保留且 `pnpm typecheck` 与 `pnpm test` 0 报错]
+- [x] **M1-2** 彻底移除右下角桌面安装悬浮窗（PWA 提示），保持页面底部纯净 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`, `apps/web/src/App.vue`, `apps/web/src/shared/components/pwa/PwaInstallPrompt.vue`] [规范: 用户需求.md#一] [验收: 页面右下角与页脚均不再出现安装悬浮窗或折叠入口；`manifest.webmanifest` 与 Service Worker 离线 App Shell 构建正常，`pnpm --filter @archive/web build` 通过]
+- [x] **M1-3** 修复三个前台细节 Bug：首页标签去重、编年视图点击热区补全、切频道过渡防闪现 [目标: `apps/web/src/features/timeline/components/TimelineCard.vue`, `apps/web/src/pages/TimelinePage.vue`, `apps/web/src/pages/MediaPage.vue`, `apps/web/src/pages/JournalPage.vue`] [规范: 用户需求.md#一] [验收: (1) 卡片中重复的 `#摄影` 等标签自动去重；(2) 编年视图右侧 `展开卷宗 →` 整块热区可稳定点击打开详情；(3) 切换频道时展示骨架屏或淡入过渡，不再短暂闪现 `0 卷展品`；首页原有图文混排对齐留白保持不变]
 
 ---
 
-### M1 · 数据库公共模型、统一迁移与存储抽象
-- [x] M1-1 搭建 `@archive/database` 并封装 D1 AtomicBatch [目标: `packages/database/src/client.ts`, `packages/database/src/batch.ts`] [规范: docs/architecture.md#1.2] [验收: 单元测试 12 项用例验证 batch 原子写入构造与 D1 语法兼容全部通过]
-- [x] M1-2 编写 Core 与 Media 模块的 Drizzle Schema 定义 [目标: `modules/core/src/infrastructure/schema.ts`, `modules/media/src/infrastructure/schema.ts`] [规范: docs/architecture.md#5.2] [验收: 成功导出 users, entries, tags, entry_tags, entry_relations, search_index, media_assets, entry_media 及 Phase 3 comments，类型检查 0 报错]
-- [x] M1-3 配置 Drizzle Kit 统揽扫描与线性迁移流水线 [目标: `packages/database/drizzle.config.ts`, `packages/database/migrations/`] [规范: docs/architecture.md#5.4] [验收: 运行 `pnpm db:generate` 成功在 migrations 目录生成完整初始迁移 SQL 文件，9 张表与全部关键索引健全无冗余]
-- [x] M1-4 实现轻量级 S3 / R2 `StoragePort` 适配器 [目标: `modules/media/src/infrastructure/r2-storage.adapter.ts`] [规范: docs/architecture.md#1.2] [验收: 基于 `aws4fetch` 14 项单元测试通过预签名 PUT/GET 字符串生成、Content-Type Header 锁定、自定义 CDN 域名与元数据解析]
+### M2 · 第二轮：视觉与看图体验升级
+> 目标：解决大屏看图局促与左右留白扁平的直观痛点，并引入轻量「随机逛展」互动。
+
+- [x] **M2-1** 重构卷宗详情弹窗为横/竖图自适应宽版布局，并打通一键全屏看图室 [目标: `apps/web/src/features/timeline/components/EntryDetailModal.vue`, `apps/web/src/features/media/components/MediaLightbox.vue`] [依赖: M1-3] [规范: 用户需求.md#二] [验收: (1) 根据图片宽高比自动判型——竖图切换为**左图右文**宽版弹窗，左侧近满高呈现完整竖图，右侧同步展示标题、拍摄说明、标签与「观展题记」评论区，无需上下猛滚；(2) 横图保持上下结构但显著放宽弹窗与图片区宽度、收紧外圈留白，清晰展示细节；(3) 点击图片可进入 `MediaLightbox` 全屏细看；移动端窄屏布局无溢出]
+- [x] **M2-2** 将柔和环境光斑与半透明磨砂玻璃质感延展至各主页面留白区 [目标: `apps/web/src/app/styles/main.css`, `apps/web/src/app/layouts/DefaultLayout.vue`, `apps/web/src/pages/TimelinePage.vue`, `apps/web/src/pages/MediaPage.vue`, `apps/web/src/pages/JournalPage.vue`] [依赖: M1-2] [规范: 用户需求.md#二] [验收: 宽屏下各主页面左右留白呈现克制温润的微弱底影与磨砂玻璃层次感，不喧宾夺主抢夺展品卡片注意力；长列表滚动帧率流畅无明显掉帧，组件/页面编译通过]
+- [x] **M2-3** 实现首页克制的「随机抽一卷」全链路功能（随机公开条目接口 + 首页低调入口） [目标: `modules/core/src/`, `workers/api/src/`, `apps/web/src/shared/api/client.ts`, `apps/web/src/pages/TimelinePage.vue`] [依赖: M2-1] [规范: 用户需求.md#三] [验收: `GET /api/v1/entries/random` 仅从 `public` & `published` 数据随机返回且单元测试验证不会泄露 `private` 条目；首页点击「随机抽一卷」低调按钮即可弹出自适应卷宗弹窗，支持连续再抽不重复当前条]
 
 ---
 
-### M2 · 核心业务模块（Core / Media）与 API 组装
-- [x] M2-1 实现 `@archive/module-core` 核心用例与 RBAC 中间件 [目标: `modules/core/src/`] [规范: docs/architecture.md#4.2-3] [验收: 单元测试覆盖访客只读过滤（仅 `public` & `published`）与 Admin 权限全量放行，10 项用例全部通过]
-- [x] M2-2 实现 `@archive/module-media` 媒体授权与元数据登记服务 [目标: `modules/media/src/`] [规范: docs/architecture.md#5.2-6] [验收: 单元测试覆盖上传凭证签发、元数据写入与关联绑定校验，6 项用例全部通过]
-- [x] M2-3 创建 `workers/api` 入口并完成依赖注入与路由装配 [目标: `workers/api/src/bootstrap.ts`, `workers/api/src/app.ts`, `workers/api/wrangler.jsonc`] [规范: docs/architecture.md#3] [验收: Hono 挂载 `/api/v1/entries`, `/api/v1/media`, `/api/v1/auth`, `/api/v1/tags`, `/api/health` 路由，CORS 与统一异常拦截完备]
-- [x] M2-4 编写 Workers 集成测试与种子数据脚本 [目标: `workers/api/tests/api.spec.ts`, `packages/database/src/seed.ts`] [验收: `pnpm test` 5 项端到端 API 场景验证访客过滤与 Admin 写操作闭环全部通过，`pnpm db:seed` 成功生成初始 Admin 与示例数据]
+### M3 · 第三轮：影像长廊「旅行合集（青海湖模式）」与单图独立批注
+> 目标：在 `II. 影像长廊` 落地耐逛的特展瀑布流、非打断式单图留言抽屉与低门槛批量归集上传。
+
+- [x] **M3-1** 扩展旅行合集（Collection）与单图独立留言（含策展人注）的数据模型与线性迁移 [目标: `packages/contracts/src/`, `modules/media/src/infrastructure/schema.ts`, `modules/comment/src/infrastructure/schema.ts`, `packages/database/migrations/`] [规范: 用户需求.md#三, README.md#架构与目录结构] [验收: 完成合集表、合集-媒体关联表及单图评论字段（`media_asset_id`、`is_curator_note`）定义；运行 `pnpm db:generate` 生成干净线性 SQL 迁移且 `pnpm typecheck` 0 报错]
+- [x] **M3-2** 实现旅行合集与单图评论后端业务服务、API 路由与权限/缓存测试 [目标: `modules/media/src/`, `modules/comment/src/`, `workers/api/src/bootstrap.ts`, `workers/api/src/app.ts`, `workers/api/tests/`] [依赖: M3-1] [规范: 用户需求.md#三, README.md#核心特性] [验收: 挂载合集公开查询（含 `Cache-Control`）、Admin 合集管理/批量绑定及单图留言读写接口；管理员留言自动打标 `isCuratorNote: true`，访客写合集返回 401/403；新增单测与 API 集成测试全部通过]
+- [x] **M3-3** 升级 `II. 影像长廊` 支持「全部影像 / 旅行合集」切换与高流畅度瀑布流长卷 [目标: `apps/web/src/pages/MediaPage.vue`, `apps/web/src/shared/api/client.ts`] [依赖: M3-2, M2-2] [规范: 用户需求.md#三] [验收: 影像长廊顶部提供「全部影像 / 旅行合集」切换；点开任意合集（如《青海湖》）直接展开瀑布流长卷，复用 `< 100KB` WebP 缩略图与提前锁定的宽高比占位（无明显 CLS 跳动），支持滚轮顺滑浏览]
+- [x] **M3-4** 实现单图批注角标与非打断式侧边留言抽屉（大图 + EXIF + 策展人注） [目标: `apps/web/src/features/media/components/PhotoCommentDrawer.vue`, `apps/web/src/pages/MediaPage.vue`] [依赖: M3-3] [规范: 用户需求.md#三] [验收: 瀑布流每张照片显示轻量批注角标；点击后桌面端从右侧滑出抽屉、手机端从底部弹出抽屉，呈现高清大图、EXIF 拍摄参数与单图独立留言；管理员回忆高亮渲染为「策展人注」；关闭抽屉后原地保留滚动位置不打断浏览]
+- [x] **M3-5** 升级后台批量传图组件，支持上传时顺手归属或快捷新建旅行合集 [目标: `apps/web/src/features/media/components/MediaUploader.vue`, `apps/web/src/shared/api/client.ts`] [依赖: M3-2] [规范: 用户需求.md#三, README.md#日常使用与操作指南] [验收: 批量拖入多张照片时可选归属已有合集或现场新建合集；延续前端 Canvas WebP 压缩、EXIF 解析与并发直传 R2 链路，上传完成后自动关联入合集并立即可在特展瀑布流中查看]
 
 ---
 
-### M3 · Web 应用基础骨架、PWA 移动端与权限控制
-- [x] M3-1 初始化 Vue 3 + Vite + Tailwind CSS 应用 [目标: `apps/web/vite.config.ts`, `apps/web/src/main.ts`] [规范: docs/architecture.md#3] [验收: `pnpm --filter @archive/web build` 成功输出 dist，TypeScript 与 CSS 编译 0 报错]
-- [x] M3-2 配置 PWA Manifest 与 Service Worker 离线 App Shell [目标: `apps/web/public/manifest.webmanifest`, `apps/web/src/shared/components/pwa/`] [规范: docs/architecture.md#1.2] [验收: Workbox 自动生成离线 SW 缓存 17 项核心资产，PWA 引导与新版刷新组件齐备]
-- [x] M3-3 构建响应式 App Shell 布局与移动端底部导航 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`] [验收: 桌面端优雅侧边栏、移动端沉浸式底部 Tab 与安全区适配自适应响应]
-- [x] M3-4 实现强类型 API Client 与 Admin 登录鉴权状态管理 [目标: `apps/web/src/shared/api/client.ts`, `apps/web/src/features/auth/`] [规范: docs/architecture.md#4.2-3] [验收: 强类型 API 自动带 Token 并映射 AppError，Pinia 管理员暗门认证及 20 项前端单元测试 100% 通过]
+### M4 · 第四轮：后期锦上添花与全量验收交付
+> 目标：在前三轮跑顺后，补齐展馆活人感、对外分享体验、护眼阅读与数据自持能力。
 
----
-
-### M4 · 全局时间线、媒体长廊灯箱与直传体验
-- [x] M4-1 实现全局公共记忆时间线视图 [目标: `apps/web/src/features/timeline/`] [规范: docs/architecture.md#5.2-2] [验收: 按 `occurred_at` 倒序 Cursor 滚动加载、年份刻度筛选、类型与关键词过滤流畅交互]
-- [x] M4-2 实现媒体长廊网格与大图灯箱预览组件 [目标: `apps/web/src/features/media/`] [验收: 支持瀑布流自适应渲染、全屏灯箱缩放手势、键盘左右切换与 EXIF 信息抽屉]
-- [x] M4-3 实现前端浏览器 WebP 缩略图生成器 [目标: `apps/web/src/shared/utils/image-processor.ts`] [规范: docs/architecture.md#1.2] [验收: Canvas/Worker 离线处理原图生成 < 100KB WebP 缩略图，质量与体积符合预期]
-- [x] M4-4 实现多文件拖拽并发直传组件 [目标: `apps/web/src/features/media/components/MediaUploader.vue`] [验收: 选择多张照片后并发获取预签名 URL、直传 R2 并自动回填元数据入库]
-
----
-
-### M5 · Phase 2 扩展（日记/旅行）与 Leaflet 免费地图
-- [x] M5-1 实现 `@archive/module-journal` 随想日记模块 [目标: `modules/journal/`, `apps/web/src/features/journal/`] [规范: docs/architecture.md#5.3] [验收: Markdown 实时编辑预览、心情/天气设置、与时间线卡片无缝联动]
-- [x] M5-2 实现 `@archive/module-travel` 旅行模块与 Leaflet + OSM 开源地图 [目标: `modules/travel/`, `apps/web/src/shared/components/map/LeafletMap.vue`] [规范: docs/architecture.md#1.2] [验收: 渲染 OpenStreetMap 免费瓦片，标记足迹点并绘制行程路线 Polyline，无需任何 API Key]
-
----
-
-### M6 · 高扩展性（国内CDN/多存储/评论）验证与交付
-- [x] M6-1 验证多存储切换与国内 CDN 缓存策略 [目标: `docs/deployment-and-cdn-guide.md`] [规范: docs/architecture.md#1.2] [验收: 单元测试模拟通过 `StoragePort` 切换为 S3 兼容国内对象存储配置，公开接口包含标准 `Cache-Control` 头]
-- [x] M6-2 验证 `CommentPort` 契约与全流程 E2E 回归 [目标: `tests/e2e/workflow.spec.ts`] [规范: docs/architecture.md#4.2-5] [验收: 端到端测试跑通：访客只读浏览 -> Admin 登录 -> 快速上传补录历史 -> 时间线实时展现]
+- [x] **M4-1** 增加极简「关于馆主」展签角落与管理员轻量编辑能力 [目标: `apps/web/src/app/layouts/DefaultLayout.vue`, `apps/web/src/shared/api/client.ts`, `modules/core/src/`, `workers/api/src/`] [依赖: M1-1] [规范: 用户需求.md#四] [验收: 前台提供低调入口展示馆主近况、最近在看的番或循环歌单；管理员登录后可便捷更新文案并持久化至 D1，访客仅只读可见]
+- [x] **M4-2** 配置全站与旅行合集/单卷的社交分享卡片（Open Graph / Twitter Card） [目标: `apps/web/index.html`, `workers/api/src/app.ts`] [依赖: M3-2] [规范: 用户需求.md#四] [验收: 转发首页、单条卷宗或《青海湖》合集链接时，HTML 响应正确输出对应的 `og:title`、`og:description`、`og:image` 与封面图 URL，单元测试校验静态资源与动态路由 Meta 注入符合预期]
+- [x] **M4-3** 实现「夜间暖墨模式」主题切换与后台「一键备份导出」功能 [目标: `apps/web/src/app/styles/main.css`, `apps/web/src/shared/stores/ui.store.ts`, `modules/core/src/`, `workers/api/src/`] [依赖: M2-2] [规范: 用户需求.md#四] [验收: (1) 夜间暖墨模式柔和护眼，手札阅读与磨砂玻璃对比度清晰，偏好持久化至本地；(2) 仅管理员可触发一键备份导出，下载包含条目、日记、合集、评论与媒体索引清单的完整数据包（未登录请求返回 401/403）]
+- [x] **M4-4** 执行全工作区回归测试、构建核验与文档同步 [目标: `README.md`, `tasks.md`] [依赖: M3-5, M4-3] [规范: README.md#常用开发命令] [验收: `pnpm typecheck`、`pnpm test`（全量原有 166 项 + 本轮新增用例）、`pnpm build` 均 100% 通过；核对 `pnpm db:migrate:remote` 与 `pnpm deploy` 变更清单并同步 `README.md` 新特性说明]
 
 ---
 
 ## 4. 验收门槛清单
 
-- [x] **代码静态检查**：`pnpm lint` 与 `pnpm typecheck` 全工作区 0 错误、0 警告；
-- [x] **模块依赖边界**：无越权跨模块导入（`modules/*` 互不引用内部代码）；
-- [x] **访客与管理权限**：未经认证调用写 API 100% 返回 401/403，访客查询仅能检索 `public` & `published` 数据；
-- [x] **移动端与 PWA**：手机端无水平溢出，添加到主屏幕可独立全屏启动；
-- [x] **离网与免费保证**：地图完全基于 Leaflet + OSM，不产生任何第三方地图商业计费；缩略图由前端完成转换，Worker 不产生额外计算费用。
+- [x] **静态检查与测试**：`pnpm typecheck` 全工作区 11/11 子包 0 报错，`pnpm test` 21 files / 183 tests 100% 通过，`pnpm build` 全量构建通过。
+- [x] **减法与保留边界**：足迹漫游前台入口彻底隐藏但底层代码完好；PWA 悬浮窗已移除；首页图文混排对齐版式未被误改；3 个细节 Bug 实测消除（首轮已完成无头 Chrome 桌面/移动双端视觉实测）。
+- [x] **视觉与看图体验**：横/竖图卷宗弹窗自适应形态自然，大屏左右留白具备磨砂玻璃层次，首页「随机抽一卷」不泄露私密条目。
+- [x] **旅行合集与单图互动**：《青海湖》类多图合集瀑布流、单图侧边/底部抽屉（「策展人注」高亮）与批量上传归属合集均已完成编译与测试核验（后半程 UI 交互待部署后人工走查）。
+- [x] **安全与零额外成本**：所有新建写接口及导出接口严格执行 Admin 权限校验；新增公开查询携带合理 `Cache-Control` 头；无商业付费 API 引入。
 
 ---
 
@@ -163,7 +164,8 @@ export interface CommentPort {
 
 | 潜在风险 | 早期暴露途径 | 缓解与降级方案 |
 | :--- | :--- | :--- |
-| **Cloudflare 国内访问延迟** | 浏览器 Network 瀑布流监控 | 架构已内建 `StoragePort` 与 HTTP 缓存头，必要时可无缝挂载国内 CDN（如 EdgeOne）与国内对象存储 |
-| **大批单反 RAW/超大图上传卡死前端** | 批量导入大图并发测试 | 前端图片处理 Worker 设置并发限制（如最大 3 并发）与分片阈值限制 |
-| **D1 事务批量写入超限** | 极端多图批量关联测试 | `AtomicBatch` 封装按 50 语句自动分批执行，避免触发 D1 单批上限 |
-| **未来需要开放评论防垃圾灌水** | `CommentPort` 接口验证 | 数据模型已预留 `ip_hash` 与 `status = 'pending'` 审核流，可无缝对接验证码与敏感词过滤 |
+| **大面积 `backdrop-filter` 磨砂玻璃导致长列表滚动掉帧** | Chrome DevTools Performance / 移动端真机滚动实测 | 底层光斑使用静态低开销径向渐变或 `will-change` 独立合成层，限制模糊半径与作用区域；低性能设备或 `prefers-reduced-motion` 下优雅降级为半透明纯色底 |
+| **大合集瀑布流（几十上百张图）产生布局跳动（CLS）或内存过高** | 模拟 50+ 张不同比例照片的合集滚动测试 | 严格依赖媒体元数据中的 `width/height` 预先锁定容器 `aspect-ratio`，优先加载 `< 100KB` WebP 缩略图并配合原生 `loading="lazy"`，仅在点开抽屉/灯箱时加载高清图 |
+| **单图评论扩展影响既有 Entry 评论兼容性** | `modules/comment` 与既有 API 集成测试回归 | 数据库迁移保持向后兼容（`entry_id` 与 `media_asset_id` 可按目标类型并存并加索引），不破坏已有「观展题记」评论读取与防刷哈希逻辑 |
+| **SPA 前端路由导致微信/Telegram 等社交爬虫抓取不到动态分享卡片** | `curl` 模拟爬虫请求合集与详情页 URL 检查 `<meta>` | 在 `workers/api` 面向静态 HTML 响应层增加轻量 `HTMLRewriter`（Cloudflare Workers 原生零开销）按路径动态注入 `og:title / og:description / og:image` |
+| **批量上传几十张照片同时归属合集时部分失败** | 批量上传中断与部分重试场景测试 | 保持单文件独立直传与状态反馈，单张成功即回填归属或支持对失败项一键重试，避免整批回滚重传 |
