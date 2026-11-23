@@ -4,6 +4,16 @@ import {
   getStoredToken,
   setStoredToken,
   onUnauthorized,
+  getRandomEntry,
+  listCollections,
+  getCollectionMedia,
+  createCollection,
+  bindCollectionMedia,
+  listMediaComments,
+  postMediaComment,
+  getCuratorProfile,
+  updateCuratorProfile,
+  exportArchiveBackup,
 } from '../src/shared/api/client';
 import {
   UnauthorizedError,
@@ -219,5 +229,50 @@ describe('API Client (@archive/web/src/shared/api/client)', () => {
       hasMore: true,
       limit: 2,
     });
+  });
+
+  it('calls M2-3, M3-2, M4-1, and M4-3 typed endpoints with expected paths and methods', async () => {
+    const calls: Array<{ url: string; method?: string; body?: string }> = [];
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      calls.push({ url, method: init?.method, body: init?.body as string | undefined });
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({
+          success: true,
+          data: url.includes('/comments') ? [{ id: 'c1' }] : { ok: true },
+          meta: { pagination: { cursor: null, hasMore: false, limit: 20 } },
+        }),
+      } as Response;
+    });
+
+    await getRandomEntry('e-prev');
+    await listCollections();
+    await getCollectionMedia('kyoto 2026');
+    await createCollection({ title: 'Kyoto', visibility: 'public' });
+    await bindCollectionMedia('col-1', { items: [{ mediaAssetId: 'm1', sortOrder: 0 }], replace: true });
+    await listMediaComments('m1', { limit: 10 });
+    await postMediaComment('m1', { authorName: 'A', authorEmail: 'a@b.c', content: 'Nice!' });
+    await getCuratorProfile();
+    await updateCuratorProfile({
+      name: 'Curator',
+      bio: 'Bio',
+      statusText: 'Archiving',
+      recentAnime: [],
+      loopPlaylist: [],
+    });
+    await exportArchiveBackup();
+
+    expect(calls[0]).toMatchObject({ url: '/api/v1/entries/random?excludeId=e-prev', method: 'GET' });
+    expect(calls[1]).toMatchObject({ url: '/api/v1/collections', method: 'GET' });
+    expect(calls[2]).toMatchObject({ url: '/api/v1/collections/kyoto%202026/media', method: 'GET' });
+    expect(calls[3]).toMatchObject({ url: '/api/v1/collections', method: 'POST' });
+    expect(calls[4]).toMatchObject({ url: '/api/v1/collections/col-1/media', method: 'POST' });
+    expect(calls[5]).toMatchObject({ url: '/api/v1/media/m1/comments?limit=10', method: 'GET' });
+    expect(calls[6]).toMatchObject({ url: '/api/v1/media/m1/comments', method: 'POST' });
+    expect(calls[7]).toMatchObject({ url: '/api/v1/curator', method: 'GET' });
+    expect(calls[8]).toMatchObject({ url: '/api/v1/admin/curator', method: 'PUT' });
+    expect(calls[9]).toMatchObject({ url: '/api/v1/admin/export', method: 'GET' });
   });
 });

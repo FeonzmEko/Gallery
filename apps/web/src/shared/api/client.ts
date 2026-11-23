@@ -10,6 +10,16 @@ import {
   type ApiResponse,
   type ApiErrorResponse,
   type ApiErrorDetail,
+  type EntryDto,
+  type MediaCollectionDto,
+  type MediaCollectionDetailDto,
+  type CreateMediaCollectionInput,
+  type BindCollectionMediaInput,
+  type MediaCommentDto,
+  type CreateCommentDto,
+  type CommentPaginationQuery,
+  type CuratorProfileDto,
+  type UpdateCuratorProfileInput,
 } from '@archive/contracts';
 import { generateUlid } from '@archive/shared';
 
@@ -225,6 +235,134 @@ async function getPaginated<T>(
   };
 }
 
+export interface ArchiveBackupExportDto {
+  version: string;
+  exportedAt: number;
+  exportedBy: {
+    userId: string;
+    email?: string;
+    role: string;
+  };
+  curator: CuratorProfileDto;
+  entries: Array<Record<string, unknown>>;
+  tags: Array<Record<string, unknown>>;
+  entryTags: Array<Record<string, unknown>>;
+  entryRelations: Array<Record<string, unknown>>;
+  journals: Array<Record<string, unknown>>;
+  trips: Array<Record<string, unknown>>;
+  tripLocations: Array<Record<string, unknown>>;
+  collections: Array<Record<string, unknown>>;
+  collectionItems: Array<Record<string, unknown>>;
+  media: Array<Record<string, unknown>>;
+  entryMedia: Array<Record<string, unknown>>;
+  comments: Array<Record<string, unknown>>;
+}
+
+export async function getRandomEntry(excludeId?: string): Promise<EntryDto> {
+  return request<EntryDto>('/api/v1/entries/random', {
+    method: 'GET',
+    params: excludeId ? { excludeId } : undefined,
+  });
+}
+
+export async function listCollections(): Promise<MediaCollectionDto[]> {
+  return request<MediaCollectionDto[]>('/api/v1/collections', {
+    method: 'GET',
+  });
+}
+
+export async function getCollectionMedia(slug: string): Promise<MediaCollectionDetailDto> {
+  return request<MediaCollectionDetailDto>(
+    `/api/v1/collections/${encodeURIComponent(slug)}/media`,
+    { method: 'GET' }
+  );
+}
+
+export async function createCollection(
+  input: CreateMediaCollectionInput
+): Promise<MediaCollectionDto> {
+  return request<MediaCollectionDto>('/api/v1/collections', {
+    method: 'POST',
+    body: input as any,
+  });
+}
+
+export async function bindCollectionMedia(
+  id: string,
+  input: BindCollectionMediaInput
+): Promise<MediaCollectionDetailDto> {
+  return request<MediaCollectionDetailDto>(
+    `/api/v1/collections/${encodeURIComponent(id)}/media`,
+    {
+      method: 'POST',
+      body: input as any,
+    }
+  );
+}
+
+export async function listMediaComments(
+  mediaId: string,
+  params?: Partial<CommentPaginationQuery>
+): Promise<PaginatedApiResult<MediaCommentDto>> {
+  return getPaginated<MediaCommentDto>(
+    `/api/v1/media/${encodeURIComponent(mediaId)}/comments`,
+    { params }
+  );
+}
+
+export async function postMediaComment(
+  mediaId: string,
+  input: CreateCommentDto
+): Promise<MediaCommentDto> {
+  return request<MediaCommentDto>(
+    `/api/v1/media/${encodeURIComponent(mediaId)}/comments`,
+    {
+      method: 'POST',
+      body: input as any,
+    }
+  );
+}
+
+export async function getCuratorProfile(): Promise<CuratorProfileDto> {
+  return request<CuratorProfileDto>('/api/v1/curator', {
+    method: 'GET',
+  });
+}
+
+export async function updateCuratorProfile(
+  input: UpdateCuratorProfileInput
+): Promise<CuratorProfileDto> {
+  return request<CuratorProfileDto>('/api/v1/admin/curator', {
+    method: 'PUT',
+    body: input as any,
+  });
+}
+
+export async function exportArchiveBackup(options?: {
+  download?: boolean;
+  filename?: string;
+}): Promise<ArchiveBackupExportDto> {
+  const data = await request<ArchiveBackupExportDto>('/api/v1/admin/export', {
+    method: 'GET',
+  });
+
+  if (options?.download && typeof document !== 'undefined' && typeof URL !== 'undefined') {
+    const dateStamp = new Date(data.exportedAt || Date.now()).toISOString().slice(0, 10);
+    const filename = options.filename || `personal-archive-backup-${dateStamp}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  return data;
+}
+
 export const apiClient = {
   get: <T>(url: string, options?: RequestOptions) =>
     request<T>(url, { ...options, method: 'GET' }),
@@ -244,4 +382,14 @@ export const apiClient = {
     request<T>(url, { ...options, method: 'DELETE' }),
 
   request,
+  getRandomEntry,
+  listCollections,
+  getCollectionMedia,
+  createCollection,
+  bindCollectionMedia,
+  listMediaComments,
+  postMediaComment,
+  getCuratorProfile,
+  updateCuratorProfile,
+  exportArchiveBackup,
 };
