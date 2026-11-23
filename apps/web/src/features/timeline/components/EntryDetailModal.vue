@@ -33,7 +33,19 @@
                 {{ entry.title }}
               </h2>
             </div>
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                v-if="randomMode"
+                type="button"
+                :disabled="isDrawingRandom"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] border border-[#C4BBA9] bg-[#FAF8F4]/90 text-[11px] font-serif tracking-[0.12em] text-[#57534C] hover:border-[#9A3F2B] hover:text-[#9A3F2B] transition-colors disabled:opacity-50"
+                @click="emit('draw-random', entry.id)"
+                title="再随机抽取另一卷展品"
+              >
+                <Loader2Icon v-if="isDrawingRandom" class="w-3 h-3 animate-spin text-[#9A3F2B]" />
+                <ShuffleIcon v-else class="w-3 h-3" />
+                <span>再抽一卷</span>
+              </button>
               <button
                 v-if="isAdmin"
                 type="button"
@@ -124,7 +136,19 @@
                 </h2>
               </div>
 
-              <div class="flex items-center gap-1 shrink-0">
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  v-if="randomMode"
+                  type="button"
+                  :disabled="isDrawingRandom"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] border border-[#C4BBA9] bg-[#FAF8F4]/90 text-[11px] font-serif tracking-[0.12em] text-[#57534C] hover:border-[#9A3F2B] hover:text-[#9A3F2B] transition-colors disabled:opacity-50"
+                  @click="emit('draw-random', entry.id)"
+                  title="再随机抽取另一卷展品"
+                >
+                  <Loader2Icon v-if="isDrawingRandom" class="w-3 h-3 animate-spin text-[#9A3F2B]" />
+                  <ShuffleIcon v-else class="w-3 h-3" />
+                  <span>再抽一卷</span>
+                </button>
                 <button
                   v-if="isAdmin"
                   type="button"
@@ -353,7 +377,19 @@
               </h2>
             </div>
 
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                v-if="randomMode"
+                type="button"
+                :disabled="isDrawingRandom"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] border border-[#C4BBA9] bg-[#FAF8F4]/90 text-[11px] font-serif tracking-[0.12em] text-[#57534C] hover:border-[#9A3F2B] hover:text-[#9A3F2B] transition-colors disabled:opacity-50"
+                @click="emit('draw-random', entry.id)"
+                title="再随机抽取另一卷展品"
+              >
+                <Loader2Icon v-if="isDrawingRandom" class="w-3 h-3 animate-spin text-[#9A3F2B]" />
+                <ShuffleIcon v-else class="w-3 h-3" />
+                <span>再抽一卷</span>
+              </button>
               <button
                 v-if="isAdmin"
                 type="button"
@@ -633,6 +669,7 @@ import {
   Maximize2 as Maximize2Icon,
   Camera as CameraIcon,
   MapPin as MapPinIcon,
+  Shuffle as ShuffleIcon,
 } from 'lucide-vue-next';
 import { apiClient } from '@/shared/api/client';
 import { useUiStore } from '@/shared/stores/ui.store';
@@ -642,15 +679,24 @@ import MediaLightbox, { type LightboxItem } from '@/features/media/components/Me
 import { formatDateTime, formatRelativeTime } from '@archive/shared';
 import type { EntryDto, CommentDto, EntryMediaDto, MediaAssetDto } from '@archive/contracts';
 
-const props = defineProps<{
-  modelValue: boolean;
-  entry: EntryDto | null;
-  isAdmin: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean;
+    entry: EntryDto | null;
+    isAdmin: boolean;
+    randomMode?: boolean;
+    isDrawingRandom?: boolean;
+  }>(),
+  {
+    randomMode: false,
+    isDrawingRandom: false,
+  }
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void;
   (e: 'edit', entry: EntryDto): void;
+  (e: 'draw-random', currentEntryId: string): void;
 }>();
 
 const uiStore = useUiStore();

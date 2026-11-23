@@ -25,7 +25,7 @@
           将散落岁月的光斑、足迹与思绪，按真实发生刻度逐一妥善归档。
         </p>
 
-        <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-wrap items-center gap-3.5">
           <div class="flex items-center gap-3 font-mono text-[11px] tracking-[0.14em] text-[#57534C] tabular-nums">
             <span v-if="isLoading" class="inline-flex items-center gap-1.5 text-[#9B9488]">
               <span class="w-1.5 h-1.5 rounded-full bg-[#9A3F2B]/60 animate-pulse"></span>
@@ -37,6 +37,18 @@
               <span v-if="yearRangeLabel">{{ yearRangeLabel }}</span>
             </template>
           </div>
+
+          <button
+            type="button"
+            :disabled="isDrawingRandom"
+            class="inline-flex items-center gap-1.5 rounded-[2px] border border-[#C4BBA9] bg-[#FAF8F4]/80 px-3.5 py-1.5 text-xs font-serif tracking-[0.12em] text-[#57534C] hover:border-[#9A3F2B] hover:text-[#9A3F2B] transition-colors duration-200 disabled:opacity-50"
+            @click="handleDrawRandomEntry()"
+            title="随机抽取一卷公开藏品浏览"
+          >
+            <Loader2Icon v-if="isDrawingRandom" class="w-3 h-3 animate-spin text-[#9A3F2B]" />
+            <ShuffleIcon v-else class="w-3 h-3" />
+            <span>随机抽一卷</span>
+          </button>
 
           <button
             v-if="authStore.isAdmin"
@@ -332,6 +344,9 @@
       v-model="isDetailOpen"
       :entry="selectedEntry"
       :is-admin="authStore.isAdmin"
+      :random-mode="isRandomDetailMode"
+      :is-drawing-random="isDrawingRandom"
+      @draw-random="handleDrawRandomEntry"
       @edit="handleEditEntry"
     />
 
@@ -346,11 +361,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   Plus as PlusIcon,
   Search as SearchIcon,
   Loader2 as Loader2Icon,
   X as XIcon,
+  Shuffle as ShuffleIcon,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 import { useUiStore } from '@/shared/stores/ui.store';
@@ -360,6 +377,8 @@ import CreateEntryModal from '@/features/timeline/components/CreateEntryModal.vu
 import EntryDetailModal from '@/features/timeline/components/EntryDetailModal.vue';
 import type { EntryDto, TagDto } from '@archive/contracts';
 
+const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 
@@ -389,6 +408,9 @@ const editingEntry = ref<EntryDto | null>(null);
 
 const isDetailOpen = ref(false);
 const selectedEntry = ref<EntryDto | null>(null);
+const isDrawingRandom = ref(false);
+const isRandomDetailMode = ref(false);
+const lastRandomEntryId = ref<string | null>(null);
 
 const hasActiveFilter = computed(
   () =>
@@ -539,8 +561,48 @@ function loadMore() {
 }
 
 function openDetailModal(entry: EntryDto) {
+  isRandomDetailMode.value = false;
   selectedEntry.value = entry;
   isDetailOpen.value = true;
+}
+
+async function handleDrawRandomEntry(explicitExcludeId?: string) {
+  if (isDrawingRandom.value) return;
+  const excludeId = explicitExcludeId ?? lastRandomEntryId.value ?? undefined;
+  isDrawingRandom.value = true;
+  try {
+    const drawn = await apiClient.getRandomEntry(excludeId);
+    if (explicitExcludeId && drawn.id === explicitExcludeId) {
+      uiStore.notifyInfo('馆内目前仅此一卷公开藏品');
+    }
+    lastRandomEntryId.value = drawn.id;
+    selectedEntry.value = drawn;
+    isRandomDetailMode.value = true;
+    isDetailOpen.value = true;
+  } catch (err: any) {
+    uiStore.notifyInfo(err?.message || '暂无可抽取的公开卷宗');
+  } finally {
+    isDrawingRandom.value = false;
+  }
+}
+
+let routeEntrySeq = 0;
+
+async function openEntryFromRoute(entryId: string) {
+  const reqSeq = ++routeEntrySeq;
+  try {
+    const entry = await apiClient.get<EntryDto>(`/api/v1/entries/${encodeURIComponent(entryId)}`);
+    if (reqSeq !== routeEntrySeq) return;
+    isRandomDetailMode.value = false;
+    selectedEntry.value = entry;
+    isDetailOpen.value = true;
+  } catch {
+    if (reqSeq !== routeEntrySeq) return;
+    uiStore.notifyInfo('该卷宗暂未公开或已不存在');
+    if (route.params.id) {
+      router.replace({ name: 'timeline' }).catch(() => {});
+    }
+  }
 }
 
 function openCreateModal() {
@@ -595,6 +657,25 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => route.params.id,
+  (entryId) => {
+    if (typeof entryId === 'string' && entryId.trim()) {
+      openEntryFromRoute(entryId.trim());
+    }
+  },
+  { immediate: true }
+);
+
+watch(isDetailOpen, (open) => {
+  if (!open) {
+    isRandomDetailMode.value = false;
+    if (route.params.id) {
+      router.replace({ name: 'timeline' }).catch(() => {});
+    }
+  }
+});
 
 onMounted(() => {
   loadMetadata();
