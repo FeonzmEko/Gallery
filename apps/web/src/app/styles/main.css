@@ -181,6 +181,20 @@ html.dark body::before {
     border-color: var(--ink);
     background-color: #FFFFFF;
   }
+
+  html.dark .editorial-field:focus {
+    background-color: var(--linen);
+  }
+
+  html.dark .passe-partout {
+    box-shadow: 0 1px 0 rgba(255, 244, 228, 0.06) inset,
+      0 14px 32px -24px rgba(0, 0, 0, 0.55);
+  }
+
+  html.dark .museum-plate:hover {
+    box-shadow: 0 22px 48px -28px rgba(0, 0, 0, 0.55),
+      0 4px 12px -6px rgba(0, 0, 0, 0.35);
+  }
 }
 
 /* Warm Archival Cartography Filter for Leaflet Maps */
@@ -285,3 +299,85 @@ html.dark body::before {
     background-color: var(--alabaster);
   }
 }
+
+/* ===================================================================== */
+/* NIGHT WARM INK MODE (M4-3) - Global Museum Palette Adaptation          */
+/* ===================================================================== */
+html.dark ::-webkit-scrollbar-thumb {
+  background: #3F3931;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #595045;
+}
+
+/* Warm-ink surface remapping */
+html.dark .bg-\[\#F3EFE7\] { background-color: #161412; }
+html.dark .bg-\[\#F3EFE7\]\/40 { background-color: rgba(22, 20, 18, 0.4); }
+html.dark .bg-\[\#F3EFE7\]\/60 { background-color: rgba(22, 20, 18, 0.6); }
+html.dark .bg-\[\#F3EFE7\]\/75 { background-color: rgba(22, 20, 18, 0.75); }
+html.dark .bg-\[\#F3EFE7\]\/80 { background-color: rgba(22, 20, 18, 0.8); }
+html.dark .bg-\[\#F3EFE7\]\/90 { background-color: rgba(22, 20, 18, 0.9); }
+html.dark .bg-\[\#F3EFE7\]\/95 { background-color: rgba(22, 20, 18, 0.95); }
+
+html.dark .bg-\[\#FAF8F4\] { background-color: #1E1B18; }
+html.dark .bg-\[\#FAF8F4\]\/40 { background-color: rgba(30, 27, 24, 0.45); }
+html.dark .bg-\[\#FAF8F4\]\/55 { background-color: rgba(30, 27, 24, 0.55); }
+html.dark .bg-\[\#FAF8F4\]\/80 { background-color: rgba(30, 27, 24, 0.82); }
+html.dark .bg-\[\#FAF8F4\]\/92 { background-color: rgba(30, 27, 24, 0.92); }
+html.dark .bg-\[\#FAF8F4\]\/95 { background-color: rgba(30, 27, 24, 0.95); }
+html.dark .bg-\[\#FAF8F4\]\/98 { background-color: rgba(30, 27, 24, 0.97); }
+
+html.dark .bg-\[\#EAE4D8\] { background-color: #26221E; }
+html.dark .bg-\[\#EAE4D8\]\/45 { background-color: rgba(38, 34, 30, 0.45); }
+html.dark .bg-\[\#EAE4D8\]\/55 { background-color: rgba(38, 34, 30, 0.55); }
+html.dark .bg-\[\#EAE4D8\]\/60 { background-color: rgba(38, 34, 30, 0.6); }
+html.dark .bg-\[\#EAE4D8\]\/65 { background-color: rgba(38, 34, 30, 0.65); }
+html.dark .bg-\[\#EAE4D8\]\/70 { background-color: rgba(38, 34, 30, 0.7); }
+html.dark .bg-\[\#EAE4D8\]\/80 { background-color: rgba(38, 34, 30, 0.8); }
+html.dark .bg-\[\#FAF4F2\],
+html.dark .bg-\[\#FAF4F2\]\/98 { background-color: rgba(45, 27, 24, 0.96); }
+
+/* Elevated ink-plate buttons vs modal scrims */
+html.dark .bg-\[\#161513\] { background-color: #2E2924; }
+html.dark .bg-\[\#161513\]\/5 { background-color: rgba(236, 230, 220, 0.05); }
+html.dark .bg-\[\#161513\]\/55 { background-color: rgba(10, 9, 8, 0.72); }
+html.dark .bg-\[\#161513\]\/60 { background-color: rgba(10, 9, 8, 0.76); }
+html.dark .hover\:bg-\[\#161513\]:hover { background-color: #38322C; }
+html.dark .hover\:bg-\[\#F3EFE7\]:hover { background-color: #26221E; }
+html.dark .hover\:bg-\[\#FAF8F4\]:hover { background-color: #26221E; }
+
+/* Warm parchment ink typography */
+html.dark .text-\[\#161513\] { color: #ECE6DC; }
+html.dark .text-\[\#262420\] { color: #E2DBD0; }
+html.dark .text-\[\#4A4640\] { color: #C5BDB0; }
+html.dark .text-\[\#57534C\] { color: #B8B0A4; }
+html.dark .text-\[\#6E685E\] { color: #9E978B; }
+html.dark .text-\[\#787268\] { color: #90897D; }
+html.dark .text-\[\#8E887E\] { color: #827B70; }
+html.dark .text-\[\#9B9488\] { color: #756E64; }
+html.dark .text-\[\#C4BBA9\] { color: #544D44; }
+html.dark .text-\[\#9A3F2B\] { color: #D16B54; }
+html.dark .text-\[\#3D4E42\] { color: #7E9A87; }
+html.dark .text-\[\#9A6B2F\],
+html.dark .text-\[\#7A5B32\] { color: #CFA162; }
+
+html.dark .hover\:text-\[\#161513\]:hover { color: #F5F0E6; }
+html.dark .hover\:text-\[\#9A3F2B\]:hover { color: #E07D66; }
+html.dark .group:hover .group-hover\:text-\[\#161513\] { color: #F5F0E6; }
+html.dark .group:hover .group-hover\:text-\[\#9A3F2B\] { color: #E07D66; }
+
+html.dark .placeholder-\[\#787268\]::placeholder,
+html.dark .placeholder-\[\#9B9488\]::placeholder {
+  color: #756E64;
+}
+
+/* Warm charcoal hairlines & borders */
+html.dark .border-\[\#DDD6C9\] { border-color: #332E28; }
+html.dark .border-\[\#E8E2D6\] { border-color: #2B2722; }
+html.dark .border-\[\#C4BBA9\] { border-color: #4A433B; }
+html.dark .border-\[\#161513\] { border-color: #6E665B; }
+html.dark .focus\:border-\[\#161513\]:focus { border-color: #ECE6DC; }
+html.dark .divide-\[\#E8E2D6\] > :not([hidden]) ~ :not([hidden]) { border-color: #2B2722; }
+html.dark .bg-\[\#DDD6C9\] { background-color: #332E28; }
+html.dark .bg-\[\#C4BBA9\] { background-color: #4A433B; }

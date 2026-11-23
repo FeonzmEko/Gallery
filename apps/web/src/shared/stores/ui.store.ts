@@ -18,10 +18,38 @@ export interface ConfirmOptions {
 }
 
 export type QuickCreateTarget = 'entry' | 'photo' | 'journal' | 'trip';
+export type ArchiveTheme = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'archive_theme';
+
+function readStoredTheme(): ArchiveTheme {
+  if (typeof localStorage === 'undefined') return 'light';
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function applyDocumentTheme(next: ArchiveTheme): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', next === 'dark');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    themeMeta.setAttribute('content', next === 'dark' ? '#161412' : '#F3EFE7');
+  }
+  const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
+  if (colorSchemeMeta) {
+    colorSchemeMeta.setAttribute('content', next === 'dark' ? 'dark' : 'light');
+  }
+}
 
 export const useUiStore = defineStore('ui', () => {
   const toasts = ref<ToastItem[]>([]);
   let nextToastId = 1;
+
+  const theme = ref<ArchiveTheme>(readStoredTheme());
+  applyDocumentTheme(theme.value);
 
   const confirmState = ref<{
     open: boolean;
@@ -42,7 +70,35 @@ export const useUiStore = defineStore('ui', () => {
   let confirmResolver: ((ok: boolean) => void) | null = null;
 
   const isQuickMenuOpen = ref(false);
+  const isCuratorModalOpen = ref(false);
   const pendingAction = ref<QuickCreateTarget | null>(null);
+
+  function setTheme(next: ArchiveTheme): void {
+    theme.value = next;
+    applyDocumentTheme(next);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+      } catch {
+        // Ignore storage quota errors
+      }
+    }
+  }
+
+  function toggleTheme(): ArchiveTheme {
+    const next: ArchiveTheme = theme.value === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    return next;
+  }
+
+  function openCuratorModal(): void {
+    isQuickMenuOpen.value = false;
+    isCuratorModalOpen.value = true;
+  }
+
+  function closeCuratorModal(): void {
+    isCuratorModalOpen.value = false;
+  }
 
   function addToast(message: string, variant: ToastVariant = 'info', durationMs = 3600): void {
     const id = nextToastId++;
@@ -112,9 +168,15 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     toasts,
+    theme,
     confirmState,
     isQuickMenuOpen,
+    isCuratorModalOpen,
     pendingAction,
+    setTheme,
+    toggleTheme,
+    openCuratorModal,
+    closeCuratorModal,
     notifySuccess,
     notifyError,
     notifyInfo,

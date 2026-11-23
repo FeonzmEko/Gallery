@@ -17,10 +17,22 @@ const routes: RouteRecordRaw[] = [
     redirect: '/',
   },
   {
+    path: '/entries/:id',
+    name: 'entry-detail',
+    component: () => import('@/pages/TimelinePage.vue'),
+    meta: { title: '展品卷宗 - Personal Archive' },
+  },
+  {
     path: '/media',
     name: 'media',
     component: () => import('@/pages/MediaPage.vue'),
     meta: { title: '媒体长廊 - Personal Archive' },
+  },
+  {
+    path: '/media/collections/:slug',
+    name: 'media-collection',
+    component: () => import('@/pages/MediaPage.vue'),
+    meta: { title: '旅行合集 - 媒体长廊 - Personal Archive' },
   },
   {
     path: '/journal',

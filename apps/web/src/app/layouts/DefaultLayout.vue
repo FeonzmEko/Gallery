@@ -70,8 +70,35 @@
           </RouterLink>
         </nav>
 
-        <!-- Right: Quiet Curatorial Gateway -->
-        <div class="flex items-center gap-3 shrink-0 relative">
+        <!-- Right: Curator Placard, Warm-Ink Theme & Quiet Curatorial Gateway -->
+        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 relative">
+          <!-- About Curator Placard Trigger -->
+          <button
+            type="button"
+            class="group inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[2px] text-[11px] font-serif tracking-[0.12em] text-[#57534C] hover:text-[#161513] border border-transparent hover:border-[#DDD6C9] transition-colors duration-200"
+            title="关于馆主 · 展签"
+            aria-label="关于馆主"
+            @click="uiStore.openCuratorModal()"
+          >
+            <UserRoundIcon class="w-3.5 h-3.5 text-[#787268] group-hover:text-[#9A3F2B] transition-colors" />
+            <span class="hidden lg:inline">关于馆主</span>
+          </button>
+
+          <!-- Night Warm Ink Mode Toggle -->
+          <button
+            type="button"
+            class="inline-flex items-center justify-center h-8 w-8 rounded-[2px] border border-transparent hover:border-[#DDD6C9] text-[#57534C] hover:text-[#9A3F2B] transition-colors duration-200"
+            :title="uiStore.theme === 'dark' ? '切换至日间纸墨模式' : '切换至夜间暖墨模式'"
+            :aria-label="uiStore.theme === 'dark' ? '切换至日间纸墨模式' : '切换至夜间暖墨模式'"
+            :aria-pressed="uiStore.theme === 'dark'"
+            @click="uiStore.toggleTheme()"
+          >
+            <SunIcon v-if="uiStore.theme === 'dark'" class="w-3.5 h-3.5" />
+            <MoonIcon v-else class="w-3.5 h-3.5" />
+          </button>
+
+          <span class="hidden sm:inline-block h-3.5 w-[1px] bg-[#DDD6C9]"></span>
+
           <template v-if="authStore.isAdmin">
             <button
               type="button"
@@ -139,7 +166,19 @@
                   <span class="font-mono text-[10px] text-[#9B9488] group-hover:text-[#9A3F2B] transition-colors">+</span>
                 </button>
               </div>
-              <div class="border-t border-[#E8E2D6] py-1.5 bg-[#F3EFE7]/40">
+              <div class="border-t border-[#E8E2D6] py-1.5 bg-[#F3EFE7]/40 space-y-0.5">
+                <button
+                  type="button"
+                  class="w-full flex items-center justify-between gap-2.5 px-4 py-2 text-xs text-[#161513] hover:bg-[#F3EFE7] hover:text-[#3D4E42] transition-colors text-left disabled:opacity-50"
+                  :disabled="isExporting"
+                  @click="handleExportBackup"
+                >
+                  <span class="flex items-center gap-2.5 font-serif">
+                    <DownloadIcon class="w-3.5 h-3.5 text-[#3D4E42]" />
+                    <span>{{ isExporting ? '正在打包备份…' : '一键备份导出' }}</span>
+                  </span>
+                  <span class="font-mono text-[10px] text-[#9B9488]">JSON</span>
+                </button>
                 <button
                   type="button"
                   class="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-[#787268] hover:text-[#9A3F2B] transition-colors text-left"
@@ -196,6 +235,14 @@
                 {{ item.roman }}
               </RouterLink>
             </div>
+            <span class="h-3 w-[1px] bg-[#DDD6C9]"></span>
+            <button
+              type="button"
+              class="font-serif text-[11px] tracking-[0.12em] text-[#57534C] hover:text-[#9A3F2B] transition-colors"
+              @click="uiStore.openCuratorModal()"
+            >
+              关于馆主
+            </button>
             <span class="h-3 w-[1px] bg-[#DDD6C9]"></span>
             <span class="font-mono text-[10px] tracking-[0.18em] text-[#6E685E]">MMXVIII — MMXXVI</span>
             <button
@@ -278,11 +325,13 @@
     <!-- Global Notifications & Modals -->
     <ToastContainer />
     <ConfirmModal />
+    <CuratorPlacardModal />
     <LoginModal />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router';
 import {
   Clock as ClockIcon,
@@ -292,10 +341,16 @@ import {
   Plus as PlusIcon,
   UploadCloud as UploadCloudIcon,
   PenSquare as PenSquareIcon,
+  UserRound as UserRoundIcon,
+  Moon as MoonIcon,
+  Sun as SunIcon,
+  Download as DownloadIcon,
 } from 'lucide-vue-next';
+import { apiClient } from '@/shared/api/client';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 import { useUiStore, type QuickCreateTarget } from '@/shared/stores/ui.store';
 import LoginModal from '@/features/auth/components/LoginModal.vue';
+import CuratorPlacardModal from '@/features/curator/components/CuratorPlacardModal.vue';
 import ToastContainer from '@/shared/components/ui/ToastContainer.vue';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal.vue';
 
@@ -303,6 +358,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const isExporting = ref(false);
 
 interface NavItem {
   roman: string;
@@ -310,12 +366,32 @@ interface NavItem {
   shortTitle: string;
   path: string;
   altPaths?: string[];
+  prefixPaths?: string[];
 }
 
 const navItems: NavItem[] = [
-  { roman: 'I.', title: '时光纪流', shortTitle: '时光', path: '/', altPaths: ['/timeline'] },
-  { roman: 'II.', title: '影像长廊', shortTitle: '影像', path: '/media' },
-  { roman: 'III.', title: '随想手札', shortTitle: '手札', path: '/journal' },
+  {
+    roman: 'I.',
+    title: '时光纪流',
+    shortTitle: '时光',
+    path: '/',
+    altPaths: ['/timeline'],
+    prefixPaths: ['/entries/'],
+  },
+  {
+    roman: 'II.',
+    title: '影像长廊',
+    shortTitle: '影像',
+    path: '/media',
+    prefixPaths: ['/media/'],
+  },
+  {
+    roman: 'III.',
+    title: '随想手札',
+    shortTitle: '手札',
+    path: '/journal',
+    prefixPaths: ['/journal/'],
+  },
 ];
 
 const quickActions: { label: string; target: QuickCreateTarget; route: string; icon: any }[] = [
@@ -327,7 +403,24 @@ const quickActions: { label: string; target: QuickCreateTarget; route: string; i
 function isNavActive(item: NavItem): boolean {
   if (route.path === item.path) return true;
   if (item.altPaths && item.altPaths.includes(route.path)) return true;
+  if (item.prefixPaths && item.prefixPaths.some((prefix) => route.path.startsWith(prefix))) {
+    return true;
+  }
   return false;
+}
+
+async function handleExportBackup(): Promise<void> {
+  if (isExporting.value) return;
+  isExporting.value = true;
+  try {
+    await apiClient.exportArchiveBackup({ download: true });
+    uiStore.isQuickMenuOpen = false;
+    uiStore.notifySuccess('全站档案备份已导出下载');
+  } catch (err) {
+    uiStore.notifyError(err instanceof Error ? err.message : '导出备份失败');
+  } finally {
+    isExporting.value = false;
+  }
 }
 
 async function dispatchQuickAction(target: QuickCreateTarget, targetRoute: string): Promise<void> {
