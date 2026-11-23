@@ -16,6 +16,42 @@
   --seal: #9A3F2B;
   --moss: #3D4E42;
   --obsidian: #11100F;
+
+  /* Frosted Glass & Ambient Aura Tokens (Light / Archival Rag) */
+  --glass-surface: rgba(250, 248, 244, 0.82);
+  --glass-chrome: rgba(243, 239, 231, 0.84);
+  --glass-border: rgba(221, 214, 201, 0.78);
+  --glass-highlight: rgba(255, 255, 255, 0.65);
+  --ambient-terracotta: rgba(154, 63, 43, 0.055);
+  --ambient-moss: rgba(61, 78, 66, 0.05);
+  --ambient-ochre: rgba(182, 138, 76, 0.048);
+  --boundary-sheen: rgba(250, 248, 244, 0.42);
+}
+
+/* Night Warm Ink Base Tokens (Prepared for M4-3 Dark Mode) */
+html.dark {
+  color-scheme: dark;
+  --canvas: #161412;
+  --alabaster: #1E1B18;
+  --linen: #26221E;
+  --rule: #332E28;
+  --rule-strong: #4A433B;
+  --ink: #ECE6DC;
+  --ink-secondary: #B8B0A4;
+  --ink-muted: #8E877C;
+  --ink-dim: #6C665D;
+  --seal: #C4604A;
+  --moss: #6B8272;
+  --obsidian: #0D0C0B;
+
+  --glass-surface: rgba(30, 27, 24, 0.82);
+  --glass-chrome: rgba(22, 20, 18, 0.84);
+  --glass-border: rgba(66, 59, 51, 0.72);
+  --glass-highlight: rgba(255, 244, 228, 0.06);
+  --ambient-terracotta: rgba(196, 96, 74, 0.08);
+  --ambient-moss: rgba(107, 130, 114, 0.068);
+  --ambient-ochre: rgba(196, 152, 88, 0.055);
+  --boundary-sheen: rgba(30, 27, 24, 0.38);
 }
 
 html,
@@ -42,8 +78,56 @@ body::before {
   background-size: 200px 200px;
 }
 
+html.dark body::before {
+  opacity: 0.026;
+  mix-blend-mode: soft-light;
+}
+
+/* Static Low-Overhead Ambient Color Glows (Zero filter:blur cost) */
+.ambient-aura-left {
+  background: radial-gradient(
+    ellipse 52% 46% at 6% 18%,
+    var(--ambient-terracotta) 0%,
+    rgba(154, 63, 43, 0.015) 48%,
+    transparent 74%
+  );
+}
+
+.ambient-aura-right {
+  background: radial-gradient(
+    ellipse 48% 50% at 94% 34%,
+    var(--ambient-moss) 0%,
+    rgba(61, 78, 66, 0.014) 50%,
+    transparent 74%
+  );
+}
+
+.ambient-aura-bottom {
+  background: radial-gradient(
+    ellipse 58% 44% at 18% 90%,
+    var(--ambient-ochre) 0%,
+    transparent 70%
+  );
+}
+
 /* Museum Hairline & Frame Utilities */
 @layer components {
+  .archival-glass {
+    background-color: var(--glass-surface);
+    border-color: var(--glass-border);
+    box-shadow: 0 1px 0 var(--glass-highlight) inset;
+    -webkit-backdrop-filter: blur(10px) saturate(112%);
+    backdrop-filter: blur(10px) saturate(112%);
+  }
+
+  .archival-glass-chrome {
+    background-color: var(--glass-chrome);
+    border-color: var(--glass-border);
+    box-shadow: 0 1px 0 var(--glass-highlight) inset;
+    -webkit-backdrop-filter: blur(10px) saturate(110%);
+    backdrop-filter: blur(10px) saturate(110%);
+  }
+
   .museum-plate {
     background-color: var(--alabaster);
     border: 1px solid var(--rule);
@@ -180,4 +264,24 @@ body::before {
 
 .safe-bottom-margin {
   margin-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
+}
+
+/* Low-overhead degradation for reduced motion / transparency preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-reveal {
+    animation: none;
+  }
+
+  .museum-plate {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .archival-glass,
+  .archival-glass-chrome {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--alabaster);
+  }
 }

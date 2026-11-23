@@ -1,9 +1,25 @@
 <template>
-  <div class="min-h-screen bg-[#F3EFE7] text-[#161513] flex flex-col relative selection:bg-[#9A3F2B]/15 selection:text-[#9A3F2B]">
+  <div class="min-h-screen bg-[var(--canvas)] text-[var(--ink)] flex flex-col relative selection:bg-[#9A3F2B]/15 selection:text-[#9A3F2B]">
+    <!-- ========================================================= -->
+    <!-- STATIC LOW-OVERHEAD AMBIENT GALLERY AURA & MARGIN RAILS   -->
+    <!-- ========================================================= -->
+    <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute inset-0 ambient-aura-left"></div>
+      <div class="absolute inset-0 ambient-aura-right"></div>
+      <div class="hidden md:block absolute inset-0 ambient-aura-bottom"></div>
+      <!-- Subtle content-boundary framing on wide screens without shifting exhibition layout -->
+      <div class="hidden xl:block max-w-[1360px] h-full mx-auto relative">
+        <span class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-[var(--rule)]/55 to-transparent"></span>
+        <span class="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-[var(--rule)]/55 to-transparent"></span>
+        <span class="absolute inset-y-0 -left-10 w-10 bg-gradient-to-r from-transparent to-[var(--boundary-sheen)] opacity-60"></span>
+        <span class="absolute inset-y-0 -right-10 w-10 bg-gradient-to-l from-transparent to-[var(--boundary-sheen)] opacity-60"></span>
+      </div>
+    </div>
+
     <!-- ========================================================= -->
     <!-- ARCHITECTURAL GALLERY MASTHEAD                            -->
     <!-- ========================================================= -->
-    <header class="sticky top-0 z-40 bg-[#F3EFE7]/92 backdrop-blur-md border-b border-[#DDD6C9]">
+    <header class="sticky top-0 z-40 archival-glass-chrome border-b border-[var(--rule)]">
       <div class="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12 h-[72px] flex items-center justify-between gap-6">
         <!-- Left: Minimalist Museum Emblem & Wordmark -->
         <RouterLink to="/" class="flex items-center gap-3.5 group min-w-0 shrink-0">
@@ -100,7 +116,7 @@
           >
             <div
               v-if="authStore.isAdmin && uiStore.isQuickMenuOpen"
-              class="absolute right-0 top-12 w-64 rounded-[2px] border border-[#DDD6C9] bg-[#FAF8F4] shadow-[0_24px_48px_-20px_rgba(22,21,19,0.22)] z-50 overflow-hidden"
+              class="absolute right-0 top-12 w-64 rounded-[2px] border archival-glass shadow-[0_24px_48px_-20px_rgba(22,21,19,0.22)] z-50 overflow-hidden"
             >
               <div class="px-4 py-3 border-b border-[#E8E2D6] bg-[#F3EFE7]/60">
                 <p class="kicker-caps text-[#9B9488]">CURATOR WORKBENCH</p>
@@ -149,7 +165,7 @@
     <!-- ========================================================= -->
     <!-- EXHIBITION VIEWPORT                                       -->
     <!-- ========================================================= -->
-    <main class="flex-1 max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-28 md:pb-24">
+    <main class="relative z-10 flex-1 max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-28 md:pb-24">
       <slot>
         <RouterView />
       </slot>
@@ -158,7 +174,7 @@
     <!-- ========================================================= -->
     <!-- PRINT MONOGRAPH COLOPHON FOOTER (Desktop)                 -->
     <!-- ========================================================= -->
-    <footer class="hidden md:block border-t border-[#DDD6C9] bg-[#F3EFE7]">
+    <footer class="relative z-10 hidden md:block border-t border-[var(--rule)] archival-glass-chrome">
       <div class="max-w-[1360px] mx-auto px-8 lg:px-12 py-10">
         <div class="flex items-center justify-between gap-8">
           <div class="flex items-baseline gap-4">
@@ -198,7 +214,7 @@
     <!-- ========================================================= -->
     <!-- ARCHITECTURAL MOBILE BOTTOM RAIL (< md)                   -->
     <!-- ========================================================= -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#DDD6C9] bg-[#F3EFE7]/95 backdrop-blur-xl pb-safe">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--rule)] archival-glass-chrome pb-safe">
       <div class="flex h-16 items-stretch justify-around px-1">
         <RouterLink
           v-for="item in navItems"
@@ -262,7 +278,6 @@
     <!-- Global Notifications & Modals -->
     <ToastContainer />
     <ConfirmModal />
-    <PwaInstallPrompt />
     <LoginModal />
   </div>
 </template>
@@ -277,12 +292,10 @@ import {
   Plus as PlusIcon,
   UploadCloud as UploadCloudIcon,
   PenSquare as PenSquareIcon,
-  MapPinPlus as MapPinPlusIcon,
 } from 'lucide-vue-next';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 import { useUiStore, type QuickCreateTarget } from '@/shared/stores/ui.store';
 import LoginModal from '@/features/auth/components/LoginModal.vue';
-import PwaInstallPrompt from '@/shared/components/pwa/PwaInstallPrompt.vue';
 import ToastContainer from '@/shared/components/ui/ToastContainer.vue';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal.vue';
 
@@ -303,14 +316,12 @@ const navItems: NavItem[] = [
   { roman: 'I.', title: '时光纪流', shortTitle: '时光', path: '/', altPaths: ['/timeline'] },
   { roman: 'II.', title: '影像长廊', shortTitle: '影像', path: '/media' },
   { roman: 'III.', title: '随想手札', shortTitle: '手札', path: '/journal' },
-  { roman: 'IV.', title: '足迹漫游', shortTitle: '足迹', path: '/travel' },
 ];
 
 const quickActions: { label: string; target: QuickCreateTarget; route: string; icon: any }[] = [
   { label: '记录时光条目', target: 'entry', route: '/', icon: ClockIcon },
   { label: '直传摄影胶片', target: 'photo', route: '/media', icon: UploadCloudIcon },
   { label: '撰写随想手札', target: 'journal', route: '/journal', icon: PenSquareIcon },
-  { label: '标记旅行足迹', target: 'trip', route: '/travel', icon: MapPinPlusIcon },
 ];
 
 function isNavActive(item: NavItem): boolean {

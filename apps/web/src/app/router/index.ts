@@ -28,6 +28,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/JournalPage.vue'),
     meta: { title: '随想日记 - Personal Archive' },
   },
+  // 隐藏前台「足迹漫游」导航入口；保留路由与页面代码以便未来随时重启
   {
     path: '/travel',
     name: 'travel',
