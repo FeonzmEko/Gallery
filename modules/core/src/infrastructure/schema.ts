@@ -187,3 +187,16 @@ export type EntryRelationInsert = typeof entryRelations.$inferInsert;
 
 export type EntrySearchIndexSelect = typeof entrySearchIndex.$inferSelect;
 export type EntrySearchIndexInsert = typeof entrySearchIndex.$inferInsert;
+
+/**
+ * Site Settings Table (M4-1)
+ * Key-value JSON configuration store (e.g. 'curator_profile').
+ */
+export const siteSettings = sqliteTable('site_settings', {
+  key: text('key').primaryKey(),
+  valueJson: text('value_json').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});
+
+export type SiteSettingSelect = typeof siteSettings.$inferSelect;
+export type SiteSettingInsert = typeof siteSettings.$inferInsert;

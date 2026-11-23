@@ -9,15 +9,23 @@ export type CommentStatus = 'approved' | 'pending' | 'spam';
 
 export interface CommentDto {
   id: string;
-  entryId: string;
+  entryId: string | null;
+  mediaAssetId: string | null;
   parentId: string | null;
   authorName: string;
   authorEmail: string;
   authorUrl: string | null;
   content: string;
   status: CommentStatus;
+  isCuratorNote: boolean;
   createdAt: number;
 }
+
+export interface MediaCommentDto extends CommentDto {
+  mediaAssetId: string;
+}
+
+export type MediaComment = MediaCommentDto;
 
 export interface CreateCommentDto {
   parentId?: string | null;
@@ -25,6 +33,10 @@ export interface CreateCommentDto {
   authorEmail: string;
   authorUrl?: string | null;
   content: string;
+}
+
+export interface CreateCommentOptions {
+  isCuratorNote?: boolean;
 }
 
 export interface CommentPaginationQuery {
@@ -49,8 +61,28 @@ export interface CommentPort {
     entryId: string,
     dto: CreateCommentDto,
     ipHash: string,
-    userAgent?: string
+    userAgent?: string,
+    options?: CreateCommentOptions
   ): Promise<CommentDto>;
+
+  /**
+   * List approved comments for a specific media asset.
+   */
+  listMediaComments?(
+    mediaAssetId: string,
+    pagination: CommentPaginationQuery
+  ): Promise<PaginatedResult<MediaCommentDto>>;
+
+  /**
+   * Post a new comment for a specific media asset.
+   */
+  createMediaComment?(
+    mediaAssetId: string,
+    dto: CreateCommentDto,
+    ipHash: string,
+    userAgent?: string,
+    options?: CreateCommentOptions
+  ): Promise<MediaCommentDto>;
 
   /**
    * Moderate comment status (Admin only).

@@ -6,6 +6,7 @@ export * from './application/auth.service.js';
 export * from './application/entry.service.js';
 export * from './application/tag.service.js';
 export * from './application/relation.service.js';
+export * from './application/curator.service.js';
 export * from './infrastructure/schema.js';
 
 /**

@@ -171,18 +171,21 @@ describe('End-to-End Core Workflow Regression Suite (M6-2)', () => {
 
       CREATE TABLE comments (
         id TEXT PRIMARY KEY NOT NULL,
-        entry_id TEXT NOT NULL,
+        entry_id TEXT,
+        media_asset_id TEXT,
         parent_id TEXT,
         author_name TEXT NOT NULL,
         author_email TEXT NOT NULL,
         author_url TEXT,
         content TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'approved',
+        is_curator_note INTEGER NOT NULL DEFAULT 0,
         ip_hash TEXT NOT NULL,
         user_agent TEXT,
         created_at INTEGER NOT NULL
       );
       CREATE INDEX idx_comments_entry_time ON comments (entry_id, status, created_at);
+      CREATE INDEX idx_comments_media_time ON comments (media_asset_id, status, created_at);
     `);
 
     mockD1 = new TestMockD1Database(rawDb);

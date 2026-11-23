@@ -3,6 +3,7 @@ import type { ArchiveModuleDefinition } from '@archive/contracts';
 export * from './infrastructure/schema.js';
 export * from './infrastructure/r2-storage.adapter.js';
 export * from './application/media.service.js';
+export * from './application/collection.service.js';
 
 /**
  * Archive Media Module Definition

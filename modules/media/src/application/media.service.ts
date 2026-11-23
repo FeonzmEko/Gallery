@@ -252,7 +252,7 @@ export class MediaService {
     return this.storagePort.getDownloadUrl(key, expiresIn);
   }
 
-  private async mapAssetToDto(asset: MediaAssetSelect): Promise<MediaAssetDto> {
+  async mapAssetToDto(asset: MediaAssetSelect): Promise<MediaAssetDto> {
     const originalUrl = await this.resolveObjectUrl(asset.bucketKey, asset.visibility);
     const thumbUrl = asset.thumbKey
       ? await this.resolveObjectUrl(asset.thumbKey, asset.visibility)

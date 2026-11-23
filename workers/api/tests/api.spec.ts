@@ -199,16 +199,44 @@ describe('Workers API Integration Suite', () => {
 
       CREATE TABLE comments (
         id TEXT PRIMARY KEY NOT NULL,
-        entry_id TEXT NOT NULL,
+        entry_id TEXT,
+        media_asset_id TEXT,
         parent_id TEXT,
         author_name TEXT NOT NULL,
         author_email TEXT NOT NULL,
         author_url TEXT,
         content TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'approved',
+        is_curator_note INTEGER NOT NULL DEFAULT 0,
         ip_hash TEXT NOT NULL,
         user_agent TEXT,
         created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE media_collections (
+        id TEXT PRIMARY KEY NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        description TEXT,
+        cover_media_id TEXT,
+        occurred_range TEXT,
+        visibility TEXT NOT NULL DEFAULT 'public',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE media_collection_items (
+        collection_id TEXT NOT NULL REFERENCES media_collections(id) ON DELETE CASCADE,
+        media_asset_id TEXT NOT NULL REFERENCES media_assets(id) ON DELETE CASCADE,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        added_at INTEGER NOT NULL,
+        PRIMARY KEY (collection_id, media_asset_id)
+      );
+
+      CREATE TABLE site_settings (
+        key TEXT PRIMARY KEY NOT NULL,
+        value_json TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
       );
     `);
 
@@ -588,5 +616,598 @@ describe('Workers API Integration Suite', () => {
     const adminJournalsRes = await app.request('/api/v1/journals', { headers: authHeaders }, mockEnv);
     const adminJournalsBody = (await adminJournalsRes.json()) as any;
     expect(adminJournalsBody.data.find((j: any) => j.id === journalBody.data.id)).toBeUndefined();
+  });
+
+  it('M2-3: GET /api/v1/entries/random returns public published entry with no-store and excludes excludeId', async () => {
+    const firstRes = await app.request('/api/v1/entries/random', { method: 'GET' }, mockEnv);
+    expect(firstRes.status).toBe(200);
+    expect(firstRes.headers.get('cache-control')).toContain('no-store');
+    const firstBody = (await firstRes.json()) as any;
+    expect(firstBody.success).toBe(true);
+    expect(firstBody.data.visibility).toBe('public');
+    expect(firstBody.data.status).toBe('published');
+
+    // Exclude the first returned ID -> should pick the other seeded public published entry
+    for (let i = 0; i < 5; i++) {
+      const nextRes = await app.request(
+        `/api/v1/entries/random?excludeId=${encodeURIComponent(firstBody.data.id)}`,
+        { method: 'GET' },
+        mockEnv
+      );
+      expect(nextRes.status).toBe(200);
+      const nextBody = (await nextRes.json()) as any;
+      expect(nextBody.data.id).not.toBe(firstBody.data.id);
+      expect(nextBody.data.visibility).toBe('public');
+      expect(nextBody.data.status).toBe('published');
+    }
+  });
+
+  it('M3-2: supports collections CRUD/binding, cache headers, private guards, and single-media comments with isCuratorNote', async () => {
+    // 1. Visitor cannot create collection or bind media
+    const unauthCreate = await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Unauthorized Album' }),
+      },
+      mockEnv
+    );
+    expect(unauthCreate.status).toBe(401);
+
+    // Login as admin
+    const loginRes = await app.request(
+      '/api/v1/auth/login',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@archive.internal',
+          password: 'Admin@Pass2026',
+        }),
+      },
+      mockEnv
+    );
+    const token = ((await loginRes.json()) as any).data.token;
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    // Upload & confirm 2 media assets
+    const uploadAndConfirm = async (filename: string, model: string) => {
+      const tRes = await app.request(
+        '/api/v1/media/upload-url',
+        {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            filename,
+            contentType: 'image/jpeg',
+            sizeBytes: 24000,
+            mediaType: 'image',
+          }),
+        },
+        mockEnv
+      );
+      const t = ((await tRes.json()) as any).data;
+      await app.request(
+        `/api/v1/media/${t.mediaId}/confirm`,
+        {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            width: 2048,
+            height: 1365,
+            thumbKey: `thumbs/${filename}`,
+            exif: { make: 'FUJIFILM', model, iso: 400 },
+          }),
+        },
+        mockEnv
+      );
+      return t.mediaId as string;
+    };
+
+    const m1 = await uploadAndConfirm('frame-1.jpg', 'X100VI');
+    const m2 = await uploadAndConfirm('frame-2.jpg', 'X-Pro3');
+
+    // Create public and private collections
+    const pubColRes = await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: 'Tokyo Film Roll',
+          slug: 'tokyo-film-roll',
+          description: 'Midnight alleys in Shinjuku',
+          occurredRange: '2026.10',
+          visibility: 'public',
+        }),
+      },
+      mockEnv
+    );
+    expect(pubColRes.status).toBe(201);
+    const pubCol = ((await pubColRes.json()) as any).data;
+
+    const privColRes = await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: 'Private Contact Sheet',
+          slug: 'private-contact-sheet',
+          visibility: 'private',
+        }),
+      },
+      mockEnv
+    );
+    expect(privColRes.status).toBe(201);
+
+    // Unauthenticated bind should fail 401
+    const unauthBind = await app.request(
+      `/api/v1/collections/${pubCol.id}/media`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ mediaAssetId: m1, sortOrder: 0 }] }),
+      },
+      mockEnv
+    );
+    expect(unauthBind.status).toBe(401);
+
+    // Bind & order m2 before m1
+    const bindRes = await app.request(
+      `/api/v1/collections/${pubCol.id}/media`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          items: [
+            { mediaAssetId: m2, sortOrder: 1 },
+            { mediaAssetId: m1, sortOrder: 2 },
+          ],
+          replace: true,
+        }),
+      },
+      mockEnv
+    );
+    expect(bindRes.status).toBe(201);
+
+    // Post single-media comments: 1 guest (isCuratorNote=false), 1 admin (isCuratorNote=true)
+    const guestCommentRes = await app.request(
+      `/api/v1/media/${m2}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'cf-connecting-ip': '203.0.113.55',
+        },
+        body: JSON.stringify({
+          authorName: 'Visitor Ken',
+          authorEmail: 'ken@example.com',
+          content: 'Love the shadows here.',
+        }),
+      },
+      mockEnv
+    );
+    expect(guestCommentRes.status).toBe(201);
+    expect(((await guestCommentRes.json()) as any).data.isCuratorNote).toBe(false);
+
+    const adminCommentRes = await app.request(
+      `/api/v1/media/${m2}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'cf-connecting-ip': '203.0.113.56',
+        },
+        body: JSON.stringify({
+          authorName: 'Curator',
+          authorEmail: 'admin@archive.internal',
+          content: 'Pushed Cinestill 800T +1 stop.',
+        }),
+      },
+      mockEnv
+    );
+    expect(adminCommentRes.status).toBe(201);
+    expect(((await adminCommentRes.json()) as any).data.isCuratorNote).toBe(true);
+
+    // Public GET /api/v1/collections -> only public collections, Cache-Control: public, max-age=60...
+    const listColsRes = await app.request('/api/v1/collections', { method: 'GET' }, mockEnv);
+    expect(listColsRes.status).toBe(200);
+    expect(listColsRes.headers.get('cache-control')).toContain('public, max-age=60');
+    const listColsBody = (await listColsRes.json()) as any;
+    expect(listColsBody.data).toHaveLength(1);
+    expect(listColsBody.data[0].slug).toBe('tokyo-film-roll');
+    expect(listColsBody.data[0].mediaCount).toBe(2);
+    expect(listColsBody.data[0].coverUrl).toBeTruthy();
+
+    // Public GET /api/v1/collections/:slug/media -> ordered items with dimensions, EXIF, URLs, commentCount
+    const colMediaRes = await app.request(
+      '/api/v1/collections/tokyo-film-roll/media',
+      { method: 'GET' },
+      mockEnv
+    );
+    expect(colMediaRes.status).toBe(200);
+    expect(colMediaRes.headers.get('cache-control')).toContain('public, max-age=60');
+    const colMediaBody = (await colMediaRes.json()) as any;
+    expect(colMediaBody.data.collection.slug).toBe('tokyo-film-roll');
+    expect(colMediaBody.data.items).toHaveLength(2);
+    expect(colMediaBody.data.items[0].id).toBe(m2);
+    expect(colMediaBody.data.items[0].width).toBe(2048);
+    expect(colMediaBody.data.items[0].height).toBe(1365);
+    expect(colMediaBody.data.items[0].exif.model).toBe('X-Pro3');
+    expect(colMediaBody.data.items[0].commentCount).toBe(2);
+    expect(colMediaBody.data.items[1].id).toBe(m1);
+    expect(colMediaBody.data.items[1].commentCount).toBe(0);
+
+    // Private collection blocked for guests, allowed for admin
+    const privGuestRes = await app.request(
+      '/api/v1/collections/private-contact-sheet/media',
+      { method: 'GET' },
+      mockEnv
+    );
+    expect(privGuestRes.status).toBe(401);
+
+    const privAdminRes = await app.request(
+      '/api/v1/collections/private-contact-sheet/media',
+      { method: 'GET', headers: authHeaders },
+      mockEnv
+    );
+    expect(privAdminRes.status).toBe(200);
+
+    // GET /api/v1/media/:mediaId/comments
+    const getCommentsRes = await app.request(`/api/v1/media/${m2}/comments`, { method: 'GET' }, mockEnv);
+    expect(getCommentsRes.status).toBe(200);
+    const getCommentsBody = (await getCommentsRes.json()) as any;
+    expect(getCommentsBody.data).toHaveLength(2);
+
+    // Verify existing Entry comment backward compatibility
+    const entryCommentRes = await app.request(
+      '/api/v1/entries/entry_compat_01/comments',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          authorName: 'Legacy Visitor',
+          authorEmail: 'legacy@example.com',
+          content: 'Still works cleanly!',
+        }),
+      },
+      mockEnv
+    );
+    expect(entryCommentRes.status).toBe(201);
+    const entryCommentData = ((await entryCommentRes.json()) as any).data;
+    expect(entryCommentData.entryId).toBe('entry_compat_01');
+    expect(entryCommentData.mediaAssetId).toBeNull();
+    expect(entryCommentData.isCuratorNote).toBe(false);
+  });
+
+  it('M4-1 & M4-3: supports curator profile read/write and admin full JSON backup export with strict auth', async () => {
+    // 1. Public GET /api/v1/curator returns default profile
+    const defaultCuratorRes = await app.request('/api/v1/curator', { method: 'GET' }, mockEnv);
+    expect(defaultCuratorRes.status).toBe(200);
+    const defaultCuratorBody = (await defaultCuratorRes.json()) as any;
+    expect(defaultCuratorBody.data.name).toBeTruthy();
+
+    // 2. Unauthenticated PUT /api/v1/admin/curator and GET /api/v1/admin/export fail with 401
+    const unauthPut = await app.request(
+      '/api/v1/admin/curator',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Hacker' }),
+      },
+      mockEnv
+    );
+    expect(unauthPut.status).toBe(401);
+
+    const unauthExport = await app.request('/api/v1/admin/export', { method: 'GET' }, mockEnv);
+    expect(unauthExport.status).toBe(401);
+
+    // 3. Login as admin and update curator profile
+    const loginRes = await app.request(
+      '/api/v1/auth/login',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@archive.internal',
+          password: 'Admin@Pass2026',
+        }),
+      },
+      mockEnv
+    );
+    const token = ((await loginRes.json()) as any).data.token;
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const putCuratorRes = await app.request(
+      '/api/v1/admin/curator',
+      {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({
+          name: 'FeonzmEko',
+          bio: '胶片摄影与数字档案馆主',
+          statusText: '整理京都秋日底片',
+          location: 'Hangzhou',
+          recentAnime: [{ title: '葬送的芙莉莲', status: 'watching', progress: 'EP 18' }],
+          loopPlaylist: [{ title: '丸の内サディスティック', artist: '椎名林檎' }],
+        }),
+      },
+      mockEnv
+    );
+    expect(putCuratorRes.status).toBe(200);
+    const putBody = (await putCuratorRes.json()) as any;
+    expect(putBody.data.name).toBe('FeonzmEko');
+    expect(putBody.data.recentAnime).toHaveLength(1);
+    expect(putBody.data.loopPlaylist).toHaveLength(1);
+
+    // Persisted in D1 and visible via public GET /api/v1/curator
+    const getCuratorRes = await app.request('/api/v1/curator', { method: 'GET' }, mockEnv);
+    expect(getCuratorRes.status).toBe(200);
+    const getCuratorBody = (await getCuratorRes.json()) as any;
+    expect(getCuratorBody.data.name).toBe('FeonzmEko');
+    expect(getCuratorBody.data.statusText).toBe('整理京都秋日底片');
+
+    // Create a collection & media comment so export verifies all sections
+    await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ title: 'Backup Album', slug: 'backup-album' }),
+      },
+      mockEnv
+    );
+    await app.request(
+      '/api/v1/media/media_backup_01/comments',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          authorName: 'FeonzmEko',
+          authorEmail: 'admin@archive.internal',
+          content: 'Backup note',
+        }),
+      },
+      mockEnv
+    );
+
+    // 4. Admin GET /api/v1/admin/export returns complete JSON backup
+    const exportRes = await app.request(
+      '/api/v1/admin/export',
+      { method: 'GET', headers: authHeaders },
+      mockEnv
+    );
+    expect(exportRes.status).toBe(200);
+    expect(exportRes.headers.get('cache-control')).toContain('no-store');
+    expect(exportRes.headers.get('content-disposition')).toContain('personal-archive-backup-');
+    const exportBody = (await exportRes.json()) as any;
+    expect(exportBody.success).toBe(true);
+    expect(exportBody.data.version).toBe('1.0');
+    expect(exportBody.data.curator.name).toBe('FeonzmEko');
+    expect(exportBody.data.entries.length).toBeGreaterThanOrEqual(4);
+    expect(Array.isArray(exportBody.data.journals)).toBe(true);
+    expect(Array.isArray(exportBody.data.collections)).toBe(true);
+    expect(exportBody.data.collections.some((c: any) => c.slug === 'backup-album')).toBe(true);
+    expect(exportBody.data.comments.some((c: any) => c.mediaAssetId === 'media_backup_01')).toBe(true);
+    expect(Array.isArray(exportBody.data.media)).toBe(true);
+  });
+
+  it('M4-2: injects dynamic OG / Twitter Card tags for public routes and never leaks private entries or collections', async () => {
+    // Login & create a public entry with cover, a private entry, a public collection, and a private collection
+    const loginRes = await app.request(
+      '/api/v1/auth/login',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@archive.internal',
+          password: 'Admin@Pass2026',
+        }),
+      },
+      mockEnv
+    );
+    const token = ((await loginRes.json()) as any).data.token;
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const ticketRes = await app.request(
+      '/api/v1/media/upload-url',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          filename: 'og-cover.jpg',
+          contentType: 'image/jpeg',
+          sizeBytes: 10240,
+          mediaType: 'image',
+        }),
+      },
+      mockEnv
+    );
+    const coverMediaId = ((await ticketRes.json()) as any).data.mediaId;
+    await app.request(
+      `/api/v1/media/${coverMediaId}/confirm`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ thumbKey: 'thumbs/og-cover.webp' }),
+      },
+      mockEnv
+    );
+
+    const pubEntryRes = await app.request(
+      '/api/v1/entries',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'photo',
+          title: 'Sunset Over West Lake',
+          summary: 'Warm evening reflection on the water.',
+          coverMediaId,
+          occurredAt: Date.now(),
+          visibility: 'public',
+          status: 'published',
+        }),
+      },
+      mockEnv
+    );
+    const pubEntryId = ((await pubEntryRes.json()) as any).data.id;
+
+    const privEntryRes = await app.request(
+      '/api/v1/entries',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'journal',
+          title: 'Secret Diary Entry Never Leak',
+          summary: 'Top secret inner thoughts.',
+          occurredAt: Date.now(),
+          visibility: 'private',
+          status: 'published',
+        }),
+      },
+      mockEnv
+    );
+    const privEntryId = ((await privEntryRes.json()) as any).data.id;
+
+    await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: 'Kyoto Monograph',
+          slug: 'kyoto-monograph',
+          description: 'Autumn stroll frames',
+          coverMediaId,
+          visibility: 'public',
+        }),
+      },
+      mockEnv
+    );
+
+    await app.request(
+      '/api/v1/collections',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          title: 'Secret Vault Album',
+          slug: 'secret-vault-album',
+          description: 'Confidential negative scans',
+          visibility: 'private',
+        }),
+      },
+      mockEnv
+    );
+
+    const baseHtml = `<!DOCTYPE html><html><head><title>Personal Archive · 个人数字档案馆</title><meta property="og:title" content="Fallback" /></head><body><div id="app"></div></body></html>`;
+    const envWithAssets: Env = {
+      ...mockEnv,
+      ASSETS: {
+        fetch: vi.fn().mockImplementation(async () =>
+          new Response(baseHtml, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          })
+        ),
+      } as any,
+    };
+
+    // 1. Home route /
+    const homeRes = await app.request('https://feonzmeko.qzz.io/', { method: 'GET' }, envWithAssets);
+    expect(homeRes.status).toBe(200);
+    const homeHtml = await homeRes.text();
+    expect(homeHtml).toContain('property="og:title" content="Personal Archive · 个人数字档案馆"');
+    expect(homeHtml).toContain('name="twitter:card" content="summary"');
+    expect(homeHtml).not.toContain('content="Fallback"');
+
+    // 2. Public entry /entries/:id -> injects entry title, summary, og:image, summary_large_image
+    const entryRes = await app.request(
+      `https://feonzmeko.qzz.io/entries/${pubEntryId}`,
+      { method: 'GET' },
+      envWithAssets
+    );
+    expect(entryRes.status).toBe(200);
+    const entryHtml = await entryRes.text();
+    expect(entryHtml).toContain('Sunset Over West Lake · Personal Archive');
+    expect(entryHtml).toContain('Warm evening reflection on the water.');
+    expect(entryHtml).toContain('property="og:image" content="https://media.archive.internal/thumbs/og-cover.webp"');
+    expect(entryHtml).toContain('name="twitter:card" content="summary_large_image"');
+
+    // 3. Private entry /entries/:id -> falls back to default OG, NEVER leaks title/summary
+    const privRes = await app.request(
+      `https://feonzmeko.qzz.io/entries/${privEntryId}`,
+      { method: 'GET' },
+      envWithAssets
+    );
+    expect(privRes.status).toBe(200);
+    const privHtml = await privRes.text();
+    expect(privHtml).not.toContain('Secret Diary Entry Never Leak');
+    expect(privHtml).not.toContain('Top secret inner thoughts.');
+    expect(privHtml).toContain('property="og:title" content="Personal Archive · 个人数字档案馆"');
+
+    // 4. Public collection /media/collections/:slug
+    const colRes = await app.request(
+      'https://feonzmeko.qzz.io/media/collections/kyoto-monograph',
+      { method: 'GET' },
+      envWithAssets
+    );
+    expect(colRes.status).toBe(200);
+    const colHtml = await colRes.text();
+    expect(colHtml).toContain('Kyoto Monograph · 影像长廊 · Personal Archive');
+    expect(colHtml).toContain('Autumn stroll frames');
+    expect(colHtml).toContain('property="og:image" content="https://media.archive.internal/thumbs/og-cover.webp"');
+
+    // 5. Private collection -> never leaks private collection title/description
+    const privColRes = await app.request(
+      'https://feonzmeko.qzz.io/media/collections/secret-vault-album',
+      { method: 'GET' },
+      envWithAssets
+    );
+    expect(privColRes.status).toBe(200);
+    const privColHtml = await privColRes.text();
+    expect(privColHtml).not.toContain('Secret Vault Album');
+    expect(privColHtml).not.toContain('Confidential negative scans');
+
+    // 6. Native Cloudflare HTMLRewriter execution path verification
+    const registeredSelectors: string[] = [];
+    class MockHTMLRewriter {
+      on(selector: string, _handlers: any) {
+        registeredSelectors.push(selector);
+        return this;
+      }
+      transform(res: Response) {
+        return res;
+      }
+    }
+    vi.stubGlobal('HTMLRewriter', MockHTMLRewriter);
+    try {
+      const rewriterRes = await app.request(
+        `https://feonzmeko.qzz.io/entries/${pubEntryId}`,
+        { method: 'GET' },
+        envWithAssets
+      );
+      expect(rewriterRes.status).toBe(200);
+      expect(registeredSelectors).toEqual([
+        'meta[property^="og:"], meta[name^="twitter:"]',
+        'title',
+        'head',
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -1,4 +1,4 @@
-import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
+import type { D1Database, R2Bucket, Fetcher } from '@cloudflare/workers-types';
 
 /**
  * Cloudflare Worker environment bindings
@@ -9,6 +9,9 @@ export interface Env {
 
   // Cloudflare R2 Bucket binding
   MEDIA_BUCKET?: R2Bucket;
+
+  // Cloudflare Workers Static Assets binding (for SPA HTML + OG HTMLRewriter)
+  ASSETS?: Fetcher;
 
   // S3 / R2 API credential variables for signed upload/download generation
   R2_ACCOUNT_ID?: string;

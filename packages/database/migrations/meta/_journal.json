@@ -15,6 +15,13 @@
       "when": 1795090000000,
       "tag": "0001_journal_travel_media_exif",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795414264028,
+      "tag": "0002_nostalgic_green_goblin",
+      "breakpoints": true
     }
   ]
 }

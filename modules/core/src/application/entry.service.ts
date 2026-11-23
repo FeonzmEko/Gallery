@@ -1,5 +1,6 @@
 import {
   eq,
+  ne,
   and,
   or,
   lt,
@@ -35,6 +36,7 @@ import {
   tags,
   entryTags,
   entrySearchIndex,
+  type EntrySelect,
 } from '../infrastructure/schema.js';
 import { assertAdmin, hasAdminPrivileges } from '../domain/rbac.js';
 import { TagService } from './tag.service.js';
@@ -293,7 +295,106 @@ export class EntryService {
       throw new NotFoundError('条目不存在', id);
     }
 
-    const tagsList = await this.getTagsForEntry(id);
+    return this.hydrateEntry(entry, user);
+  }
+
+  /**
+   * Pick a random public & published entry, optionally excluding a specific entry ID.
+   * Falls back to returning the single available entry if only 1 public published entry exists.
+   */
+  async getRandomEntry(options?: { excludeId?: string }): Promise<EntryDto> {
+    const baseConditions = [
+      eq(entries.visibility, 'public'),
+      eq(entries.status, 'published'),
+      isNull(entries.deletedAt),
+    ];
+
+    const excludeId = options?.excludeId?.trim();
+    let selected: EntrySelect | undefined;
+
+    if (excludeId) {
+      const excludedRows = await this.db
+        .select()
+        .from(entries)
+        .where(and(...baseConditions, ne(entries.id, excludeId)))
+        .orderBy(sql`RANDOM()`)
+        .limit(1);
+      selected = excludedRows[0];
+    }
+
+    if (!selected) {
+      const fallbackRows = await this.db
+        .select()
+        .from(entries)
+        .where(and(...baseConditions))
+        .orderBy(sql`RANDOM()`)
+        .limit(1);
+      selected = fallbackRows[0];
+    }
+
+    if (!selected) {
+      throw new NotFoundError('暂无可抽取的公开条目');
+    }
+
+    // Pass null user so cover media resolution also strictly adheres to public visibility
+    return this.hydrateEntry(selected, null);
+  }
+
+  /**
+   * Public-only lookup for OG / Twitter Card metadata injection.
+   * Strictly restricts to visibility = 'public' AND status = 'published' AND deletedAt IS NULL.
+   */
+  async getPublicEntryForOg(idOrSlug: string): Promise<{
+    id: string;
+    title: string;
+    summary: string | null;
+    coverUrl: string | null;
+    coverThumbUrl: string | null;
+  } | null> {
+    const cleanKey = idOrSlug.trim();
+    if (!cleanKey) return null;
+
+    const rows = await this.db
+      .select()
+      .from(entries)
+      .where(
+        and(
+          or(eq(entries.id, cleanKey), eq(entries.slug, cleanKey)),
+          eq(entries.visibility, 'public'),
+          eq(entries.status, 'published'),
+          isNull(entries.deletedAt)
+        )
+      )
+      .limit(1);
+
+    const row = rows[0];
+    if (!row) return null;
+
+    let coverUrl: string | null = null;
+    let coverThumbUrl: string | null = null;
+    if (row.coverMediaId && this.mediaResolver) {
+      const resolved = await this.mediaResolver([row.coverMediaId], null);
+      const urls = resolved.get(row.coverMediaId);
+      if (urls) {
+        coverUrl = urls.originalUrl;
+        coverThumbUrl = urls.thumbUrl ?? urls.originalUrl;
+      }
+    }
+
+    return {
+      id: row.id,
+      title: row.title,
+      summary: row.summary,
+      coverUrl,
+      coverThumbUrl,
+    };
+  }
+
+  private async hydrateEntry(
+    entry: EntrySelect,
+    user?: AuthUser | null
+  ): Promise<EntryDto> {
+    const tagsList = await this.getTagsForEntry(entry.id);
     let coverUrl: string | null = null;
     let coverThumbUrl: string | null = null;
     if (entry.coverMediaId && this.mediaResolver) {

@@ -131,6 +131,12 @@ export function createTestDatabase(): { db: ArchiveDb; rawDb: DatabaseSync } {
       body_excerpt TEXT,
       updated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE site_settings (
+      key TEXT PRIMARY KEY NOT NULL,
+      value_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
   `);
 
   const mockD1 = new MockD1Database(mem);

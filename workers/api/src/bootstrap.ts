@@ -1,6 +1,16 @@
 import { createDb, type ArchiveDb } from '@archive/database';
-import { AuthService, EntryService, TagService, RelationService } from '@archive/module-core';
-import { MediaService, R2StorageAdapter } from '@archive/module-media';
+import {
+  AuthService,
+  EntryService,
+  TagService,
+  RelationService,
+  CuratorService,
+} from '@archive/module-core';
+import {
+  MediaService,
+  MediaCollectionService,
+  R2StorageAdapter,
+} from '@archive/module-media';
 import { JournalService } from '@archive/module-journal';
 import { TravelService } from '@archive/module-travel';
 import { CommentService } from '@archive/module-comment';
@@ -14,7 +24,9 @@ export interface AppServices {
   entry: EntryService;
   tag: TagService;
   relation: RelationService;
+  curator: CuratorService;
   media: MediaService;
+  collection: MediaCollectionService;
   journal: JournalService;
   travel: TravelService;
   comment: CommentService;
@@ -208,6 +220,7 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
   const auth = new AuthService(db, { jwtSecret });
   const tag = new TagService(db);
   const relation = new RelationService(db);
+  const curator = new CuratorService(db);
   const media = new MediaService(db, storage, {
     publicBaseUrl: customStorage ? undefined : env.R2_PUBLIC_DOMAIN,
   });
@@ -217,6 +230,9 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
   const journal = new JournalService(db);
   const travel = new TravelService(db);
   const comment = new CommentService(db);
+  const collection = new MediaCollectionService(db, media, (mediaIds) =>
+    comment.countMediaComments(mediaIds)
+  );
 
   return {
     db,
@@ -225,7 +241,9 @@ export function bootstrapServices(env: Env, customStorage?: StoragePort): AppSer
     entry,
     tag,
     relation,
+    curator,
     media,
+    collection,
     journal,
     travel,
     comment,

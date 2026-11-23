@@ -19,17 +19,33 @@ import {
   MediaTypeSchema,
   VisibilitySchema,
   ExifMetadataSchema,
+  CreateMediaCollectionInputSchema,
+  BindCollectionMediaInputSchema,
+  UpdateCuratorProfileInputSchema,
 } from '@archive/contracts';
 import { generateUlid } from '@archive/shared';
-import { mountCommentRoutes } from '@archive/module-comment';
-import { mountJournalRoutes } from '@archive/module-journal';
-import { mountTravelRoutes } from '@archive/module-travel';
+import {
+  entries,
+  tags,
+  entryTags,
+  entryRelations,
+} from '@archive/module-core';
+import {
+  mediaAssets,
+  entryMedia,
+  mediaCollections,
+  mediaCollectionItems,
+} from '@archive/module-media';
+import { mountCommentRoutes, comments } from '@archive/module-comment';
+import { mountJournalRoutes, journalEntries } from '@archive/module-journal';
+import { mountTravelRoutes, trips, tripLocations } from '@archive/module-travel';
 import type { Env } from './env.js';
 import {
   bootstrapServices,
   verifyStorageOperation,
   type AppServices,
 } from './bootstrap.js';
+import { resolveOgMetadata, rewriteHtmlWithOgMeta } from './og-rewriter.js';
 
 export interface AppContext {
   Bindings: Env;
@@ -278,6 +294,14 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
     const user = c.get('user');
     const years = await services.entry.getTimelineYears(user, query.type);
     return c.json(successResponse(years));
+  });
+
+  entriesRoutes.get('/random', async (c) => {
+    const excludeId = c.req.query('excludeId')?.trim() || undefined;
+    const services = c.get('services');
+    const entry = await services.entry.getRandomEntry({ excludeId });
+    c.header('Cache-Control', 'no-store');
+    return c.json(successResponse(entry));
   });
 
   entriesRoutes.get('/', cachePublicFeed, async (c) => {
@@ -570,6 +594,144 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
 
   app.route('/api/v1/tags', tagsRoutes);
 
+  // --- Media Collections Routes: /api/v1/collections (M3-2) ---
+  const collectionsRoutes = new Hono<AppContext>();
+
+  collectionsRoutes.get('/', cachePublicFeed, async (c) => {
+    const services = c.get('services');
+    const user = c.get('user');
+    const items = await services.collection.listCollections(user);
+    return c.json(successResponse(items));
+  });
+
+  collectionsRoutes.get('/:slug/media', cachePublicFeed, async (c) => {
+    const slug = c.req.param('slug');
+    const services = c.get('services');
+    const user = c.get('user');
+    const detail = await services.collection.getCollectionMedia(slug, user);
+    return c.json(successResponse(detail));
+  });
+
+  collectionsRoutes.post('/', requireAdmin, async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const validated = CreateMediaCollectionInputSchema.parse(body);
+    const services = c.get('services');
+    const user = c.get('user')!;
+    const created = await services.collection.createCollection(validated, user);
+    return c.json(successResponse(created), 201);
+  });
+
+  collectionsRoutes.post('/:id/media', requireAdmin, async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json().catch(() => ({}));
+    const validated = BindCollectionMediaInputSchema.parse(body);
+    const services = c.get('services');
+    const user = c.get('user')!;
+    const detail = await services.collection.bindCollectionMedia(id, validated, user);
+    return c.json(successResponse(detail), 201);
+  });
+
+  app.route('/api/v1/collections', collectionsRoutes);
+
+  // --- Curator Profile Routes (M4-1) ---
+  app.get('/api/v1/curator', cachePublicFeed, async (c) => {
+    const services = c.get('services');
+    const profile = await services.curator.getProfile();
+    return c.json(successResponse(profile));
+  });
+
+  app.put('/api/v1/admin/curator', requireAdmin, async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const validated = UpdateCuratorProfileInputSchema.parse(body);
+    const services = c.get('services');
+    const user = c.get('user')!;
+    const updated = await services.curator.updateProfile(validated, user);
+    return c.json(successResponse(updated));
+  });
+
+  // --- Admin Export Backup Route (M4-3) ---
+  app.get('/api/v1/admin/export', requireAdmin, async (c) => {
+    const services = c.get('services');
+    const user = c.get('user')!;
+    const db = services.db;
+
+    const [
+      allEntries,
+      allTags,
+      allEntryTags,
+      allEntryRelations,
+      allJournals,
+      allTrips,
+      allTripLocations,
+      allCollections,
+      allCollectionItems,
+      allMedia,
+      allEntryMedia,
+      allComments,
+      curatorProfile,
+    ] = await Promise.all([
+      db.select().from(entries),
+      db.select().from(tags),
+      db.select().from(entryTags),
+      db.select().from(entryRelations),
+      db.select().from(journalEntries),
+      db.select().from(trips),
+      db.select().from(tripLocations),
+      db.select().from(mediaCollections),
+      db.select().from(mediaCollectionItems),
+      db.select().from(mediaAssets),
+      db.select().from(entryMedia),
+      db.select().from(comments),
+      services.curator.getProfile(),
+    ]);
+
+    const itemsByCollection = new Map<string, typeof allCollectionItems>();
+    for (const item of allCollectionItems) {
+      const list = itemsByCollection.get(item.collectionId) ?? [];
+      list.push(item);
+      itemsByCollection.set(item.collectionId, list);
+    }
+
+    const collectionsWithItems = allCollections.map((col) => ({
+      ...col,
+      items: (itemsByCollection.get(col.id) ?? []).sort((a, b) => a.sortOrder - b.sortOrder),
+    }));
+
+    const exportedAt = Date.now();
+    const dateStamp = new Date(exportedAt).toISOString().slice(0, 10);
+
+    c.header('Cache-Control', 'private, no-store');
+    c.header(
+      'Content-Disposition',
+      `attachment; filename="personal-archive-backup-${dateStamp}.json"`
+    );
+
+    return c.json(
+      successResponse({
+        version: '1.0',
+        exportedAt,
+        exportedBy: {
+          userId: user.userId,
+          email: user.email,
+          role: user.role,
+        },
+        curator: curatorProfile,
+        entries: allEntries,
+        tags: allTags,
+        entryTags: allEntryTags,
+        entryRelations: allEntryRelations,
+        journals: allJournals,
+        trips: allTrips,
+        tripLocations: allTripLocations,
+        collections: collectionsWithItems,
+        collectionItems: allCollectionItems,
+        media: allMedia,
+        entryMedia: allEntryMedia,
+        comments: allComments,
+      })
+    );
+  });
+
   // --- Mount Journal, Travel & Comment Module Routes ---
   mountJournalRoutes(app, {
     getJournalService: (c) => (c.get('services') as AppServices).journal,
@@ -581,6 +743,29 @@ export function createApp(customStorage?: StoragePort): Hono<AppContext> {
 
   mountCommentRoutes(app, {
     getCommentService: (c) => (c.get('services') as AppServices).comment,
+  });
+
+  // --- Static SPA HTML & Dynamic OG / Twitter Card Injection (M4-2) ---
+  app.get('*', async (c, next) => {
+    const reqUrl = new URL(c.req.url);
+    if (reqUrl.pathname.startsWith('/api/')) {
+      return next();
+    }
+
+    const assets = c.env?.ASSETS;
+    if (!assets) {
+      return next();
+    }
+
+    const assetResponse = await assets.fetch(c.req.raw as any);
+    const contentType = assetResponse.headers.get('content-type') || '';
+    if (!contentType.includes('text/html')) {
+      return assetResponse as unknown as Response;
+    }
+
+    const services = c.get('services');
+    const ogMeta = await resolveOgMetadata(reqUrl, services);
+    return rewriteHtmlWithOgMeta(assetResponse as unknown as Response, ogMeta);
   });
 
   return app;

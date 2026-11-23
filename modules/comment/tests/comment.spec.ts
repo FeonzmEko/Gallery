@@ -337,5 +337,63 @@ describe('@archive/module-comment', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('GET & POST /api/v1/media/:mediaId/comments should support single-media comments and auto-tag isCuratorNote for admin', async () => {
+      // Guest submission -> isCuratorNote: false
+      const guestPost = await app.request('/api/v1/media/media_01/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'cf-connecting-ip': '203.0.113.10',
+        },
+        body: JSON.stringify({
+          authorName: 'Guest Photo Fan',
+          authorEmail: 'fan@example.com',
+          content: 'Love the film grain on this frame!',
+        }),
+      });
+      expect(guestPost.status).toBe(201);
+      const guestBody = (await guestPost.json()) as any;
+      expect(guestBody.data.mediaAssetId).toBe('media_01');
+      expect(guestBody.data.entryId).toBeNull();
+      expect(guestBody.data.isCuratorNote).toBe(false);
+
+      // Admin submission -> isCuratorNote: true
+      const authedApp = new Hono<any>();
+      authedApp.use('*', async (c, next) => {
+        c.set('user', mockAdmin);
+        await next();
+      });
+      mountCommentRoutes(authedApp, { comment: service });
+
+      const adminPost = await authedApp.request('/api/v1/media/media_01/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'cf-connecting-ip': '203.0.113.11',
+        },
+        body: JSON.stringify({
+          authorName: 'Archivist',
+          authorEmail: 'admin@archive.internal',
+          content: 'Shot on Contax T2, Portra 400.',
+        }),
+      });
+      expect(adminPost.status).toBe(201);
+      const adminBody = (await adminPost.json()) as any;
+      expect(adminBody.data.mediaAssetId).toBe('media_01');
+      expect(adminBody.data.isCuratorNote).toBe(true);
+
+      // List media comments with Cache-Control
+      const listRes = await app.request('/api/v1/media/media_01/comments', { method: 'GET' });
+      expect(listRes.status).toBe(200);
+      expect(listRes.headers.get('cache-control')).toContain('public');
+      const listBody = (await listRes.json()) as any;
+      expect(listBody.data).toHaveLength(2);
+
+      // Verify countMediaComments
+      const counts = await service.countMediaComments(['media_01', 'media_empty']);
+      expect(counts.get('media_01')).toBe(2);
+      expect(counts.get('media_empty')).toBeUndefined();
+    });
   });
 });

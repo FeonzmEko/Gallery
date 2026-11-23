@@ -105,3 +105,69 @@ export interface UploadTicketDto {
   expiresInSeconds: number;
   maxSizeBytes: number;
 }
+
+/**
+ * Media Collection DTO (M3-1)
+ * Curated photo album / travel roll grouping media assets.
+ */
+export interface MediaCollectionDto {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  coverMediaId: string | null;
+  coverUrl?: string | null;
+  coverThumbUrl?: string | null;
+  occurredRange: string | null;
+  visibility: Visibility;
+  mediaCount?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type MediaCollection = MediaCollectionDto;
+
+export interface MediaCollectionItemDto {
+  collectionId: string;
+  mediaAssetId: string;
+  sortOrder: number;
+  addedAt: number;
+}
+
+export interface CollectionMediaAssetDto extends MediaAssetDto {
+  sortOrder: number;
+  addedAt: number;
+  commentCount: number;
+}
+
+export interface MediaCollectionDetailDto {
+  collection: MediaCollectionDto;
+  items: CollectionMediaAssetDto[];
+}
+
+export const CreateMediaCollectionInputSchema = z.object({
+  slug: z.string().trim().min(1).max(120).optional(),
+  title: z.string().trim().min(1, '合集标题不能为空').max(200),
+  description: z.string().trim().max(1000).optional().nullable(),
+  coverMediaId: z.string().trim().min(1).optional().nullable(),
+  occurredRange: z.string().trim().max(100).optional().nullable(),
+  visibility: VisibilitySchema.default('public'),
+});
+
+export type CreateMediaCollectionInput = z.infer<typeof CreateMediaCollectionInputSchema>;
+
+export const UpdateMediaCollectionInputSchema = CreateMediaCollectionInputSchema.partial();
+export type UpdateMediaCollectionInput = z.infer<typeof UpdateMediaCollectionInputSchema>;
+
+export const BindCollectionMediaItemSchema = z.object({
+  mediaAssetId: z.string().trim().min(1, '媒体 ID 不能为空'),
+  sortOrder: z.number().int().optional(),
+});
+
+export const BindCollectionMediaInputSchema = z.object({
+  items: z.array(BindCollectionMediaItemSchema).min(1, '至少绑定一张媒体资产'),
+  replace: z.boolean().optional().default(false),
+});
+
+export type BindCollectionMediaItemInput = z.infer<typeof BindCollectionMediaItemSchema>;
+export type BindCollectionMediaInput = z.infer<typeof BindCollectionMediaInputSchema>;

@@ -73,6 +73,15 @@ export function mountCommentRoutes(
     await next();
   };
 
+  const extractIpHash = async (c: Context<CommentEnv>): Promise<string> => {
+    const clientIp =
+      c.req.header('cf-connecting-ip') ||
+      c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
+      c.req.header('x-real-ip') ||
+      '127.0.0.1';
+    return hashIp(clientIp);
+  };
+
   // 1. List Approved Comments for an Entry (Public read with CDN Cache header)
   router.get('/entries/:entryId/comments', async (c) => {
     const service = resolveService(c);
@@ -100,16 +109,50 @@ export function mountCommentRoutes(
     const body = await c.req.json().catch(() => ({}));
     const validated = CreateCommentInputSchema.parse(body);
 
-    const clientIp =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0].trim() ||
-      c.req.header('x-real-ip') ||
-      '127.0.0.1';
+    const userAgent = c.req.header('user-agent');
+    const ipHash = await extractIpHash(c);
+    const isCuratorNote = hasAdminPrivileges(c.get('user')?.role);
+
+    const created = await service.createComment(entryId, validated, ipHash, userAgent, {
+      isCuratorNote,
+    });
+    return c.json(successResponse(created), 201);
+  });
+
+  // 2b. List Approved Comments for a Media Asset (Public read with CDN Cache header)
+  router.get('/media/:mediaId/comments', async (c) => {
+    const service = resolveService(c);
+    const mediaId = c.req.param('mediaId')!;
+    const query = c.req.query();
+    const parsedQuery = CommentPaginationQuerySchema.parse(query);
+
+    const result = await service.listMediaComments(mediaId, {
+      cursor: parsedQuery.cursor,
+      limit: parsedQuery.limit,
+    });
+
+    c.header('Cache-Control', 'public, max-age=30, s-maxage=300');
+    return c.json(
+      successResponse(result.items, {
+        pagination: result.pagination,
+      })
+    );
+  });
+
+  // 2c. Post a New Comment for a Media Asset (Auto-tags isCuratorNote when Admin is logged in)
+  router.post('/media/:mediaId/comments', async (c) => {
+    const service = resolveService(c);
+    const mediaId = c.req.param('mediaId')!;
+    const body = await c.req.json().catch(() => ({}));
+    const validated = CreateCommentInputSchema.parse(body);
 
     const userAgent = c.req.header('user-agent');
-    const ipHash = await hashIp(clientIp);
+    const ipHash = await extractIpHash(c);
+    const isCuratorNote = hasAdminPrivileges(c.get('user')?.role);
 
-    const created = await service.createComment(entryId, validated, ipHash, userAgent);
+    const created = await service.createMediaComment(mediaId, validated, ipHash, userAgent, {
+      isCuratorNote,
+    });
     return c.json(successResponse(created), 201);
   });
 

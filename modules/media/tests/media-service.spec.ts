@@ -10,6 +10,7 @@ import {
   MediaTypeNotAllowedError,
 } from '@archive/contracts';
 import { MediaService } from '../src/application/media.service.js';
+import { MediaCollectionService } from '../src/application/collection.service.js';
 import * as schema from '../src/infrastructure/schema.js';
 
 class MockD1PreparedStatement {
@@ -115,6 +116,42 @@ describe('MediaService', () => {
         role TEXT NOT NULL DEFAULT 'gallery',
         sort_order INTEGER NOT NULL DEFAULT 0,
         caption TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE media_collections (
+        id TEXT PRIMARY KEY NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        description TEXT,
+        cover_media_id TEXT,
+        occurred_range TEXT,
+        visibility TEXT NOT NULL DEFAULT 'public',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE media_collection_items (
+        collection_id TEXT NOT NULL REFERENCES media_collections(id) ON DELETE CASCADE,
+        media_asset_id TEXT NOT NULL REFERENCES media_assets(id) ON DELETE CASCADE,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        added_at INTEGER NOT NULL,
+        PRIMARY KEY (collection_id, media_asset_id)
+      );
+
+      CREATE TABLE comments (
+        id TEXT PRIMARY KEY NOT NULL,
+        entry_id TEXT,
+        media_asset_id TEXT,
+        parent_id TEXT,
+        author_name TEXT NOT NULL,
+        author_email TEXT NOT NULL,
+        author_url TEXT,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'approved',
+        is_curator_note INTEGER NOT NULL DEFAULT 0,
+        ip_hash TEXT NOT NULL,
+        user_agent TEXT,
         created_at INTEGER NOT NULL
       );
     `);
@@ -281,5 +318,90 @@ describe('MediaService', () => {
     expect(list).toHaveLength(1);
     expect(list[0].mediaId).toBe(ticket.mediaId);
     expect(list[0].caption).toBe('Front cover photo');
+  });
+
+  it('should create collections, bind/sort media, enforce private visibility, and attach commentCount', async () => {
+    const commentCounter = vi.fn().mockImplementation(async (ids: string[]) => {
+      const m = new Map<string, number>();
+      if (ids[0]) m.set(ids[0], 3);
+      return m;
+    });
+    const collectionService = new MediaCollectionService(db, mediaService, commentCounter);
+
+    // Upload 2 public photos
+    const t1 = await mediaService.requestUploadTicket(
+      { filename: 'kyoto1.jpg', contentType: 'image/jpeg', sizeBytes: 1000, mediaType: 'image' },
+      adminUser
+    );
+    await mediaService.confirmUpload(
+      t1.mediaId,
+      { width: 1600, height: 1200, thumbKey: 'thumbs/kyoto1.webp', exif: { model: 'Leica M6' } },
+      adminUser
+    );
+    const t2 = await mediaService.requestUploadTicket(
+      { filename: 'kyoto2.jpg', contentType: 'image/jpeg', sizeBytes: 1200, mediaType: 'image' },
+      adminUser
+    );
+    await mediaService.confirmUpload(t2.mediaId, { width: 1200, height: 1600 }, adminUser);
+
+    // Create public & private collections
+    const pubCol = await collectionService.createCollection(
+      {
+        title: 'Kyoto Autumn',
+        slug: 'kyoto-autumn',
+        description: 'Foliage walk',
+        occurredRange: '2026.11',
+        visibility: 'public',
+      },
+      adminUser
+    );
+    const privCol = await collectionService.createCollection(
+      {
+        title: 'Private Contact Sheet',
+        slug: 'private-sheet',
+        visibility: 'private',
+      },
+      adminUser
+    );
+
+    // Bind & sort t2 before t1
+    await collectionService.bindCollectionMedia(
+      pubCol.id,
+      {
+        items: [
+          { mediaAssetId: t2.mediaId, sortOrder: 1 },
+          { mediaAssetId: t1.mediaId, sortOrder: 2 },
+        ],
+        replace: true,
+      },
+      adminUser
+    );
+
+    // Public list hides private collection, shows mediaCount=2 & fallback coverUrl
+    const guestCols = await collectionService.listCollections(null);
+    expect(guestCols).toHaveLength(1);
+    expect(guestCols[0].slug).toBe('kyoto-autumn');
+    expect(guestCols[0].mediaCount).toBe(2);
+    expect(guestCols[0].coverUrl).toBeTruthy();
+
+    // Admin list shows both
+    const adminCols = await collectionService.listCollections(adminUser);
+    expect(adminCols).toHaveLength(2);
+
+    // Guest detail returns ordered photos with exif & commentCount
+    const detail = await collectionService.getCollectionMedia('kyoto-autumn', null);
+    expect(detail.items).toHaveLength(2);
+    expect(detail.items[0].id).toBe(t2.mediaId);
+    expect(detail.items[1].id).toBe(t1.mediaId);
+    expect(detail.items[1].exif?.model).toBe('Leica M6');
+    expect(detail.items[0].commentCount).toBe(3);
+
+    // Private collection blocked for guest/unauthenticated
+    await expect(collectionService.getCollectionMedia(privCol.slug, null)).rejects.toThrow(
+      UnauthorizedError
+    );
+    await expect(collectionService.getCollectionMedia(privCol.slug, guestUser)).rejects.toThrow(
+      ForbiddenError
+    );
   });
 });

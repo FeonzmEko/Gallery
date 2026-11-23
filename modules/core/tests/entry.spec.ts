@@ -262,4 +262,130 @@ describe('EntryService & RBAC Timeline', () => {
     expect(relations).toHaveLength(1);
     expect(relations[0].targetEntryId).toBe(e2.id);
   });
+
+  describe('getRandomEntry (M2-3)', () => {
+    it('should only return public & published entries and never leak private, unlisted, draft, archived, or deleted entries', async () => {
+      const publicPub = await entryService.createEntry(
+        {
+          title: 'Only Public Published',
+          type: 'photo',
+          occurredAt: 1700000001000,
+          visibility: 'public',
+          status: 'published',
+        },
+        adminUser
+      );
+
+      await entryService.createEntry(
+        {
+          title: 'Private Secret',
+          type: 'journal',
+          occurredAt: 1700000002000,
+          visibility: 'private',
+          status: 'published',
+        },
+        adminUser
+      );
+
+      await entryService.createEntry(
+        {
+          title: 'Unlisted Entry',
+          type: 'journal',
+          occurredAt: 1700000003000,
+          visibility: 'unlisted',
+          status: 'published',
+        },
+        adminUser
+      );
+
+      await entryService.createEntry(
+        {
+          title: 'Public Draft',
+          type: 'journal',
+          occurredAt: 1700000004000,
+          visibility: 'public',
+          status: 'draft',
+        },
+        adminUser
+      );
+
+      await entryService.createEntry(
+        {
+          title: 'Public Archived',
+          type: 'journal',
+          occurredAt: 1700000005000,
+          visibility: 'public',
+          status: 'archived',
+        },
+        adminUser
+      );
+
+      const deletedPub = await entryService.createEntry(
+        {
+          title: 'Deleted Public',
+          type: 'journal',
+          occurredAt: 1700000006000,
+          visibility: 'public',
+          status: 'published',
+        },
+        adminUser
+      );
+      await entryService.deleteEntry(deletedPub.id, adminUser, true);
+
+      // Run multiple times to ensure no non-public/non-published entry ever leaks
+      for (let i = 0; i < 10; i++) {
+        const picked = await entryService.getRandomEntry();
+        expect(picked.id).toBe(publicPub.id);
+        expect(picked.visibility).toBe('public');
+        expect(picked.status).toBe('published');
+      }
+
+      // Even if only 1 public published entry exists and excludeId matches it, fallback returns it
+      const fallbackPicked = await entryService.getRandomEntry({ excludeId: publicPub.id });
+      expect(fallbackPicked.id).toBe(publicPub.id);
+    });
+
+    it('should exclude excludeId when multiple public published entries exist', async () => {
+      const e1 = await entryService.createEntry(
+        {
+          title: 'Public Entry A',
+          type: 'journal',
+          occurredAt: 1700000001000,
+          visibility: 'public',
+          status: 'published',
+        },
+        adminUser
+      );
+      const e2 = await entryService.createEntry(
+        {
+          title: 'Public Entry B',
+          type: 'photo',
+          occurredAt: 1700000002000,
+          visibility: 'public',
+          status: 'published',
+        },
+        adminUser
+      );
+
+      for (let i = 0; i < 8; i++) {
+        const picked = await entryService.getRandomEntry({ excludeId: e1.id });
+        expect(picked.id).toBe(e2.id);
+      }
+    });
+
+    it('should throw NotFoundError when no public published entries exist', async () => {
+      await entryService.createEntry(
+        {
+          title: 'Only Private',
+          type: 'journal',
+          occurredAt: 1700000001000,
+          visibility: 'private',
+          status: 'published',
+        },
+        adminUser
+      );
+
+      await expect(entryService.getRandomEntry()).rejects.toThrow(NotFoundError);
+    });
+  });
 });
