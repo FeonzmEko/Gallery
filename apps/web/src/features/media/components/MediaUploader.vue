@@ -36,38 +36,140 @@
         <!-- Modal Body -->
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <!-- Settings Bar -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-[2px] bg-[#FAF8F4] border border-[#DDD6C9] text-xs">
-            <div class="flex items-center justify-between sm:justify-start gap-3">
-              <span class="kicker-caps text-[#787268]">ACCESS</span>
-              <div class="inline-flex border border-[#DDD6C9] rounded-[2px] bg-[#F3EFE7]">
-                <button
-                  type="button"
-                  class="px-3 py-1 text-xs font-serif transition-colors"
-                  :class="uploadVisibility === 'public' ? 'bg-[#161513] text-[#FAF8F4]' : 'text-[#787268] hover:text-[#161513]'"
-                  @click="uploadVisibility = 'public'"
-                >
-                  公开访问
-                </button>
-                <button
-                  type="button"
-                  class="px-3 py-1 border-l border-[#DDD6C9] text-xs font-serif transition-colors"
-                  :class="uploadVisibility === 'private' ? 'bg-[#9A6B2F] text-[#FAF8F4]' : 'text-[#787268] hover:text-[#161513]'"
-                  @click="uploadVisibility = 'private'"
-                >
-                  私密隐藏
-                </button>
+          <div class="space-y-3.5 p-4 rounded-[2px] bg-[var(--alabaster)] border border-[var(--rule)] text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex items-center justify-between sm:justify-start gap-3">
+                <span class="kicker-caps text-[#787268]">ACCESS</span>
+                <div class="inline-flex border border-[#DDD6C9] rounded-[2px] bg-[#F3EFE7]">
+                  <button
+                    type="button"
+                    class="px-3 py-1 text-xs font-serif transition-colors"
+                    :class="uploadVisibility === 'public' ? 'bg-[#161513] text-[#FAF8F4]' : 'text-[#787268] hover:text-[#161513]'"
+                    @click="uploadVisibility = 'public'"
+                  >
+                    公开访问
+                  </button>
+                  <button
+                    type="button"
+                    class="px-3 py-1 border-l border-[#DDD6C9] text-xs font-serif transition-colors"
+                    :class="uploadVisibility === 'private' ? 'bg-[#9A6B2F] text-[#FAF8F4]' : 'text-[#787268] hover:text-[#161513]'"
+                    @click="uploadVisibility = 'private'"
+                  >
+                    私密隐藏
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="!targetEntryId" class="flex items-center justify-between sm:justify-end gap-2">
+                <label class="flex items-center gap-2 cursor-pointer text-[var(--ink)] font-serif">
+                  <input
+                    type="checkbox"
+                    v-model="createTimelineEntry"
+                    class="rounded-[2px] border-[#C4BBA9] text-[#9A3F2B] focus:ring-[#9A3F2B]"
+                  />
+                  <span>同步生成时间线摄影条目</span>
+                </label>
               </div>
             </div>
 
-            <div v-if="!targetEntryId" class="flex items-center justify-between sm:justify-end gap-2">
-              <label class="flex items-center gap-2 cursor-pointer text-[#161513] font-serif">
-                <input
-                  type="checkbox"
-                  v-model="createTimelineEntry"
-                  class="rounded-[2px] border-[#C4BBA9] text-[#9A3F2B] focus:ring-[#9A3F2B]"
-                />
-                <span>同步生成时间线摄影条目</span>
-              </label>
+            <!-- M3-5: Travel Collection Assignment / Quick Create -->
+            <div v-if="!targetEntryId" class="pt-3 border-t border-[var(--rule)] space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                  <FolderPlusIcon class="w-3.5 h-3.5 text-[var(--seal)] shrink-0" />
+                  <span class="kicker-caps text-[var(--ink-muted)] shrink-0">COLLECTION</span>
+                  <select
+                    v-model="selectedCollectionId"
+                    :disabled="isLoadingCollections || isProcessing"
+                    class="flex-1 min-w-0 editorial-field px-2.5 py-1.5 text-xs font-serif"
+                    aria-label="归属旅行合集"
+                  >
+                    <option value="">不归属合集（仅存入影像长廊）</option>
+                    <option
+                      v-for="col in collections"
+                      :key="col.id"
+                      :value="col.id"
+                    >
+                      {{ col.title }}{{ col.occurredRange ? ` · ${col.occurredRange}` : '' }}{{ col.visibility === 'private' ? ' [私密]' : '' }}
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[2px] border border-[var(--rule-strong)] text-[11px] font-serif text-[var(--ink)] hover:border-[var(--seal)] hover:text-[var(--seal)] transition-colors shrink-0"
+                  @click="toggleNewCollectionForm"
+                >
+                  <PlusIcon class="w-3 h-3" />
+                  <span>{{ showNewCollectionForm ? '收起新建' : '快捷新建合集' }}</span>
+                </button>
+              </div>
+
+              <!-- Inline Quick Create Collection Form -->
+              <div
+                v-if="showNewCollectionForm"
+                class="p-3.5 rounded-[2px] border border-[var(--rule)] bg-[var(--canvas)]/70 space-y-2.5"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="kicker-caps text-[var(--seal)]">NEW TRAVEL COLLECTION</span>
+                  <span class="text-[10px] font-mono text-[var(--ink-muted)]">
+                    可见性默认跟随当前「{{ uploadVisibility === 'private' ? '私密' : '公开' }}」设置
+                  </span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <input
+                    v-model="newCollectionForm.title"
+                    type="text"
+                    maxlength="200"
+                    placeholder="合集标题 *（如：青海湖）"
+                    class="editorial-field px-2.5 py-1.5 text-xs"
+                  />
+                  <input
+                    v-model="newCollectionForm.occurredRange"
+                    type="text"
+                    maxlength="100"
+                    placeholder="发生区间（可选，如：2026-07 · 青海湖）"
+                    class="editorial-field px-2.5 py-1.5 text-xs"
+                  />
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    v-model="newCollectionForm.description"
+                    type="text"
+                    maxlength="1000"
+                    placeholder="合集简介或旅途前言（可选）"
+                    class="flex-1 editorial-field px-2.5 py-1.5 text-xs"
+                  />
+                  <button
+                    type="button"
+                    :disabled="isCreatingCollection || !newCollectionForm.title.trim()"
+                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-[2px] bg-[var(--ink)] text-[var(--alabaster)] text-xs font-serif hover:bg-[var(--seal)] transition-colors disabled:opacity-40 shrink-0"
+                    @click="handleCreateCollection"
+                  >
+                    <Loader2Icon v-if="isCreatingCollection" class="w-3 h-3 animate-spin" />
+                    <span>创建并选中</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Unbound Assets Retry Banner (if batch bind failed) -->
+              <div
+                v-if="unboundAssets.length > 0"
+                class="flex items-center justify-between gap-3 px-3 py-2 rounded-[2px] border border-[var(--seal)]/40 bg-[var(--seal)]/10 text-[11px]"
+              >
+                <span class="font-serif text-[var(--seal)]">
+                  有 {{ unboundAssets.length }} 张已上传影像尚未完成合集归属。
+                </span>
+                <button
+                  type="button"
+                  :disabled="isBindingCollection"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] bg-[var(--seal)] text-[#FAF8F4] font-serif hover:opacity-90 disabled:opacity-50 shrink-0"
+                  @click="retryBindUnboundAssets"
+                >
+                  <Loader2Icon v-if="isBindingCollection" class="w-3 h-3 animate-spin" />
+                  <span>重试归属</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -228,12 +330,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import {
   UploadCloud as UploadCloudIcon,
   X as XIcon,
   Image as ImageIcon,
   Loader2 as Loader2Icon,
+  FolderPlus as FolderPlusIcon,
+  Plus as PlusIcon,
 } from 'lucide-vue-next';
 import { apiClient, getStoredToken } from '@/shared/api/client';
 import { useUiStore } from '@/shared/stores/ui.store';
@@ -243,18 +347,25 @@ import {
   type ExifMetadata,
   type ProcessedImageResult,
 } from '@/shared/utils/image-processor';
-import type { MediaAssetDto, UploadTicketDto, EntryDto } from '@archive/contracts';
+import type {
+  MediaAssetDto,
+  UploadTicketDto,
+  EntryDto,
+  MediaCollectionDto,
+} from '@archive/contracts';
 import { generateUlid } from '@archive/shared';
 
 const props = defineProps<{
   modelValue: boolean;
   targetEntryId?: string;
+  defaultCollectionId?: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void;
   (e: 'uploaded', assets: MediaAssetDto[]): void;
   (e: 'entry-created', entry: EntryDto): void;
+  (e: 'collection-updated', collectionId: string): void;
 }>();
 
 const uiStore = useUiStore();
@@ -284,9 +395,138 @@ const queue = ref<QueueItem[]>([]);
 const uploadVisibility = ref<'public' | 'private'>('public');
 const createTimelineEntry = ref(true);
 
+const collections = ref<MediaCollectionDto[]>([]);
+const isLoadingCollections = ref(false);
+const selectedCollectionId = ref('');
+const showNewCollectionForm = ref(false);
+const isCreatingCollection = ref(false);
+const isBindingCollection = ref(false);
+const unboundAssets = ref<MediaAssetDto[]>([]);
+const newCollectionForm = ref({
+  title: '',
+  occurredRange: '',
+  description: '',
+});
+
 const hasCompletedTasks = computed(() => queue.value.some((t) => t.status === 'success'));
 const hasPendingTasks = computed(() => queue.value.some((t) => t.status === 'pending' || t.status === 'error'));
 const hasFailedTasks = computed(() => queue.value.some((t) => t.status === 'error'));
+
+async function loadCollections() {
+  if (props.targetEntryId) return;
+  isLoadingCollections.value = true;
+  try {
+    collections.value = await apiClient.listCollections();
+    if (
+      props.defaultCollectionId &&
+      collections.value.some((c) => c.id === props.defaultCollectionId)
+    ) {
+      selectedCollectionId.value = props.defaultCollectionId;
+    }
+  } catch {
+    // Non-blocking: uploader remains usable even if collection list fails to load
+  } finally {
+    isLoadingCollections.value = false;
+  }
+}
+
+function toggleNewCollectionForm() {
+  showNewCollectionForm.value = !showNewCollectionForm.value;
+}
+
+async function handleCreateCollection() {
+  const title = newCollectionForm.value.title.trim();
+  if (!title || isCreatingCollection.value) return;
+
+  isCreatingCollection.value = true;
+  try {
+    const created = await apiClient.createCollection({
+      title,
+      occurredRange: newCollectionForm.value.occurredRange.trim() || null,
+      description: newCollectionForm.value.description.trim() || null,
+      visibility: uploadVisibility.value,
+    });
+    collections.value = [created, ...collections.value];
+    selectedCollectionId.value = created.id;
+    newCollectionForm.value = { title: '', occurredRange: '', description: '' };
+    showNewCollectionForm.value = false;
+    emit('collection-updated', created.id);
+    uiStore.notifySuccess(`已新建旅行合集「${created.title}」`);
+  } catch (err: any) {
+    uiStore.notifyError(err?.message || '新建合集失败');
+  } finally {
+    isCreatingCollection.value = false;
+  }
+}
+
+async function bindAssetsToCollection(collectionId: string, assets: MediaAssetDto[]): Promise<boolean> {
+  if (!collectionId || assets.length === 0) return true;
+  isBindingCollection.value = true;
+  try {
+    const targetCol = collections.value.find((c) => c.id === collectionId);
+    const baseOrder = targetCol?.mediaCount ?? 0;
+    const detail = await apiClient.bindCollectionMedia(collectionId, {
+      items: assets.map((asset, idx) => ({
+        mediaAssetId: asset.id,
+        sortOrder: baseOrder + idx,
+      })),
+      replace: false,
+    });
+    if (targetCol) {
+      targetCol.mediaCount = detail.collection.mediaCount ?? baseOrder + assets.length;
+    }
+    const boundIds = new Set(assets.map((a) => a.id));
+    unboundAssets.value = unboundAssets.value.filter((a) => !boundIds.has(a.id));
+    emit('collection-updated', collectionId);
+    return true;
+  } catch (err: any) {
+    const existingIds = new Set(unboundAssets.value.map((a) => a.id));
+    for (const asset of assets) {
+      if (!existingIds.has(asset.id)) {
+        unboundAssets.value.push(asset);
+      }
+    }
+    uiStore.notifyError(err?.message || '照片已上传，但归属合集失败，可点击重试归属');
+    return false;
+  } finally {
+    isBindingCollection.value = false;
+  }
+}
+
+async function retryBindUnboundAssets() {
+  if (!selectedCollectionId.value || unboundAssets.value.length === 0 || isBindingCollection.value) {
+    return;
+  }
+  const count = unboundAssets.value.length;
+  const ok = await bindAssetsToCollection(selectedCollectionId.value, [...unboundAssets.value]);
+  if (ok) {
+    const targetCol = collections.value.find((c) => c.id === selectedCollectionId.value);
+    uiStore.notifySuccess(
+      `已将 ${count} 张影像归入「${targetCol?.title || '所选合集'}」`
+    );
+  }
+}
+
+watch(
+  () => props.modelValue,
+  (isOpen) => {
+    if (isOpen && !props.targetEntryId) {
+      if (props.defaultCollectionId) {
+        selectedCollectionId.value = props.defaultCollectionId;
+      }
+      loadCollections();
+    }
+  }
+);
+
+watch(
+  () => props.defaultCollectionId,
+  (newId) => {
+    if (newId && props.modelValue && !props.targetEntryId) {
+      selectedCollectionId.value = newId;
+    }
+  }
+);
 
 async function handleClose() {
   if (isProcessing.value) {
@@ -432,8 +672,18 @@ async function startUploadQueue() {
     await Promise.all(workers);
 
     if (uploadedAssets.length > 0) {
+      if (!props.targetEntryId && selectedCollectionId.value) {
+        const boundOk = await bindAssetsToCollection(selectedCollectionId.value, uploadedAssets);
+        if (boundOk) {
+          const targetCol = collections.value.find((c) => c.id === selectedCollectionId.value);
+          uiStore.notifySuccess(
+            `成功上传 ${uploadedAssets.length} 张影像并归入「${targetCol?.title || '旅行合集'}」`
+          );
+        }
+      } else {
+        uiStore.notifySuccess(`成功上传 ${uploadedAssets.length} 张影像`);
+      }
       emit('uploaded', uploadedAssets);
-      uiStore.notifySuccess(`成功上传 ${uploadedAssets.length} 张影像`);
     }
   } finally {
     isProcessing.value = false;
