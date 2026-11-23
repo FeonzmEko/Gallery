@@ -25,7 +25,7 @@
             class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#11100F]/85 via-[#11100F]/40 to-transparent px-4 pt-8 pb-3 text-[10px] font-mono tracking-[0.16em] uppercase text-[#FAF8F4]/90 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           >
             <span>{{ typeTheme.code }} · {{ formattedDate }}</span>
-            <span v-if="entry.tags?.length" class="text-[#E2A998]">#{{ entry.tags[0] }}</span>
+            <span v-if="uniqueTags.length" class="text-[#E2A998]">#{{ uniqueTags[0] }}</span>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@
       <div class="pt-5 border-t border-[#E8E2D6] flex items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
           <button
-            v-for="tag in (entry.tags || []).slice(0, 3)"
+            v-for="tag in uniqueTags.slice(0, 3)"
             :key="tag"
             type="button"
             class="text-[11px] font-mono tracking-[0.08em] text-[#787268] hover:text-[#9A3F2B] transition-colors"
@@ -114,10 +114,14 @@
             #{{ tag }}
           </button>
         </div>
-        <span class="inline-flex items-center gap-2 text-[11px] font-serif tracking-[0.16em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors shrink-0">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 text-[11px] font-serif tracking-[0.16em] text-[#161513] group-hover:text-[#9A3F2B] transition-colors shrink-0 cursor-pointer"
+          @click.stop="$emit('select', entry)"
+        >
           <span>展开卷宗</span>
           <span class="font-mono transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
-        </span>
+        </button>
       </div>
     </div>
   </article>
@@ -150,7 +154,7 @@
           class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#11100F]/85 via-[#11100F]/35 to-transparent px-3.5 pt-7 pb-2.5 text-[10px] font-mono tracking-[0.15em] uppercase text-[#FAF8F4]/90 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         >
           <span class="truncate">{{ typeTheme.code }} · {{ formattedDate }}</span>
-          <span v-if="entry.tags?.length" class="text-[#E2A998] shrink-0 ml-2">#{{ entry.tags[0] }}</span>
+          <span v-if="uniqueTags.length" class="text-[#E2A998] shrink-0 ml-2">#{{ uniqueTags[0] }}</span>
         </div>
       </div>
     </div>
@@ -222,7 +226,7 @@
       <div class="pt-4 border-t border-[#E8E2D6] flex items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
           <button
-            v-for="tag in (entry.tags || []).slice(0, 3)"
+            v-for="tag in uniqueTags.slice(0, 3)"
             :key="tag"
             type="button"
             class="text-[11px] font-mono text-[#57534C] hover:text-[#9A3F2B] transition-colors"
@@ -230,14 +234,18 @@
           >
             #{{ tag }}
           </button>
-          <span v-if="!entry.tags?.length" class="text-[11px] font-serif text-[#6E685E]">
+          <span v-if="!uniqueTags.length" class="text-[11px] font-serif text-[#6E685E]">
             {{ typeTheme.label }}
           </span>
         </div>
-        <span class="inline-flex items-center gap-1.5 text-[11px] font-serif tracking-[0.14em] text-[#57534C] group-hover:text-[#9A3F2B] transition-colors shrink-0">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 text-[11px] font-serif tracking-[0.14em] text-[#57534C] group-hover:text-[#9A3F2B] transition-colors shrink-0 cursor-pointer"
+          @click.stop="$emit('select', entry)"
+        >
           <span>阅览</span>
           <span class="font-mono transition-transform duration-300 group-hover:translate-x-0.5">&rarr;</span>
-        </span>
+        </button>
       </div>
     </div>
   </article>
@@ -306,10 +314,10 @@
         </p>
       </div>
 
-      <div class="flex items-center justify-between pt-2">
-        <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center justify-between gap-4 pt-2">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
           <button
-            v-for="tag in entry.tags || []"
+            v-for="tag in uniqueTags"
             :key="tag"
             type="button"
             class="text-[11px] font-mono text-[#787268] hover:text-[#9A3F2B] transition-colors"
@@ -318,9 +326,14 @@
             #{{ tag }}
           </button>
         </div>
-        <span class="text-[11px] font-serif tracking-[0.14em] text-[#9B9488] group-hover:text-[#9A3F2B] transition-colors">
-          展开卷宗 &rarr;
-        </span>
+        <button
+          type="button"
+          class="relative z-10 inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap px-3 py-1.5 -my-1.5 -mr-3 rounded-[2px] text-[11px] font-serif tracking-[0.14em] text-[#787268] group-hover:text-[#9A3F2B] hover:bg-[#EAE4D8]/65 transition-colors cursor-pointer"
+          @click.stop="$emit('select', entry)"
+        >
+          <span>展开卷宗</span>
+          <span class="font-mono transition-transform duration-300 group-hover:translate-x-0.5">&rarr;</span>
+        </button>
       </div>
     </div>
 
@@ -372,6 +385,20 @@ defineEmits<{
 }>();
 
 const formattedDate = computed(() => formatDate(props.entry.occurredAt, '.'));
+
+const uniqueTags = computed<string[]>(() => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of props.entry.tags ?? []) {
+    const tag = raw.trim();
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(tag);
+  }
+  return result;
+});
 
 const plateIndex = computed(() => {
   if (props.index === undefined) return '';

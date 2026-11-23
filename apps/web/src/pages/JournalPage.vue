@@ -26,7 +26,11 @@
         </p>
 
         <div class="flex flex-wrap items-center gap-4">
-          <span class="font-mono text-[11px] tracking-[0.14em] text-[#787268] tabular-nums">
+          <span v-if="isLoading" class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.14em] text-[#9B9488]">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#9A3F2B]/60 animate-pulse"></span>
+            <span>检录中…</span>
+          </span>
+          <span v-else class="font-mono text-[11px] tracking-[0.14em] text-[#787268] tabular-nums">
             {{ journals.length }} 篇手札
           </span>
           <button
@@ -89,27 +93,36 @@
     </section>
 
     <!-- ========================================================= -->
-    <!-- LOADING SKELETON                                          -->
+    <!-- FOLIO TRANSITION STAGE (Skeleton / Empty / Folio Plates)  -->
     <!-- ========================================================= -->
-    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-7">
-      <div
-        v-for="i in 4"
-        :key="i"
-        class="h-52 bg-[#FAF8F4] border border-[#DDD6C9] p-8 animate-pulse space-y-4"
-      >
-        <div class="h-3 bg-[#EAE4D8] w-1/3"></div>
-        <div class="h-6 bg-[#EAE4D8] w-2/3"></div>
-        <div class="h-14 bg-[#EAE4D8]/60 w-full"></div>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- SERENE LITERARY EMPTY STATE                               -->
-    <!-- ========================================================= -->
-    <div
-      v-else-if="journals.length === 0"
-      class="py-24 sm:py-32 px-6 text-center flex flex-col items-center justify-center border-y border-[#DDD6C9] bg-[#FAF8F4]/40"
+    <Transition
+      mode="out-in"
+      enter-active-class="transition-opacity duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
     >
+      <!-- LOADING SKELETON -->
+      <div v-if="isLoading" key="loading" class="grid grid-cols-1 md:grid-cols-2 gap-7">
+        <div
+          v-for="i in 4"
+          :key="i"
+          class="h-52 bg-[#FAF8F4] border border-[#DDD6C9] p-8 animate-pulse space-y-4"
+        >
+          <div class="h-3 bg-[#EAE4D8] w-1/3"></div>
+          <div class="h-6 bg-[#EAE4D8] w-2/3"></div>
+          <div class="h-14 bg-[#EAE4D8]/60 w-full"></div>
+        </div>
+      </div>
+
+      <!-- SERENE LITERARY EMPTY STATE -->
+      <div
+        v-else-if="journals.length === 0"
+        key="empty"
+        class="py-24 sm:py-32 px-6 text-center flex flex-col items-center justify-center border-y border-[#DDD6C9] bg-[#FAF8F4]/40"
+      >
       <div class="w-[1px] h-10 bg-[#C4BBA9] mb-6"></div>
       <span class="font-display italic text-3xl text-[#C4BBA9] mb-4">§</span>
       <p class="font-display italic text-lg text-[#9B9488] tracking-wide">
@@ -132,10 +145,8 @@
       </button>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- LITERARY FOLIO LAYOUT (Lead Essay + 2-Col Folio Plates)   -->
-    <!-- ========================================================= -->
-    <div v-else class="space-y-8">
+    <!-- LITERARY FOLIO LAYOUT (Lead Essay + 2-Col Folio Plates) -->
+    <div v-else key="list" class="space-y-8">
       <!-- Lead Essay Spread -->
       <article
         v-if="journals.length > 0"
@@ -201,7 +212,7 @@
           <div class="pt-5 border-t border-[#E8E2D6] flex items-center justify-between gap-4">
             <div class="flex flex-wrap gap-3">
               <span
-                v-for="tag in journals[0].tags || []"
+                v-for="tag in dedupeTags(journals[0].tags)"
                 :key="tag"
                 class="text-[11px] font-mono text-[#787268]"
               >
@@ -272,9 +283,9 @@
               {{ journal.summary || '点击翻阅手札全文...' }}
             </p>
 
-            <div v-if="journal.tags && journal.tags.length > 0" class="flex flex-wrap gap-2.5 pt-1">
+            <div v-if="dedupeTags(journal.tags).length > 0" class="flex flex-wrap gap-2.5 pt-1">
               <span
-                v-for="tag in journal.tags"
+                v-for="tag in dedupeTags(journal.tags)"
                 :key="tag"
                 class="text-[11px] font-mono text-[#787268]"
               >
@@ -306,6 +317,7 @@
         </button>
       </div>
     </div>
+    </Transition>
 
     <!-- ========================================================= -->
     <!-- BOOK-SHEET READING MODAL                                  -->
@@ -364,11 +376,11 @@
               v-html="renderMarkdown(readingJournal.contentMarkdown || readingJournal.summary || '')"
             ></div>
             <div
-              v-if="readingJournal.tags && readingJournal.tags.length > 0"
+              v-if="dedupeTags(readingJournal.tags).length > 0"
               class="max-w-[64ch] mx-auto mt-10 pt-5 border-t border-[#E8E2D6] flex flex-wrap gap-3"
             >
               <span
-                v-for="tag in readingJournal.tags"
+                v-for="tag in dedupeTags(readingJournal.tags)"
                 :key="tag"
                 class="text-[11px] font-mono text-[#787268]"
               >
@@ -516,7 +528,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import {
   PenSquare as PenSquareIcon,
   Search as SearchIcon,
@@ -586,6 +598,20 @@ const form = ref<{
   visibility: 'public',
 });
 
+function dedupeTags(rawTags?: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of rawTags ?? []) {
+    const tag = raw.trim();
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(tag);
+  }
+  return result;
+}
+
 function formatOccurredAt(ts?: number): string {
   if (!ts) return '';
   return formatDate(ts, '.');
@@ -645,7 +671,11 @@ function selectMood(mood: string) {
   loadJournals(true);
 }
 
+let activeRequestSeq = 0;
+
 async function loadJournals(reset: boolean = true) {
+  const reqSeq = ++activeRequestSeq;
+
   if (reset) {
     isLoading.value = true;
     nextCursor.value = null;
@@ -660,6 +690,8 @@ async function loadJournals(reset: boolean = true) {
     if (!reset && nextCursor.value) params.cursor = nextCursor.value;
 
     const res = await apiClient.getPaginated<JournalItem>('/api/v1/journals', { params });
+    if (reqSeq !== activeRequestSeq) return;
+
     if (reset) {
       journals.value = res.items;
     } else {
@@ -668,10 +700,14 @@ async function loadJournals(reset: boolean = true) {
     nextCursor.value = res.pagination.cursor;
     hasMore.value = res.pagination.hasMore;
   } catch (err: any) {
-    uiStore.notifyError(err?.message || '加载随想手札失败');
+    if (reqSeq === activeRequestSeq) {
+      uiStore.notifyError(err?.message || '加载随想手札失败');
+    }
   } finally {
-    isLoading.value = false;
-    isLoadingMore.value = false;
+    if (reqSeq === activeRequestSeq) {
+      isLoading.value = false;
+      isLoadingMore.value = false;
+    }
   }
 }
 
@@ -754,7 +790,22 @@ watch(
   { immediate: true }
 );
 
+function handleGlobalKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    if (isWriteModalOpen.value) {
+      isWriteModalOpen.value = false;
+    } else if (readingJournal.value) {
+      readingJournal.value = null;
+    }
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeyDown);
   loadJournals(true);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 </script>

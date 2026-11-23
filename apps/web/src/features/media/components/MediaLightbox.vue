@@ -2,9 +2,8 @@
   <Teleport to="body">
     <div
       v-if="modelValue && currentItem"
-      class="fixed inset-0 z-50 flex overflow-hidden bg-[#0E0D0C]/98 backdrop-blur-xl text-[#F3EFE7] select-none"
+      class="fixed inset-0 z-[70] flex overflow-hidden bg-[#0E0D0C]/98 backdrop-blur-xl text-[#F3EFE7] select-none"
       tabindex="-1"
-      @keydown="handleKeyDown"
       ref="containerRef"
     >
       <!-- Main Viewing Room Stage -->
@@ -331,6 +330,7 @@ const zoomScale = ref(1.0);
 const showExifDrawer = ref(false);
 const imageLoaded = ref(false);
 const imageError = ref(false);
+let previousBodyOverflow: string | null = null;
 
 const currentItem = computed<LightboxItem | null>(() => {
   if (props.items.length === 0) return null;
@@ -373,9 +373,13 @@ watch(
           imageLoaded.value = true;
         }
       });
+      if (previousBodyOverflow === null) {
+        previousBodyOverflow = document.body.style.overflow;
+      }
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    } else if (previousBodyOverflow !== null) {
+      document.body.style.overflow = previousBodyOverflow;
+      previousBodyOverflow = null;
     }
   }
 );
@@ -451,22 +455,34 @@ function handleKeyDown(e: KeyboardEvent) {
 
   switch (e.key) {
     case 'Escape':
+      e.preventDefault();
+      e.stopImmediatePropagation();
       handleClose();
       break;
     case 'ArrowLeft':
+      e.preventDefault();
+      e.stopPropagation();
       prevPhoto();
       break;
     case 'ArrowRight':
+      e.preventDefault();
+      e.stopPropagation();
       nextPhoto();
       break;
     case '+':
     case '=':
+      e.preventDefault();
+      e.stopPropagation();
       zoomIn();
       break;
     case '-':
+      e.preventDefault();
+      e.stopPropagation();
       zoomOut();
       break;
     case '0':
+      e.preventDefault();
+      e.stopPropagation();
       resetZoom();
       break;
   }
@@ -482,11 +498,14 @@ function formatSize(bytes: number): string {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown, true);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-  document.body.style.overflow = '';
+  window.removeEventListener('keydown', handleKeyDown, true);
+  if (previousBodyOverflow !== null) {
+    document.body.style.overflow = previousBodyOverflow;
+    previousBodyOverflow = null;
+  }
 });
 </script>

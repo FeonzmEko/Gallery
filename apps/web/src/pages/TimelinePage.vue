@@ -27,9 +27,15 @@
 
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-3 font-mono text-[11px] tracking-[0.14em] text-[#57534C] tabular-nums">
-            <span>{{ entries.length }} 卷展品</span>
-            <span v-if="yearRangeLabel" class="text-[#C4BBA9]">/</span>
-            <span v-if="yearRangeLabel">{{ yearRangeLabel }}</span>
+            <span v-if="isLoading" class="inline-flex items-center gap-1.5 text-[#9B9488]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#9A3F2B]/60 animate-pulse"></span>
+              <span>检录中…</span>
+            </span>
+            <template v-else>
+              <span>{{ entries.length }} 卷展品</span>
+              <span v-if="yearRangeLabel" class="text-[#C4BBA9]">/</span>
+              <span v-if="yearRangeLabel">{{ yearRangeLabel }}</span>
+            </template>
           </div>
 
           <button
@@ -136,7 +142,7 @@
       </div>
 
       <!-- Quiet Tag Index Strip -->
-      <div v-if="tags.length > 0 || selectedTag" class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
+      <div v-if="dedupedTags.length > 0 || selectedTag" class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
         <span class="kicker-caps text-[#6E685E]">INDEX</span>
         <button
           v-if="selectedTag"
@@ -148,7 +154,7 @@
           <XIcon class="w-3 h-3" />
         </button>
         <button
-          v-for="tag in tags.slice(0, 14)"
+          v-for="tag in dedupedTags.slice(0, 14)"
           :key="tag.id"
           v-show="tag.name !== selectedTag"
           type="button"
@@ -161,35 +167,65 @@
     </section>
 
     <!-- ========================================================= -->
-    <!-- LOADING SKELETONS (Architectural Hairline Placeholders)   -->
+    <!-- FEED TRANSITION STAGE (Skeleton / Empty / Bento / Spine)  -->
     <!-- ========================================================= -->
-    <div v-if="isLoading && entries.length === 0" class="grid grid-cols-1 md:grid-cols-12 gap-7">
-      <div class="md:col-span-12 h-72 bg-[#FAF8F4] border border-[#DDD6C9] p-8 animate-pulse grid grid-cols-12 gap-8">
-        <div class="col-span-7 bg-[#EAE4D8]"></div>
-        <div class="col-span-5 space-y-4 py-4">
-          <div class="h-3 bg-[#EAE4D8] w-1/3"></div>
-          <div class="h-7 bg-[#EAE4D8] w-4/5"></div>
-          <div class="h-16 bg-[#EAE4D8]/60 w-full"></div>
+    <Transition
+      mode="out-in"
+      enter-active-class="transition-opacity duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <!-- LOADING SKELETONS (Architectural Hairline Placeholders) -->
+      <div v-if="isLoading" key="loading">
+        <div v-if="viewMode === 'spine'" class="border-t border-[#DDD6C9]">
+          <div
+            v-for="i in 4"
+            :key="i"
+            class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 py-8 border-b border-[#DDD6C9] animate-pulse"
+          >
+            <div class="md:col-span-3 space-y-2">
+              <div class="h-8 bg-[#EAE4D8] w-24"></div>
+              <div class="h-3 bg-[#EAE4D8]/70 w-16"></div>
+            </div>
+            <div class="md:col-span-6 space-y-3">
+              <div class="h-6 bg-[#EAE4D8] w-3/4"></div>
+              <div class="h-12 bg-[#EAE4D8]/60 w-full"></div>
+            </div>
+            <div class="md:col-span-3">
+              <div class="w-full aspect-[4/3] bg-[#EAE4D8]"></div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-12 gap-7">
+          <div class="md:col-span-12 h-72 bg-[#FAF8F4] border border-[#DDD6C9] p-8 animate-pulse grid grid-cols-12 gap-8">
+            <div class="col-span-7 bg-[#EAE4D8]"></div>
+            <div class="col-span-5 space-y-4 py-4">
+              <div class="h-3 bg-[#EAE4D8] w-1/3"></div>
+              <div class="h-7 bg-[#EAE4D8] w-4/5"></div>
+              <div class="h-16 bg-[#EAE4D8]/60 w-full"></div>
+            </div>
+          </div>
+          <div
+            v-for="i in 2"
+            :key="i"
+            class="md:col-span-6 h-60 bg-[#FAF8F4] border border-[#DDD6C9] p-7 animate-pulse space-y-4"
+          >
+            <div class="h-3 bg-[#EAE4D8] w-1/4"></div>
+            <div class="h-6 bg-[#EAE4D8] w-2/3"></div>
+            <div class="h-14 bg-[#EAE4D8]/60 w-full"></div>
+          </div>
         </div>
       </div>
-      <div
-        v-for="i in 2"
-        :key="i"
-        class="md:col-span-6 h-60 bg-[#FAF8F4] border border-[#DDD6C9] p-7 animate-pulse space-y-4"
-      >
-        <div class="h-3 bg-[#EAE4D8] w-1/4"></div>
-        <div class="h-6 bg-[#EAE4D8] w-2/3"></div>
-        <div class="h-14 bg-[#EAE4D8]/60 w-full"></div>
-      </div>
-    </div>
 
-    <!-- ========================================================= -->
-    <!-- SERENE MUSEUM PLINTH EMPTY STATE                          -->
-    <!-- ========================================================= -->
-    <div
-      v-else-if="entries.length === 0"
-      class="py-24 sm:py-32 px-6 text-center flex flex-col items-center justify-center border-y border-[#DDD6C9] bg-[#FAF8F4]/40"
-    >
+      <!-- SERENE MUSEUM PLINTH EMPTY STATE -->
+      <div
+        v-else-if="entries.length === 0"
+        key="empty"
+        class="py-24 sm:py-32 px-6 text-center flex flex-col items-center justify-center border-y border-[#DDD6C9] bg-[#FAF8F4]/40"
+      >
       <div class="w-[1px] h-10 bg-[#C4BBA9] mb-6"></div>
       <div class="relative w-10 h-10 flex items-center justify-center mb-6">
         <span class="absolute inset-0 border border-[#C4BBA9]"></span>
@@ -230,10 +266,8 @@
       </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- VIEW 1: CURATED EXHIBITION MONOGRAPH GRID                 -->
-    <!-- ========================================================= -->
-    <div v-else-if="viewMode === 'bento'" class="space-y-10">
+    <!-- VIEW 1: CURATED EXHIBITION MONOGRAPH GRID -->
+    <div v-else-if="viewMode === 'bento'" key="bento" class="space-y-10">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-7 lg:gap-8 items-stretch">
         <TimelineCard
           v-for="(entry, idx) in entries"
@@ -264,10 +298,8 @@
       </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- VIEW 2: BOOK ANNALS LEDGER (Chronological Spine)          -->
-    <!-- ========================================================= -->
-    <div v-else class="border-t border-[#DDD6C9]">
+    <!-- VIEW 2: BOOK ANNALS LEDGER (Chronological Spine) -->
+    <div v-else key="spine" class="border-t border-[#DDD6C9]">
       <TimelineCard
         v-for="(entry, idx) in entries"
         :key="entry.id"
@@ -293,6 +325,7 @@
         </button>
       </div>
     </div>
+    </Transition>
 
     <!-- Entry Detail + Markdown/Map + Comments Modal -->
     <EntryDetailModal
@@ -372,6 +405,20 @@ const yearRangeLabel = computed(() => {
   return `${sorted[0]} — ${sorted[sorted.length - 1]}`;
 });
 
+const dedupedTags = computed<TagDto[]>(() => {
+  const seen = new Set<string>();
+  const result: TagDto[] = [];
+  for (const tag of tags.value) {
+    const name = tag.name?.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({ ...tag, name });
+  }
+  return result;
+});
+
 /**
  * Editorial asymmetry rhythm:
  * - Index 0 with cover => full-width 12-column Lead Monograph Spread
@@ -442,7 +489,11 @@ async function loadMetadata() {
   }
 }
 
+let activeRequestSeq = 0;
+
 async function loadTimeline(reset: boolean = false) {
+  const reqSeq = ++activeRequestSeq;
+
   if (reset) {
     isLoading.value = true;
     nextCursor.value = null;
@@ -459,6 +510,7 @@ async function loadTimeline(reset: boolean = false) {
     if (!reset && nextCursor.value) params.cursor = nextCursor.value;
 
     const res = await apiClient.getPaginated<EntryDto>('/api/v1/entries', { params });
+    if (reqSeq !== activeRequestSeq) return;
 
     if (reset) {
       entries.value = res.items;
@@ -469,10 +521,14 @@ async function loadTimeline(reset: boolean = false) {
     nextCursor.value = res.pagination.cursor;
     hasMore.value = res.pagination.hasMore;
   } catch (err: any) {
-    uiStore.notifyError(err?.message || '加载时光纪流失败');
+    if (reqSeq === activeRequestSeq) {
+      uiStore.notifyError(err?.message || '加载时光纪流失败');
+    }
   } finally {
-    isLoading.value = false;
-    isLoadingMore.value = false;
+    if (reqSeq === activeRequestSeq) {
+      isLoading.value = false;
+      isLoadingMore.value = false;
+    }
   }
 }
 
