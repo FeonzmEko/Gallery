@@ -215,18 +215,14 @@ export class CommentService implements CommentPort {
     userAgent?: string,
     options?: CreateCommentOptions
   ): Promise<CommentDto> {
-    if (!dto.authorName || dto.authorName.trim() === '') {
-      throw new ValidationError('Author name cannot be empty');
-    }
-    if (!dto.authorEmail || dto.authorEmail.trim() === '') {
-      throw new ValidationError('Author email cannot be empty');
-    }
     if (!dto.content || dto.content.trim() === '') {
       throw new ValidationError('Comment content cannot be empty');
     }
 
     const id = generateUuidV7();
     const now = Date.now();
+    const authorName = dto.authorName?.trim() || '匿名';
+    const authorEmail = dto.authorEmail?.trim().toLowerCase() || '';
     const authorUrl = dto.authorUrl?.trim() ? dto.authorUrl.trim() : null;
     const parentId = dto.parentId?.trim() ? dto.parentId.trim() : null;
     const isCuratorNote = Boolean(options?.isCuratorNote);
@@ -251,8 +247,8 @@ export class CommentService implements CommentPort {
       entryId,
       mediaAssetId,
       parentId,
-      authorName: dto.authorName.trim(),
-      authorEmail: dto.authorEmail.trim().toLowerCase(),
+      authorName,
+      authorEmail,
       authorUrl,
       content: dto.content.trim(),
       status: this.defaultStatus,
@@ -267,8 +263,8 @@ export class CommentService implements CommentPort {
       entryId,
       mediaAssetId,
       parentId,
-      authorName: dto.authorName.trim(),
-      authorEmail: dto.authorEmail.trim().toLowerCase(),
+      authorName,
+      authorEmail,
       authorUrl,
       content: dto.content.trim(),
       status: this.defaultStatus,

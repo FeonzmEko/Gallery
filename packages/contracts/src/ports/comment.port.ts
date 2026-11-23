@@ -29,8 +29,8 @@ export type MediaComment = MediaCommentDto;
 
 export interface CreateCommentDto {
   parentId?: string | null;
-  authorName: string;
-  authorEmail: string;
+  authorName?: string | null;
+  authorEmail?: string | null;
   authorUrl?: string | null;
   content: string;
 }

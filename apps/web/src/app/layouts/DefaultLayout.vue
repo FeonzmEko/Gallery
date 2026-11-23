@@ -1,19 +1,12 @@
 <template>
-  <div class="min-h-screen bg-[var(--canvas)] text-[var(--ink)] flex flex-col relative selection:bg-[#9A3F2B]/15 selection:text-[#9A3F2B]">
+  <div class="min-h-screen bg-transparent text-[var(--ink)] flex flex-col relative selection:bg-[#9A3F2B]/15 selection:text-[#9A3F2B]">
     <!-- ========================================================= -->
-    <!-- STATIC LOW-OVERHEAD AMBIENT GALLERY AURA & MARGIN RAILS   -->
+    <!-- CONTRASTING AMBIENT WASH + FROSTED GLASS HALL + MICROGRAIN -->
     <!-- ========================================================= -->
     <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-      <div class="absolute inset-0 ambient-aura-left"></div>
-      <div class="absolute inset-0 ambient-aura-right"></div>
-      <div class="hidden md:block absolute inset-0 ambient-aura-bottom"></div>
-      <!-- Subtle content-boundary framing on wide screens without shifting exhibition layout -->
-      <div class="hidden xl:block max-w-[1360px] h-full mx-auto relative">
-        <span class="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-[var(--rule)]/55 to-transparent"></span>
-        <span class="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-[var(--rule)]/55 to-transparent"></span>
-        <span class="absolute inset-y-0 -left-10 w-10 bg-gradient-to-r from-transparent to-[var(--boundary-sheen)] opacity-60"></span>
-        <span class="absolute inset-y-0 -right-10 w-10 bg-gradient-to-l from-transparent to-[var(--boundary-sheen)] opacity-60"></span>
-      </div>
+      <div class="absolute inset-0 gallery-hall-backdrop"></div>
+      <div class="absolute inset-0 gallery-hall-frost"></div>
+      <div class="absolute inset-0 gallery-hall-grain"></div>
     </div>
 
     <!-- ========================================================= -->
@@ -204,7 +197,7 @@
     <!-- ========================================================= -->
     <!-- EXHIBITION VIEWPORT                                       -->
     <!-- ========================================================= -->
-    <main class="relative z-10 flex-1 max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-28 md:pb-24">
+    <main class="relative z-10 flex-1 max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-28 md:pb-24 exhibition-album-stage">
       <slot>
         <RouterView />
       </slot>

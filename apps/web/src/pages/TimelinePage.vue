@@ -386,7 +386,6 @@ const categories = [
   { label: '全部时光', value: 'all' },
   { label: '摄影胶片', value: 'photo' },
   { label: '随想手札', value: 'journal' },
-  { label: '旅行足迹', value: 'trip' },
 ];
 
 const viewMode = ref<'bento' | 'spine'>('bento');

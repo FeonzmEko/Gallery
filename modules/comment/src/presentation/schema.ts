@@ -2,8 +2,14 @@ import { z } from 'zod';
 
 export const CreateCommentInputSchema = z.object({
   parentId: z.string().trim().optional().nullable(),
-  authorName: z.string().trim().min(1, '昵称不能为空').max(50, '昵称不能超过50个字符'),
-  authorEmail: z.string().trim().email('请输入有效的邮箱地址'),
+  authorName: z.string().trim().max(50, '署名不能超过50个字符').optional().nullable(),
+  authorEmail: z
+    .string()
+    .trim()
+    .email('请输入有效的邮箱地址')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
   authorUrl: z
     .string()
     .trim()

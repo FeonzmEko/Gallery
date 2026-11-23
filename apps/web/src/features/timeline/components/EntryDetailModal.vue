@@ -270,42 +270,28 @@
                   </div>
                 </div>
 
-                <!-- Post Comment Form (compact grid for side panel) -->
-                <form @submit.prevent="handlePostComment" class="border border-[#DDD6C9] bg-[#F3EFE7]/60 p-4 space-y-3 text-xs rounded-[2px]">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <input
-                      v-model="commentForm.authorName"
-                      type="text"
-                      required
-                      placeholder="署名 *"
-                      class="editorial-field px-3 py-2 w-full min-w-0"
-                    />
-                    <input
-                      v-model="commentForm.authorEmail"
-                      type="email"
-                      required
-                      placeholder="邮箱 (不公开) *"
-                      class="editorial-field px-3 py-2 w-full min-w-0"
-                    />
-                  </div>
-                  <input
-                    v-model="commentForm.authorUrl"
-                    type="url"
-                    placeholder="个人主页 (可选)"
-                    class="editorial-field px-3 py-2 w-full min-w-0"
-                  />
+                <!-- Post Comment Form (compact two-field layout for side panel) -->
+                <form @submit.prevent="handlePostComment" class="border border-[#DDD6C9] bg-[#F3EFE7]/60 p-4 space-y-2.5 text-xs rounded-[2px]">
                   <textarea
                     v-model="commentForm.content"
                     rows="2"
                     required
+                    maxlength="2000"
                     placeholder="留下你的观展随感..."
                     class="w-full editorial-field px-3 py-2"
                   ></textarea>
-                  <div class="flex justify-end">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                    <input
+                      v-model="commentForm.authorName"
+                      type="text"
+                      maxlength="50"
+                      placeholder="署名（选填，留空默认为匿名）"
+                      class="editorial-field flex-1 min-w-0 px-3 py-1.5"
+                    />
                     <button
                       type="submit"
                       :disabled="isPostingComment"
-                      class="inline-flex items-center gap-2 rounded-[2px] bg-[#161513] px-4 py-1.5 text-xs font-serif tracking-[0.14em] text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors disabled:opacity-50"
+                      class="inline-flex items-center justify-center gap-2 shrink-0 rounded-[2px] bg-[#161513] px-4 py-1.5 text-xs font-serif tracking-[0.14em] text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors disabled:opacity-50"
                     >
                       <Loader2Icon v-if="isPostingComment" class="w-3 h-3 animate-spin" />
                       <span>落款留言</span>
@@ -565,41 +551,27 @@
                 </div>
 
                 <!-- Post Comment Form -->
-                <form @submit.prevent="handlePostComment" class="border border-[#DDD6C9] bg-[#F3EFE7]/60 p-5 space-y-3.5 text-xs rounded-[2px]">
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <input
-                      v-model="commentForm.authorName"
-                      type="text"
-                      required
-                      placeholder="署名 *"
-                      class="editorial-field px-3 py-2"
-                    />
-                    <input
-                      v-model="commentForm.authorEmail"
-                      type="email"
-                      required
-                      placeholder="邮箱 (不公开) *"
-                      class="editorial-field px-3 py-2"
-                    />
-                    <input
-                      v-model="commentForm.authorUrl"
-                      type="url"
-                      placeholder="个人主页 (可选)"
-                      class="editorial-field px-3 py-2"
-                    />
-                  </div>
+                <form @submit.prevent="handlePostComment" class="border border-[#DDD6C9] bg-[#F3EFE7]/60 p-5 space-y-3 text-xs rounded-[2px]">
                   <textarea
                     v-model="commentForm.content"
                     rows="2"
                     required
+                    maxlength="2000"
                     placeholder="留下你的观展随感..."
                     class="w-full editorial-field px-3 py-2"
                   ></textarea>
-                  <div class="flex justify-end">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <input
+                      v-model="commentForm.authorName"
+                      type="text"
+                      maxlength="50"
+                      placeholder="署名（选填，留空默认为匿名）"
+                      class="editorial-field flex-1 min-w-0 px-3 py-2"
+                    />
                     <button
                       type="submit"
                       :disabled="isPostingComment"
-                      class="inline-flex items-center gap-2 rounded-[2px] bg-[#161513] px-5 py-2 text-xs font-serif tracking-[0.14em] text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors disabled:opacity-50"
+                      class="inline-flex items-center justify-center gap-2 shrink-0 rounded-[2px] bg-[#161513] px-5 py-2 text-xs font-serif tracking-[0.14em] text-[#FAF8F4] hover:bg-[#9A3F2B] transition-colors disabled:opacity-50"
                     >
                       <Loader2Icon v-if="isPostingComment" class="w-3 h-3 animate-spin" />
                       <span>落款留言</span>
@@ -716,8 +688,6 @@ const isLightboxOpen = ref(false);
 
 const commentForm = ref({
   authorName: '',
-  authorEmail: '',
-  authorUrl: '',
   content: '',
 });
 
@@ -1024,15 +994,16 @@ async function loadDetails(entry: EntryDto) {
 
 async function handlePostComment() {
   if (!props.entry) return;
+  const content = commentForm.value.content.trim();
+  if (!content) return;
   isPostingComment.value = true;
   try {
+    const authorName = commentForm.value.authorName.trim();
     const created = await apiClient.post<CommentDto>(
       `/api/v1/entries/${props.entry.id}/comments`,
       {
-        authorName: commentForm.value.authorName.trim(),
-        authorEmail: commentForm.value.authorEmail.trim(),
-        authorUrl: commentForm.value.authorUrl.trim() || null,
-        content: commentForm.value.content.trim(),
+        ...(authorName ? { authorName } : {}),
+        content,
       }
     );
     comments.value.unshift(created);

@@ -170,31 +170,8 @@
                 <!-- Comment Form -->
                 <form
                   @submit.prevent="handleSubmitComment"
-                  class="border border-[var(--rule)] bg-[var(--canvas)]/65 p-4 rounded-[2px] space-y-3 text-xs"
+                  class="border border-[var(--rule)] bg-[var(--canvas)]/65 p-4 rounded-[2px] space-y-2.5 text-xs"
                 >
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <input
-                      v-model="form.authorName"
-                      type="text"
-                      required
-                      maxlength="50"
-                      placeholder="署名 *"
-                      class="editorial-field px-3 py-2 text-xs"
-                    />
-                    <input
-                      v-model="form.authorEmail"
-                      type="email"
-                      required
-                      placeholder="邮箱（不公开）*"
-                      class="editorial-field px-3 py-2 text-xs"
-                    />
-                  </div>
-                  <input
-                    v-model="form.authorUrl"
-                    type="url"
-                    placeholder="个人主页（可选，需含 https://）"
-                    class="w-full editorial-field px-3 py-2 text-xs"
-                  />
                   <textarea
                     v-model="form.content"
                     rows="3"
@@ -208,19 +185,27 @@
                     class="w-full editorial-field px-3 py-2 text-xs leading-relaxed"
                   ></textarea>
 
-                  <div class="flex items-center justify-between gap-2 pt-0.5">
-                    <span class="text-[10px] font-mono text-[var(--ink-muted)]">
-                      {{ authStore.isAdmin ? '登录态发表自动标为「策展人注」' : '仅此张照片独立留言' }}
-                    </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                    <input
+                      v-model="form.authorName"
+                      type="text"
+                      maxlength="50"
+                      placeholder="署名（选填，留空默认为匿名）"
+                      class="editorial-field flex-1 min-w-0 px-3 py-1.5 text-xs"
+                    />
                     <button
                       type="submit"
                       :disabled="isSubmitting"
-                      class="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--ink)] px-4 py-1.5 text-xs font-serif tracking-[0.12em] text-[var(--alabaster)] hover:bg-[var(--seal)] transition-colors disabled:opacity-50"
+                      class="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-[2px] bg-[var(--ink)] px-4 py-1.5 text-xs font-serif tracking-[0.12em] text-[var(--alabaster)] hover:bg-[var(--seal)] transition-colors disabled:opacity-50"
                     >
                       <Loader2Icon v-if="isSubmitting" class="w-3 h-3 animate-spin" />
-                      <span>{{ authStore.isAdmin ? '落款注记' : '留存批注' }}</span>
+                      <span>{{ authStore.isAdmin ? '落款注记' : '落款留言' }}</span>
                     </button>
                   </div>
+
+                  <p class="text-[10px] font-mono text-[var(--ink-muted)] pt-0.5">
+                    {{ authStore.isAdmin ? '登录态发表自动标为「策展人注」' : '仅此张照片独立留言 · 留空默认匿名' }}
+                  </p>
                 </form>
 
                 <!-- Comments Loading -->
@@ -368,8 +353,6 @@ const hasMoreComments = ref(false);
 
 const form = ref({
   authorName: '',
-  authorEmail: '',
-  authorUrl: '',
   content: '',
 });
 
@@ -413,9 +396,6 @@ function prefillAuthorFields() {
     if (!form.value.authorName.trim()) {
       form.value.authorName = '馆主';
     }
-    if (!form.value.authorEmail.trim()) {
-      form.value.authorEmail = authStore.user?.email || 'admin@archive.internal';
-    }
     return;
   }
 
@@ -425,12 +405,8 @@ function prefillAuthorFields() {
       if (saved) {
         const parsed = JSON.parse(saved) as {
           authorName?: string;
-          authorEmail?: string;
-          authorUrl?: string;
         };
         if (!form.value.authorName && parsed.authorName) form.value.authorName = parsed.authorName;
-        if (!form.value.authorEmail && parsed.authorEmail) form.value.authorEmail = parsed.authorEmail;
-        if (!form.value.authorUrl && parsed.authorUrl) form.value.authorUrl = parsed.authorUrl;
       }
     }
   } catch {
@@ -446,8 +422,6 @@ function saveVisitorFields() {
         VISITOR_STORAGE_KEY,
         JSON.stringify({
           authorName: form.value.authorName.trim(),
-          authorEmail: form.value.authorEmail.trim(),
-          authorUrl: form.value.authorUrl.trim(),
         })
       );
     }
@@ -492,15 +466,15 @@ async function loadComments(reset: boolean = true) {
 
 async function handleSubmitComment() {
   const mediaId = props.photo?.id;
-  if (!mediaId || isSubmitting.value) return;
+  const content = form.value.content.trim();
+  if (!mediaId || !content || isSubmitting.value) return;
 
   isSubmitting.value = true;
   try {
+    const authorName = form.value.authorName.trim();
     const created = await apiClient.postMediaComment(mediaId, {
-      authorName: form.value.authorName.trim(),
-      authorEmail: form.value.authorEmail.trim(),
-      authorUrl: form.value.authorUrl.trim() || null,
-      content: form.value.content.trim(),
+      ...(authorName ? { authorName } : {}),
+      content,
     });
 
     saveVisitorFields();

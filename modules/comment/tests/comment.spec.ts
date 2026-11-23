@@ -55,7 +55,7 @@ describe('@archive/module-comment', () => {
       expect(comment.createdAt).toBeGreaterThan(0);
     });
 
-    it('should validate required fields when creating comment', async () => {
+    it('should validate content and default empty authorName/authorEmail to anonymous', async () => {
       const ipHash = await hashIp('127.0.0.1');
 
       await expect(
@@ -63,43 +63,38 @@ describe('@archive/module-comment', () => {
           '',
           {
             authorName: 'Bob',
-            authorEmail: 'bob@example.com',
             content: 'Hello',
           },
           ipHash
         )
       ).rejects.toThrow(/Entry ID cannot be empty/);
 
-      await expect(
-        service.createComment(
-          'entry_1',
-          {
-            authorName: '',
-            authorEmail: 'bob@example.com',
-            content: 'Hello',
-          },
-          ipHash
-        )
-      ).rejects.toThrow(/Author name cannot be empty/);
+      const anonComment = await service.createComment(
+        'entry_1',
+        {
+          authorName: '   ',
+          content: 'Anonymous greeting',
+        },
+        ipHash
+      );
+      expect(anonComment.authorName).toBe('匿名');
+      expect(anonComment.authorEmail).toBe('');
+
+      const omittedAuthor = await service.createComment(
+        'entry_1',
+        {
+          content: 'Omitted author and email',
+        },
+        ipHash
+      );
+      expect(omittedAuthor.authorName).toBe('匿名');
+      expect(omittedAuthor.authorEmail).toBe('');
 
       await expect(
         service.createComment(
           'entry_1',
           {
             authorName: 'Bob',
-            authorEmail: '',
-            content: 'Hello',
-          },
-          ipHash
-        )
-      ).rejects.toThrow(/Author email cannot be empty/);
-
-      await expect(
-        service.createComment(
-          'entry_1',
-          {
-            authorName: 'Bob',
-            authorEmail: 'bob@example.com',
             content: '',
           },
           ipHash
@@ -291,6 +286,39 @@ describe('@archive/module-comment', () => {
       expect(body.success).toBe(true);
       expect(body.data.authorName).toBe('Visitor Lin');
       expect(body.data.status).toBe('approved');
+    });
+
+    it('POST /api/v1/entries/:entryId/comments and /media/:mediaId/comments should allow anonymous submission without email', async () => {
+      const entryRes = await app.request('/api/v1/entries/entry_anon_01/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'cf-connecting-ip': '198.51.100.2',
+        },
+        body: JSON.stringify({
+          authorName: '   ',
+          content: 'Quiet afternoon impression.',
+        }),
+      });
+      expect(entryRes.status).toBe(201);
+      const entryBody = (await entryRes.json()) as any;
+      expect(entryBody.data.authorName).toBe('匿名');
+      expect(entryBody.data.authorEmail).toBe('');
+
+      const mediaRes = await app.request('/api/v1/media/media_anon_01/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'cf-connecting-ip': '198.51.100.3',
+        },
+        body: JSON.stringify({
+          content: 'Minimalist photo note without email.',
+        }),
+      });
+      expect(mediaRes.status).toBe(201);
+      const mediaBody = (await mediaRes.json()) as any;
+      expect(mediaBody.data.authorName).toBe('匿名');
+      expect(mediaBody.data.mediaAssetId).toBe('media_anon_01');
     });
 
     it('GET /api/v1/entries/:entryId/comments should return 200 and include Cache-Control header', async () => {

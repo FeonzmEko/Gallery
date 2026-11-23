@@ -18,21 +18,26 @@
   --obsidian: #11100F;
 
   /* Frosted Glass & Ambient Aura Tokens (Light / Archival Rag) */
+  --hall-base: #E5DDD0;
+  --hall-frost: rgba(235, 228, 216, 0.56);
+  --album-edge: rgba(255, 255, 255, 0.72);
+  --album-border: rgba(196, 187, 169, 0.45);
   --glass-surface: rgba(250, 248, 244, 0.82);
   --glass-chrome: rgba(243, 239, 231, 0.84);
   --glass-border: rgba(221, 214, 201, 0.78);
   --glass-highlight: rgba(255, 255, 255, 0.65);
-  --ambient-terracotta: rgba(154, 63, 43, 0.055);
-  --ambient-moss: rgba(61, 78, 66, 0.05);
-  --ambient-ochre: rgba(182, 138, 76, 0.048);
-  --boundary-sheen: rgba(250, 248, 244, 0.42);
+  --ambient-sunset: rgba(186, 88, 56, 0.34);
+  --ambient-slate: rgba(74, 102, 124, 0.28);
+  --ambient-ochre: rgba(194, 144, 72, 0.30);
+  --ambient-umber: rgba(112, 84, 62, 0.24);
+  --ambient-moss: rgba(61, 88, 74, 0.22);
 }
 
 /* Night Warm Ink Base Tokens (Prepared for M4-3 Dark Mode) */
 html.dark {
   color-scheme: dark;
-  --canvas: #161412;
-  --alabaster: #1E1B18;
+  --canvas: #171512;
+  --alabaster: #1F1C18;
   --linen: #26221E;
   --rule: #332E28;
   --rule-strong: #4A433B;
@@ -44,14 +49,19 @@ html.dark {
   --moss: #6B8272;
   --obsidian: #0D0C0B;
 
+  --hall-base: #0E0C0A;
+  --hall-frost: rgba(16, 14, 12, 0.62);
+  --album-edge: rgba(255, 244, 228, 0.08);
+  --album-border: rgba(74, 67, 59, 0.52);
   --glass-surface: rgba(30, 27, 24, 0.82);
   --glass-chrome: rgba(22, 20, 18, 0.84);
   --glass-border: rgba(66, 59, 51, 0.72);
   --glass-highlight: rgba(255, 244, 228, 0.06);
-  --ambient-terracotta: rgba(196, 96, 74, 0.08);
-  --ambient-moss: rgba(107, 130, 114, 0.068);
-  --ambient-ochre: rgba(196, 152, 88, 0.055);
-  --boundary-sheen: rgba(30, 27, 24, 0.38);
+  --ambient-sunset: rgba(196, 96, 74, 0.28);
+  --ambient-slate: rgba(82, 114, 140, 0.26);
+  --ambient-ochre: rgba(196, 152, 88, 0.22);
+  --ambient-umber: rgba(124, 90, 62, 0.22);
+  --ambient-moss: rgba(88, 124, 102, 0.20);
 }
 
 html,
@@ -83,31 +93,56 @@ html.dark body::before {
   mix-blend-mode: soft-light;
 }
 
-/* Static Low-Overhead Ambient Color Glows (Zero filter:blur cost) */
-.ambient-aura-left {
-  background: radial-gradient(
-    ellipse 52% 46% at 6% 18%,
-    var(--ambient-terracotta) 0%,
-    rgba(154, 63, 43, 0.015) 48%,
-    transparent 74%
-  );
+/* Contrasting Multi-Tone Ambient Gallery Wash (Base Layer behind Frosted Glass) */
+.gallery-hall-backdrop {
+  background-color: var(--hall-base);
+  background-image:
+    radial-gradient(ellipse 38% 48% at 3% 20%, var(--ambient-sunset) 0%, transparent 72%),
+    radial-gradient(ellipse 36% 52% at 96% 24%, var(--ambient-slate) 0%, transparent 74%),
+    radial-gradient(ellipse 42% 46% at 8% 78%, var(--ambient-slate) 0%, transparent 72%),
+    radial-gradient(ellipse 40% 50% at 92% 76%, var(--ambient-ochre) 0%, transparent 72%),
+    radial-gradient(ellipse 52% 40% at 50% 6%, var(--ambient-umber) 0%, transparent 70%),
+    radial-gradient(ellipse 56% 42% at 52% 96%, var(--ambient-moss) 0%, transparent 72%);
 }
 
-.ambient-aura-right {
-  background: radial-gradient(
-    ellipse 48% 50% at 94% 34%,
-    var(--ambient-moss) 0%,
-    rgba(61, 78, 66, 0.014) 50%,
-    transparent 74%
-  );
+/* Mid-Layer Frosted Glass Pane over Contrasting Color Washes */
+.gallery-hall-frost {
+  background-color: var(--hall-frost);
+  -webkit-backdrop-filter: blur(44px) saturate(135%);
+  backdrop-filter: blur(44px) saturate(135%);
 }
 
-.ambient-aura-bottom {
-  background: radial-gradient(
-    ellipse 58% 44% at 18% 90%,
-    var(--ambient-ochre) 0%,
-    transparent 70%
-  );
+/* Tactile Frosted Glass & Fine Paper Micro-Grain Texture */
+.gallery-hall-grain {
+  opacity: 0.065;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='fg'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23fg)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+html.dark .gallery-hall-grain {
+  opacity: 0.055;
+  mix-blend-mode: soft-light;
+}
+
+/* Floating Paper Monograph Stage (Separates central exhibition from outer frosted hall) */
+@media (min-width: 1280px) {
+  .exhibition-album-stage {
+    background-color: var(--canvas);
+    border-left: 1px solid var(--album-border);
+    border-right: 1px solid var(--album-border);
+    box-shadow:
+      1px 0 0 var(--album-edge) inset,
+      -1px 0 0 var(--album-edge) inset,
+      0 22px 64px -26px rgba(22, 21, 19, 0.16);
+  }
+
+  html.dark .exhibition-album-stage {
+    box-shadow:
+      1px 0 0 var(--album-edge) inset,
+      -1px 0 0 var(--album-edge) inset,
+      0 24px 68px -22px rgba(0, 0, 0, 0.65);
+  }
 }
 
 /* Museum Hairline & Frame Utilities */
@@ -293,7 +328,8 @@ html.dark body::before {
 
 @media (prefers-reduced-transparency: reduce) {
   .archival-glass,
-  .archival-glass-chrome {
+  .archival-glass-chrome,
+  .gallery-hall-frost {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background-color: var(--alabaster);
